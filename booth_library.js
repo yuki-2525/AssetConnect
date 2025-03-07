@@ -1,4 +1,16 @@
 // booth_library.js
+
+// ヘルパー関数：日付を "YYYY-MM-DD HH:mm:ss" 形式にフォーマット
+function formatDate(date) {
+  const pad = n => n.toString().padStart(2, '0');
+  return date.getFullYear() + '-' +
+         pad(date.getMonth() + 1) + '-' +
+         pad(date.getDate()) + ' ' +
+         pad(date.getHours()) + ':' +
+         pad(date.getMinutes()) + ':' +
+         pad(date.getSeconds());
+}
+
 document.addEventListener('click', function(e) {
   const downloadLink = e.target.closest('a[href^="https://booth.pm/downloadables/"]');
   if (!downloadLink) return;
@@ -21,20 +33,20 @@ document.addEventListener('click', function(e) {
   }
   const fileName = fileNameElement.textContent.trim();
 
-  // 外側コンテナの取得（ショップ情報などが含まれる部分）
+  // 外側コンテナの取得
   const outerContainer = downloadLink.closest('div.mb-16');
   if (!outerContainer) {
     console.error("Library: Outer container not found");
     return;
   }
   
-  // タイトルの取得：外側コンテナ内で、クラス属性に "text-text-default", "font-bold", "typography-16", "mb-8", "break-all" を含む要素
+  // タイトルの取得：外側コンテナ内の指定要素から取得
   const titleElement = outerContainer.querySelector(
     'div[class*="text-text-default"][class*="font-bold"][class*="typography-16"][class*="mb-8"][class*="break-all"]'
   );
   const title = titleElement ? titleElement.textContent.trim() : '不明';
 
-  // boothID の取得：外側コンテナ内の a[href*="/items/"] から抽出
+  // boothID の取得：外側コンテナ内のアイテムリンクから抽出
   const itemLink = outerContainer.querySelector('a[href*="/items/"]');
   if (!itemLink) {
     console.error("Library: Item link not found");
@@ -51,22 +63,23 @@ document.addEventListener('click', function(e) {
   console.log('Library Page - fileName:', fileName);
   console.log('Library Page - boothID:', boothID);
 
+  const timestamp = formatDate(new Date());
+
   const newEntry = {
     title: title,
     boothID: boothID,
     filename: fileName,
-    timestamp: new Date().toISOString()
+    timestamp: timestamp,
+    url: itemLink.href,
+    free: false
   };
 
-  // 保存処理：既存の "downloadHistory" から同一 boothID & filename のエントリを削除してから追加
   chrome.storage.local.get("downloadHistory", function(result) {
     let history = result.downloadHistory || [];
-    // 同一の boothID と filename があれば削除
     history = history.filter(entry => !(entry.boothID === newEntry.boothID && entry.filename === newEntry.filename));
     history.push(newEntry);
     chrome.storage.local.set({ downloadHistory: history }, function() {
       console.log("Library entry saved:", newEntry);
-      // 保存完了後、元のダウンロードURLへ遷移
       window.location.href = downloadLink.href;
     });
   });

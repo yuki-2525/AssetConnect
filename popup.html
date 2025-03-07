@@ -1,18 +1,33 @@
 <!DOCTYPE html>
 <html lang="ja" xml:lang="ja">
-  <head>
-    <meta charset="utf-8">
-    <title>履歴エクスポート</title>
-    <style>
-      body { font-family: sans-serif; width: 240px; padding: 10px; }
-      button { width: 100%; padding: 8px; margin-top: 10px; }
-    </style>
-  </head>
-  <body>
-    <h3>履歴エクスポート／管理</h3>
+<head>
+  <meta charset="UTF-8">
+  <title>Download History</title>
+  <style>
+    body { font-family: sans-serif; width: 700px; padding: 10px; }
+    .toggle-container { margin-bottom: 10px; }
+    .toggle-container label { margin-right: 10px; }
+    .button-container { margin-bottom: 10px; }
+    .button-container button { margin-right: 5px; margin-bottom: 5px; }
+    .entry { border-bottom: 1px solid #ccc; padding: 5px 0; font-size: 12px; }
+    .entry a { color: blue; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="toggle-container">
+    <label for="toggleFree">無料ダウンロードのみ</label>
+    <input type="checkbox" id="toggleFree" checked>
+  </div>
+  <div class="button-container">
     <button id="export-ae">JSON 出力(AE Tools形式)</button>
-    <button id="export-full">タイムスタンプ付きJSON出力</button>
-    <button id="clear">履歴全削除</button>
-    <script src="popup.js"></script>
-  </body>
+    <button id="export-full">全項目JSON出力</button>
+    <button id="btn-csv-export">CSV 出力</button>
+    <button id="btn-import">CSVインポート</button>
+    <button id="btn-clear">履歴削除</button>
+    <!-- 隠しファイル入力 -->
+    <input type="file" id="csvInput" accept=".csv" style="display: none;">
+  </div>
+  <div id="history-list"></div>
+  <script src="popup.js"></script>
+</body>
 </html>
