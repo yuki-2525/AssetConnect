@@ -4,7 +4,8 @@
   "version": "1.0",
   "permissions": [
     "downloads",
-    "storage"
+    "storage",
+    "unlimitedStorage"
   ],
   "host_permissions": [
     "*://accounts.booth.pm/*",

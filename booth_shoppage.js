@@ -39,12 +39,14 @@ document.addEventListener('click', function(e) {
     timestamp: new Date().toISOString()
   };
 
-  // chrome.storage.local に保存（既存の downloadHistory に追記）
+  // 保存処理：既存の "downloadHistory" から同一 boothID & filename のエントリを削除してから追加
   chrome.storage.local.get("downloadHistory", function(result) {
-    const history = result.downloadHistory || [];
+    let history = result.downloadHistory || [];
+    // 同一の boothID と filename があれば削除
+    history = history.filter(entry => !(entry.boothID === newEntry.boothID && entry.filename === newEntry.filename));
     history.push(newEntry);
     chrome.storage.local.set({ downloadHistory: history }, function() {
-      console.log("Shop entry saved:", newEntry);
+      console.log("Library entry saved:", newEntry);
       // 保存完了後、元のダウンロードURLへ遷移
       window.location.href = downloadLink.href;
     });
