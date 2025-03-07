@@ -203,17 +203,26 @@ document.addEventListener('DOMContentLoaded', function() {
         importedEntries.push({ url: urlField, timestamp, boothID, title, filename: fileName, free });
       }
     } else {
-      // 従来形式（2カラム形式）としてパース
+      // 従来形式のCSVパース処理（改良版）
       for (let i = 0; i < lines.length; i++) {
         let line = lines[i].trim();
         if (!line) continue;
-        const match = line.match(/^\s*"([^"]+)"\s*,\s*"([^"]+)"\s*$/);
+        // 最初の行でboothIDが抽出できなければヘッダー行とみなしスキップ
+        const tempIdMatch = line.match(/\/items\/(\d+)/);
+        if (i === 0 && (!tempIdMatch || !tempIdMatch[1])) {
+          console.log("ヘッダー行としてスキップ:", line);
+          continue;
+        }
+        // 改良版正規表現: 各フィールド内でダブルクオートが現れる場合、""として許容する
+        const match = line.match(/^\s*"((?:[^"]|"")*)"\s*,\s*"((?:[^"]|"")*)"\s*$/);
         if (!match) {
           console.error("CSVインポート従来形式: パース失敗", line);
           continue;
         }
-        const urlField = match[1];
-        const manageName = match[2];
+        // 各フィールド内の""を"に置換
+        const urlField = match[1].replace(/""/g, '"');
+        const manageName = match[2].replace(/""/g, '"');
+        
         const idMatch = urlField.match(/\/items\/(\d+)/);
         const boothID = idMatch ? idMatch[1] : null;
         if (!boothID) {
@@ -227,7 +236,6 @@ document.addEventListener('DOMContentLoaded', function() {
         let title = lastSlashIndex !== -1 ? rest.substring(0, lastSlashIndex).trim() : rest.trim();
         // 従来形式は全て free:true とする
         const free = true;
-        // filename は従来形式では空文字
         importedEntries.push({ url: urlField, timestamp, boothID, title, filename: "", free });
       }
     }
