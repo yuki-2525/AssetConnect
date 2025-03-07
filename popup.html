@@ -16,13 +16,14 @@
 <body>
   <div class="toggle-container">
     <label for="toggleFree">無料ダウンロードのみ</label>
-    <input type="checkbox" id="toggleFree">
+    <input type="checkbox" id="toggleFree" checked>
   </div>
   <div class="button-container">
     <button id="export-ae">JSON 出力(AE Tools形式)</button>
     <button id="export-full">全項目JSON出力</button>
-    <button id="btn-clear">履歴削除</button>
+    <button id="btn-csv-export">CSV 出力</button>
     <button id="btn-import">CSVインポート</button>
+    <button id="btn-clear">履歴削除</button>
     <!-- 隠しファイル入力 -->
     <input type="file" id="csvInput" accept=".csv" style="display: none;">
   </div>

@@ -1,6 +1,26 @@
 document.addEventListener('DOMContentLoaded', function() {
   const toggleCheckbox = document.getElementById("toggleFree");
 
+  // 初回起動時に free 属性が空のエントリを false に更新
+  chrome.storage.local.get("downloadHistory", function(result) {
+    let history = result.downloadHistory || [];
+    let updated = false;
+    for (let i = 0; i < history.length; i++) {
+      if (history[i].free === undefined || history[i].free === null || history[i].free === "") {
+        history[i].free = false;
+        updated = true;
+      }
+    }
+    if (updated) {
+      chrome.storage.local.set({ downloadHistory: history }, function() {
+        console.log("free属性の未設定エントリをfalseに更新しました");
+        renderHistory();
+      });
+    } else {
+      renderHistory();
+    }
+  });
+
   // ヘルパー関数: タイムスタンプを "YYYY-MM-DD HH:mm:ss" 形式にフォーマット
   function formatTimestamp(ts) {
     const date = new Date(ts);
@@ -8,7 +28,15 @@ document.addEventListener('DOMContentLoaded', function() {
     return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
   }
 
-  // 履歴一覧を描画する関数（toggleCheckbox がチェックなら free:true のものだけ表示）
+  // CSVフィールド用のエスケープ関数
+  function escapeCSV(value) {
+    if (value == null) return "";
+    let str = value.toString();
+    str = str.replace(/"/g, '""');
+    return `"${str}"`;
+  }
+
+  // 履歴一覧を描画する関数（toggleCheckboxがチェックなら free:true のものだけ表示）
   function renderHistory() {
     chrome.storage.local.get("downloadHistory", function(result) {
       let history = result.downloadHistory || [];
@@ -30,14 +58,12 @@ document.addEventListener('DOMContentLoaded', function() {
         const url = entry.url && entry.url.trim() ? entry.url : `https://booth.pm/ja/items/${entry.boothID}`;
         const div = document.createElement("div");
         div.className = "entry";
+        // 表示形式: [タイムスタンプ] タイトル（タイトルはリンク）
         div.innerHTML = `<span>[${formattedTime}]</span> <a href="${url}" target="_blank">${entry.title}</a>`;
         container.appendChild(div);
       });
     });
   }
-
-  // 初期レンダリング
-  renderHistory();
 
   // トグル変更時に再描画
   toggleCheckbox.addEventListener("change", function() {
@@ -51,7 +77,6 @@ document.addEventListener('DOMContentLoaded', function() {
       const grouped = {};
       history.forEach(entry => {
         const { title, boothID, filename, timestamp } = entry;
-        // filenameがnullや空の場合はスキップ
         if (!filename) return;
         if (!grouped[boothID]) {
           grouped[boothID] = {
@@ -61,18 +86,13 @@ document.addEventListener('DOMContentLoaded', function() {
             timestamp: timestamp
           };
         } else {
-          // filenameが有効なら追加
-          if (filename) {
-            grouped[boothID].files.push(filename);
-          }
-          // タイムスタンプが新しい場合はタイトルとtimestampを更新
+          grouped[boothID].files.push(filename);
           if (new Date(timestamp) > new Date(grouped[boothID].timestamp)) {
             grouped[boothID].title = title;
             grouped[boothID].timestamp = timestamp;
           }
         }
       });
-      // filesがnullまたは空のグループは除外
       const outputArray = Object.values(grouped)
         .filter(group => group.files && group.files.length > 0)
         .map(group => ({
@@ -94,7 +114,6 @@ document.addEventListener('DOMContentLoaded', function() {
       });
     });
   });
-  
 
   // 全項目JSON出力ボタン
   document.getElementById("export-full").addEventListener("click", () => {
@@ -115,13 +134,41 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 
-  // 履歴全削除ボタン
-  document.getElementById("btn-clear").addEventListener("click", function() {
-    if (confirm("履歴を全削除しますか？")) {
-      chrome.storage.local.remove("downloadHistory", function() {
-        renderHistory();
+  // CSV 出力ボタン
+  document.getElementById("btn-csv-export").addEventListener("click", () => {
+    chrome.storage.local.get("downloadHistory", function(result) {
+      const history = result.downloadHistory || [];
+      // CSVヘッダー
+      const header = ['URL', 'timestamp', 'boothID', 'title', 'fileName', 'free'].map(escapeCSV).join(',');
+      const lines = [header];
+      history.forEach(entry => {
+        // URLが空の場合はデフォルトで埋める
+        const url = entry.url && entry.url.trim() ? entry.url : `https://booth.pm/ja/items/${entry.boothID}`;
+        const line = [
+          url,
+          entry.timestamp,
+          entry.boothID,
+          entry.title,
+          entry.filename,
+          entry.free
+        ].map(escapeCSV).join(',');
+        lines.push(line);
       });
-    }
+      const csvContent = lines.join('\n');
+      // BOMを付与してUTF-8でエクスポート
+      const csvContentWithBom = "\uFEFF" + csvContent;
+      const blob = new Blob([csvContentWithBom], { type: "text/csv;charset=UTF-8" });
+      const urlBlob = URL.createObjectURL(blob);
+      chrome.downloads.download({
+        url: urlBlob,
+        filename: "downloadHistory.csv",
+        conflictAction: "uniquify",
+        saveAs: true
+      }, (downloadId) => {
+        console.log("CSV 出力完了, downloadId:", downloadId);
+        setTimeout(() => URL.revokeObjectURL(urlBlob), 10000);
+      });
+    });
   });
 
   // CSVインポート処理
@@ -140,61 +187,81 @@ document.addEventListener('DOMContentLoaded', function() {
     reader.readAsText(file, "UTF-8");
   });
 
-  // CSVをパースして chrome.storage.local に追記する関数
+  // CSVをパースしてchrome.storage.localに追記する関数
   function importCSV(csvText) {
     const lines = csvText.split(/\r?\n/);
-    const importedEntries = [];
-    lines.forEach(line => {
-      if (!line.trim()) return;
-      // 簡易CSVパース（カンマ区切り、各フィールドはダブルクオーテーションで囲まれていると想定）
-      const match = line.match(/^\s*"([^"]+)"\s*,\s*"([^"]+)"\s*$/);
-      if (!match) {
-        console.error("CSVパース失敗:", line);
-        return;
+    if (lines.length === 0) return;
+    // ヘッダー判定: 1行目が "URL","timestamp","boothID","title","fileName","free" なら新形式
+    let headerLine = lines[0].trim().replace(/^\uFEFF/, '');
+    const headerColumns = headerLine.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(s => s.replace(/^"|"$/g, '').trim());
+    let importedEntries = [];
+    if (headerColumns.join(',') === "URL,timestamp,boothID,title,fileName,free") {
+      // 新形式
+      for (let i = 1; i < lines.length; i++) {
+        let line = lines[i].trim();
+        if (!line) continue;
+        const columns = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+        if (columns.length < 6) {
+          console.error("CSVインポート: カラム数不足", line);
+          continue;
+        }
+        const urlField = columns[0].replace(/^"|"$/g, '').trim();
+        const timestamp = columns[1].replace(/^"|"$/g, '').trim();
+        const boothID = columns[2].replace(/^"|"$/g, '').trim();
+        const title = columns[3].replace(/^"|"$/g, '').trim();
+        const fileName = columns[4].replace(/^"|"$/g, '').trim();
+        const free = columns[5].replace(/^"|"$/g, '').trim().toLowerCase() === "true";
+        importedEntries.push({ url: urlField, timestamp, boothID, title, filename: fileName, free });
       }
-      const urlField = match[1];
-      const manageName = match[2];
-  
-      // boothID: URLの/items/の後ろの数字を抽出
-      const idMatch = urlField.match(/\/items\/(\d+)/);
-      const boothID = idMatch ? idMatch[1] : null;
-      if (!boothID) {
-        console.error("boothID抽出失敗:", urlField);
-        return;
+    } else {
+      // 従来形式（2カラム形式）としてパース
+      for (let i = 0; i < lines.length; i++) {
+        let line = lines[i].trim();
+        if (!line) continue;
+        const match = line.match(/^\s*"([^"]+)"\s*,\s*"([^"]+)"\s*$/);
+        if (!match) {
+          console.error("CSVインポート従来形式: パース失敗", line);
+          continue;
+        }
+        const urlField = match[1];
+        const manageName = match[2];
+        const idMatch = urlField.match(/\/items\/(\d+)/);
+        const boothID = idMatch ? idMatch[1] : null;
+        if (!boothID) {
+          console.error("CSVインポート従来形式: boothID抽出失敗", urlField);
+          continue;
+        }
+        const tsMatch = manageName.match(/^\s*\[([^\]]+)\]/);
+        const timestamp = tsMatch ? tsMatch[1] : "";
+        let rest = manageName.replace(/^\s*\[[^\]]+\]\s*/, "");
+        const lastSlashIndex = rest.lastIndexOf("/");
+        let title = lastSlashIndex !== -1 ? rest.substring(0, lastSlashIndex).trim() : rest.trim();
+        // 従来形式は全て free:true とする
+        const free = true;
+        importedEntries.push({ url: urlField, timestamp, boothID, title, filename: "", free });
       }
-      // タイムスタンプ抽出: 管理名称の先頭の角括弧内
-      const tsMatch = manageName.match(/^\s*\[([^\]]+)\]/);
-      const timestamp = tsMatch ? tsMatch[1] : "";
-      // 管理名称から角括弧とその後の空白を除去
-      let rest = manageName.replace(/^\s*\[[^\]]+\]\s*/, "");
-      // タイトルは、rest の最後の "/" の手前まで（最後の "/" より前の文字列）
-      const lastSlashIndex = rest.lastIndexOf("/");
-      let title = lastSlashIndex !== -1 ? rest.substring(0, lastSlashIndex).trim() : rest.trim();
-  
-      // free属性: CSV インポートの場合は全て true にする
-      const free = true;
-  
-      const newEntry = {
-        url: urlField,
-        boothID: boothID,
-        timestamp: timestamp,  // 既に "YYYY-MM-DD HH:mm:ss" 形式であると仮定
-        title: title,
-        free: free
-      };
-      importedEntries.push(newEntry);
-    });
-  
-    // 既存の履歴とマージ（重複エントリは boothID と title が同じ場合は置き換え）
+    }
+    // 既存の履歴とマージ（重複エントリは boothID と filename が同じ場合は置き換え）
     chrome.storage.local.get("downloadHistory", function(result) {
       let history = result.downloadHistory || [];
       importedEntries.forEach(newEntry => {
-        history = history.filter(entry => !(entry.boothID === newEntry.boothID && entry.title === newEntry.title));
+        history = history.filter(entry => !(entry.boothID === newEntry.boothID && entry.filename === newEntry.filename));
         history.push(newEntry);
-      });
+      });      
       chrome.storage.local.set({ downloadHistory: history }, function() {
         console.log("CSVインポート完了。インポート件数:", importedEntries.length);
         renderHistory();
       });
     });
-  }  
+  }
+
+  // 履歴全削除ボタン
+  document.getElementById("btn-clear").addEventListener("click", function() {
+    if (confirm("履歴を全削除しますか？")) {
+      chrome.storage.local.remove("downloadHistory", function() {
+        renderHistory();
+      });
+    }
+  });
+  
 });
