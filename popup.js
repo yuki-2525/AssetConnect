@@ -115,32 +115,17 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   });
 
-  // 全項目JSON出力ボタン
-  document.getElementById("export-full").addEventListener("click", () => {
-    chrome.storage.local.get("downloadHistory", function(result) {
-      const history = result.downloadHistory || [];
-      const jsonContent = JSON.stringify(history, null, 2);
-      const blob = new Blob([jsonContent], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      chrome.downloads.download({
-        url: url,
-        filename: "downloadHistory_full.json",
-        conflictAction: "uniquify",
-        saveAs: true
-      }, (downloadId) => {
-        console.log("全項目JSON 出力完了, downloadId:", downloadId);
-        setTimeout(() => URL.revokeObjectURL(url), 10000);
-      });
-    });
-  });
-
   // CSV 出力ボタン
   document.getElementById("btn-csv-export").addEventListener("click", () => {
     chrome.storage.local.get("downloadHistory", function(result) {
-      const history = result.downloadHistory || [];
+      let history = result.downloadHistory || [];
+      // タイムスタンプの降順にソート（最新のものが先頭になるように）
+      history.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+      
       // CSVヘッダー
       const header = ['URL', 'timestamp', 'boothID', 'title', 'fileName', 'free'].map(escapeCSV).join(',');
       const lines = [header];
+      
       history.forEach(entry => {
         // URLが空の場合はデフォルトで埋める
         const url = entry.url && entry.url.trim() ? entry.url : `https://booth.pm/ja/items/${entry.boothID}`;
@@ -154,11 +139,13 @@ document.addEventListener('DOMContentLoaded', function() {
         ].map(escapeCSV).join(',');
         lines.push(line);
       });
+      
       const csvContent = lines.join('\n');
-      // BOMを付与してUTF-8でエクスポート
+      // BOMを付与してUTF-8で出力
       const csvContentWithBom = "\uFEFF" + csvContent;
       const blob = new Blob([csvContentWithBom], { type: "text/csv;charset=UTF-8" });
       const urlBlob = URL.createObjectURL(blob);
+      
       chrome.downloads.download({
         url: urlBlob,
         filename: "downloadHistory.csv",
@@ -170,6 +157,7 @@ document.addEventListener('DOMContentLoaded', function() {
       });
     });
   });
+
 
   // CSVインポート処理
   const csvInput = document.getElementById("csvInput");
@@ -210,6 +198,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const boothID = columns[2].replace(/^"|"$/g, '').trim();
         const title = columns[3].replace(/^"|"$/g, '').trim();
         const fileName = columns[4].replace(/^"|"$/g, '').trim();
+        // free属性は新形式の場合も、CSV側の値をそのまま利用
         const free = columns[5].replace(/^"|"$/g, '').trim().toLowerCase() === "true";
         importedEntries.push({ url: urlField, timestamp, boothID, title, filename: fileName, free });
       }
@@ -238,22 +227,52 @@ document.addEventListener('DOMContentLoaded', function() {
         let title = lastSlashIndex !== -1 ? rest.substring(0, lastSlashIndex).trim() : rest.trim();
         // 従来形式は全て free:true とする
         const free = true;
+        // filename は従来形式では空文字
         importedEntries.push({ url: urlField, timestamp, boothID, title, filename: "", free });
       }
     }
-    // 既存の履歴とマージ（重複エントリは boothID と filename が同じ場合は置き換え）
+    // 既存の履歴とマージ（重複判定は boothID と filename で行う）
     chrome.storage.local.get("downloadHistory", function(result) {
       let history = result.downloadHistory || [];
       importedEntries.forEach(newEntry => {
-        history = history.filter(entry => !(entry.boothID === newEntry.boothID && entry.filename === newEntry.filename));
+        // まず、同じ boothID のエントリについて、マージ条件でフィルタする
+        history = history.filter(existing => {
+          if (existing.boothID !== newEntry.boothID) {
+            return true; // boothIDが異なるならそのまま残す
+          }
+          const newFN = (newEntry.filename || "").trim();
+          const existFN = (existing.filename || "").trim();
+          if (newFN === "" && existFN === "") {
+            // 両方とも空の場合は重複とする（既存を削除）
+            return false;
+          } else if (newFN === "" && existFN !== "") {
+            // newEntryは空で既存はnon-empty → 既存を優先するので新Entryは追加しない（既存はそのまま残す）
+            return true;
+          } else if (newFN !== "" && existFN === "") {
+            // newEntryはnon-emptyで既存が空 → 既存を削除
+            return false;
+          } else {
+            // 両方non-empty：同じなら重複（削除）、異なるなら別のエントリとして残す
+            return newFN !== existFN;
+          }
+        });
+        // さらに、もし newEntry の filename が空で、既に同じ boothID のエントリで non-empty filename が存在する場合は、newEntry を追加しない
+        if ((newEntry.filename || "").trim() === "") {
+          const existsNonEmpty = history.some(entry => entry.boothID === newEntry.boothID && (entry.filename || "").trim() !== "");
+          if (existsNonEmpty) {
+            return; // スキップして新Entryを追加しない
+          }
+        }
         history.push(newEntry);
-      });      
+      });
       chrome.storage.local.set({ downloadHistory: history }, function() {
         console.log("CSVインポート完了。インポート件数:", importedEntries.length);
+        // 表示更新
         renderHistory();
       });
     });
   }
+
 
   // 履歴全削除ボタン
   document.getElementById("btn-clear").addEventListener("click", function() {
