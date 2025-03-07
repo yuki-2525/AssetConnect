@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <title>Download History</title>
   <style>
-    body { font-family: sans-serif; width: 600px; padding: 10px; }
+    body { font-family: sans-serif; width: 700px; padding: 10px; }
     .toggle-container { margin-bottom: 10px; }
     .toggle-container label { margin-right: 10px; }
     .button-container { margin-bottom: 10px; }
@@ -22,6 +22,9 @@
     <button id="export-ae">JSON 出力(AE Tools形式)</button>
     <button id="export-full">全項目JSON出力</button>
     <button id="btn-clear">履歴削除</button>
+    <button id="btn-import">CSVインポート</button>
+    <!-- 隠しファイル入力 -->
+    <input type="file" id="csvInput" accept=".csv" style="display: none;">
   </div>
   <div id="history-list"></div>
   <script src="popup.js"></script>
