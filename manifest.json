@@ -1,0 +1,29 @@
+{
+  "manifest_version": 3,
+  "name": "Booth Download Log",
+  "version": "1.0",
+  "permissions": [
+    "downloads",
+    "storage"
+  ],
+  "host_permissions": [
+    "*://accounts.booth.pm/*",
+    "*://*.booth.pm/*"
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://accounts.booth.pm/library*"],
+      "js": ["booth_library.js"]
+    },
+    {
+      "matches": [
+        "https://*.booth.pm/items/*",
+        "https://booth.pm/ja/items/*"
+      ],
+      "js": ["booth_shoppage.js"]
+    }
+  ]
+}
