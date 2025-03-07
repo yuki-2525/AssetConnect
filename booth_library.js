@@ -74,6 +74,7 @@ document.addEventListener('click', function(e) {
     free: false
   };
 
+  // 既存の "downloadHistory" に同一 boothID & filename があれば除外して追加
   chrome.storage.local.get("downloadHistory", function(result) {
     let history = result.downloadHistory || [];
     history = history.filter(entry => !(entry.boothID === newEntry.boothID && entry.filename === newEntry.filename));
@@ -84,3 +85,4 @@ document.addEventListener('click', function(e) {
     });
   });
 });
+
