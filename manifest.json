@@ -1,14 +1,13 @@
 {
   "manifest_version": 3,
   "name": "Booth Download Log",
-  "version": "1.1.2",
+  "version": "1.2.0",
   "permissions": [
     "downloads",
     "storage",
     "unlimitedStorage"
   ],
   "host_permissions": [
-    "*://accounts.booth.pm/*",
     "*://*.booth.pm/*"
   ],
   "action": {
@@ -26,6 +25,10 @@
         "https://booth.pm/items/*"
       ],
       "js": ["booth_shoppage.js"]
+    },
+    {
+      "matches": ["https://accounts.booth.pm/orders/*"],
+      "js": ["booth_order.js"]
     }
   ]
 }
