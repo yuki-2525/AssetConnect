@@ -1,5 +1,7 @@
 document.addEventListener('DOMContentLoaded', function() {
   const toggleCheckbox = document.getElementById("toggleFree");
+  const folderInput = document.getElementById("downloadFolder");
+  const saveFolderBtn = document.getElementById("saveFolder");
 
   // 初回起動時に free 属性が空のエントリを false に更新
   chrome.storage.local.get("downloadHistory", function(result) {
@@ -36,6 +38,21 @@ document.addEventListener('DOMContentLoaded', function() {
     return `"${str}"`;
   }
 
+  // 保存済みのフォルダパスを読み込む
+  chrome.storage.local.get("downloadFolderPath", function(result) {
+    if (result.downloadFolderPath) {
+      folderInput.value = result.downloadFolderPath;
+    }
+  });
+
+  // 「保存」ボタンのクリックイベントで値を保存
+  saveFolderBtn.addEventListener("click", function() {
+    const folderPath = folderInput.value.trim();
+    chrome.storage.local.set({ downloadFolderPath: folderPath }, function() {
+      console.log("ダウンロードフォルダのパスを保存しました:", folderPath);
+    });
+  });
+
   // 履歴一覧を描画する関数（toggleCheckboxがチェックなら free:true のものだけ表示）
   function renderHistory() {
     chrome.storage.local.get("downloadHistory", function(result) {
@@ -43,7 +60,7 @@ document.addEventListener('DOMContentLoaded', function() {
       if (toggleCheckbox.checked) {
         history = history.filter(entry => entry.free === true);
       }
-      // 最新のエントリが上になるようにソート
+      // タイムスタンプ降順にソート（最新が先頭）
       history.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
       const container = document.getElementById("history-list");
       container.innerHTML = "";
@@ -51,19 +68,111 @@ document.addEventListener('DOMContentLoaded', function() {
         container.innerHTML = "<p>履歴なし</p>";
         return;
       }
+      
       history.forEach(entry => {
-        // 既存の timestamp をフォーマットして表示
         const formattedTime = formatTimestamp(entry.timestamp);
-        // URL属性がない場合は https://booth.pm/ja/items/{boothID} を埋め込む
-        const url = entry.url && entry.url.trim() ? entry.url : `https://booth.pm/ja/items/${entry.boothID}`;
-        const div = document.createElement("div");
-        div.className = "entry";
-        // 表示形式: [タイムスタンプ] タイトル（タイトルはリンク）
-        div.innerHTML = `<span>[${formattedTime}]</span> <a href="${url}" target="_blank">${entry.title}</a>`;
-        container.appendChild(div);
+        const linkUrl = entry.url && entry.url.trim() ? entry.url : `https://booth.pm/ja/items/${entry.boothID}`;
+        
+        // エントリ全体のコンテナ（2段表示）
+        const entryDiv = document.createElement("div");
+        entryDiv.className = "entry";
+        entryDiv.style.display = "flex";
+        entryDiv.style.flexDirection = "column";
+        entryDiv.style.borderBottom = "1px solid #ccc";
+        entryDiv.style.padding = "5px 0";
+        entryDiv.style.marginBottom = "4px";
+        
+        // 上段：タイトル（リンク付き）
+        const titleLine = document.createElement("div");
+        const titleLink = document.createElement("a");
+        titleLink.href = linkUrl;
+        titleLink.target = "_blank";
+        titleLink.textContent = entry.title;
+        titleLink.style.fontSize = "0.9em";
+        titleLink.style.whiteSpace = "nowrap";
+        titleLink.style.overflow = "hidden";
+        titleLink.style.textOverflow = "ellipsis";
+        titleLine.appendChild(titleLink);
+        
+        // 下段：タイムスタンプ、ファイル名、ボタン群
+        const infoLine = document.createElement("div");
+        infoLine.style.display = "flex";
+        infoLine.style.alignItems = "center";
+        infoLine.style.marginTop = "2px";
+        
+        // 左側：タイムスタンプとファイル名
+        const infoText = document.createElement("span");
+        infoText.textContent = `[${formattedTime}] ${entry.filename}`;
+        infoText.style.fontSize = "0.9em";
+        infoText.style.whiteSpace = "nowrap";
+        infoText.style.overflow = "hidden";
+        infoText.style.textOverflow = "ellipsis";
+        infoText.style.flexGrow = "1";
+        
+        // 右側：ボタン群（ファイル名が空でない場合のみ追加）
+        const btnContainer = document.createElement("div");
+        btnContainer.style.display = "flex";
+        btnContainer.style.gap = "10px";
+        btnContainer.style.flexShrink = "0";
+        if ((entry.filename || "").trim() !== "") {
+          // 共通ボタンスタイル
+          const btnStyle = {
+            fontSize: "1em",
+            padding: "6px 12px",
+            minWidth: "130px",
+            cursor: "pointer"
+          };
+          
+          // AvatarExplorerボタン
+          const avatarBtn = document.createElement("button");
+          avatarBtn.textContent = "AvatarExplorer";
+          Object.assign(avatarBtn.style, btnStyle);
+          avatarBtn.addEventListener("click", function(event) {
+            event.stopPropagation();
+            event.preventDefault();
+            chrome.storage.local.get("downloadFolderPath", function(result) {
+              const dir = result.downloadFolderPath || "";
+              if (dir.trim() === "") {
+                alert("ダウンロード先フォルダが設定されていません。上部のフォルダ入力欄から設定してください。");
+                return;
+              }
+              const assetUrl = `VRCAE://addAsset?dir=${encodeURIComponent(dir + "/" + entry.filename)}&id=${entry.boothID}`;
+              window.location.href = assetUrl;
+            });
+          });
+          
+          // KonoAssetボタン
+          const konoBtn = document.createElement("button");
+          konoBtn.textContent = "KonoAsset";
+          Object.assign(konoBtn.style, btnStyle);
+          konoBtn.addEventListener("click", function(event) {
+            event.stopPropagation();
+            event.preventDefault();
+            chrome.storage.local.get("downloadFolderPath", function(result) {
+              const dir = result.downloadFolderPath || "";
+              if (dir.trim() === "") {
+                alert("ダウンロード先フォルダが設定されていません。上部のフォルダ入力欄から設定してください。");
+                return;
+              }
+              const assetUrl = `KonoAsset://addAsset?dir=${encodeURIComponent(dir + "/" + entry.filename)}&id=${entry.boothID}`;
+              window.location.href = assetUrl;
+            });
+          });
+          
+          btnContainer.appendChild(avatarBtn);
+          btnContainer.appendChild(konoBtn);
+        }
+        
+        infoLine.appendChild(infoText);
+        infoLine.appendChild(btnContainer);
+        
+        entryDiv.appendChild(titleLine);
+        entryDiv.appendChild(infoLine);
+        
+        container.appendChild(entryDiv);
       });
     });
-  }
+  }  
 
   // トグル変更時に再描画
   toggleCheckbox.addEventListener("change", function() {

@@ -14,6 +14,13 @@
   </style>
 </head>
 <body>
+  <!-- ダウンロードフォルダの設定 -->
+  <div class="folder-setting">
+    <label for="downloadFolder">ダウンロードフォルダのパス:</label>
+    <input type="text" id="downloadFolder" placeholder="C:\Users\USERNAME\Downloads">
+    <button id="saveFolder">保存</button>
+  </div>
+
   <div class="toggle-container">
     <label for="toggleFree">無料ダウンロードのみ</label>
     <input type="checkbox" id="toggleFree" checked>
@@ -26,6 +33,7 @@
     <!-- 隠しファイル入力 -->
     <input type="file" id="csvInput" accept=".csv" style="display: none;">
   </div>
+  
   <div id="history-list"></div>
   <script src="popup.js"></script>
 </body>
