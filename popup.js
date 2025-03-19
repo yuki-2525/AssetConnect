@@ -136,7 +136,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 alert("ダウンロード先フォルダが設定されていません。上部のフォルダ入力欄から設定してください。");
                 return;
               }
-              const assetUrl = `VRCAE://addAsset?dir=${encodeURIComponent(dir + "/" + entry.filename)}&id=${entry.boothID}`;
+              const assetUrl = `vrcae://addAsset?dir=${encodeURIComponent(dir + "/" + entry.filename)}&id=${entry.boothID}`;
               window.location.href = assetUrl;
             });
           });
