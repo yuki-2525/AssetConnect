@@ -1,4 +1,12 @@
 document.addEventListener('DOMContentLoaded', function() {
+  //HTML 内の data-i18n 属性をもつ要素のテキストを置換する
+  document.querySelectorAll('[data-i18n]').forEach(function(el) {
+    var msg = chrome.i18n.getMessage(el.getAttribute('data-i18n'));
+    if (msg) {
+      el.textContent = msg;
+    }
+  });
+
   const toggleCheckbox = document.getElementById("toggleFree");
   const folderInput = document.getElementById("downloadFolder");
   const saveFolderBtn = document.getElementById("saveFolder");
@@ -15,7 +23,6 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     if (updated) {
       chrome.storage.local.set({ downloadHistory: history }, function() {
-        console.log("free属性の未設定エントリをfalseに更新しました");
         renderHistory();
       });
     } else {
@@ -48,10 +55,13 @@ document.addEventListener('DOMContentLoaded', function() {
   // 「保存」ボタンのクリックイベントで値を保存
   saveFolderBtn.addEventListener("click", function() {
     const folderPath = folderInput.value.trim();
-    chrome.storage.local.set({ downloadFolderPath: folderPath }, function() {
-      console.log("ダウンロードフォルダのパスを保存しました:", folderPath);
-    });
+    chrome.storage.local.set({ downloadFolderPath: folderPath });
   });
+
+  // alert で使用する多言語メッセージの例（フォルダパス未設定時）
+  function showFolderNotSetAlert() {
+    alert(chrome.i18n.getMessage("saveFolderNotSet"));
+  }
 
   // 履歴一覧を描画する関数（toggleCheckboxがチェックなら free:true のものだけ表示）
   function renderHistory() {
@@ -65,7 +75,7 @@ document.addEventListener('DOMContentLoaded', function() {
       const container = document.getElementById("history-list");
       container.innerHTML = "";
       if (history.length === 0) {
-        container.innerHTML = "<p>履歴なし</p>";
+        container.innerHTML = `<p>${chrome.i18n.getMessage("noHistory")}</p>`;
         return;
       }
       
@@ -133,7 +143,7 @@ document.addEventListener('DOMContentLoaded', function() {
             chrome.storage.local.get("downloadFolderPath", function(result) {
               const dir = result.downloadFolderPath || "";
               if (dir.trim() === "") {
-                alert("ダウンロード先フォルダが設定されていません。上部のフォルダ入力欄から設定してください。");
+                showFolderNotSetAlert();
                 return;
               }
               const assetUrl = `vrcae://addAsset?dir=${encodeURIComponent(dir + "/" + entry.filename)}&id=${entry.boothID}`;
@@ -151,7 +161,7 @@ document.addEventListener('DOMContentLoaded', function() {
             chrome.storage.local.get("downloadFolderPath", function(result) {
               const dir = result.downloadFolderPath || "";
               if (dir.trim() === "") {
-                alert("ダウンロード先フォルダが設定されていません。上部のフォルダ入力欄から設定してください。");
+                showFolderNotSetAlert();
                 return;
               }
               const assetUrl = `konoasset://addAsset?dir=${encodeURIComponent(dir + "/" + entry.filename)}&id=${entry.boothID}`;
@@ -218,7 +228,6 @@ document.addEventListener('DOMContentLoaded', function() {
         conflictAction: "uniquify",
         saveAs: true
       }, (downloadId) => {
-        console.log("JSON 出力(AE Tools形式)完了, downloadId:", downloadId);
         setTimeout(() => URL.revokeObjectURL(url), 10000);
       });
     });
@@ -236,8 +245,17 @@ document.addEventListener('DOMContentLoaded', function() {
       const lines = [header];
       
       history.forEach(entry => {
-        // URLが空の場合はデフォルトで埋める
-        const url = entry.url && entry.url.trim() ? entry.url : `https://booth.pm/ja/items/${entry.boothID}`;
+        // URLが空の場合はbooth.pm/lang/items/で埋める
+        const uiLang = chrome.i18n.getUILanguage();
+        let lang;
+        if (uiLang.startsWith("ja")) {
+          lang = "ja";
+        } else if (uiLang.startsWith("ko")) {
+          lang = "ko";
+        } else {
+          lang = "en";
+        }
+        const url = entry.url && entry.url.trim() ? entry.url : `https://booth.pm/${lang}/items/${entry.boothID}`;
         const line = [
           url,
           entry.timestamp,
@@ -261,7 +279,6 @@ document.addEventListener('DOMContentLoaded', function() {
         conflictAction: "uniquify",
         saveAs: true
       }, (downloadId) => {
-        console.log("CSV 出力完了, downloadId:", downloadId);
         setTimeout(() => URL.revokeObjectURL(urlBlob), 10000);
       });
     });
@@ -288,7 +305,7 @@ document.addEventListener('DOMContentLoaded', function() {
   function importCSV(csvText) {
     const lines = csvText.split(/\r?\n/);
     if (lines.length === 0) return;
-    // ヘッダー判定: 1行目が "URL","timestamp","boothID","title","fileName","free" なら新形式
+    // ヘッダー判定: 1行目が "URL","timestamp","boothID","title","fileName","free" なら独自形式
     let headerLine = lines[0].trim().replace(/^\uFEFF/, '');
     const headerColumns = headerLine.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(s => s.replace(/^"|"$/g, '').trim());
     let importedEntries = [];
@@ -319,7 +336,6 @@ document.addEventListener('DOMContentLoaded', function() {
         // 最初の行でboothIDが抽出できなければヘッダー行とみなしスキップ
         const tempIdMatch = line.match(/\/items\/(\d+)/);
         if (i === 0 && (!tempIdMatch || !tempIdMatch[1])) {
-          console.log("ヘッダー行としてスキップ:", line);
           continue;
         }
         // 改良版正規表現: 各フィールド内でダブルクオートが現れる場合、""として許容する
@@ -343,7 +359,6 @@ document.addEventListener('DOMContentLoaded', function() {
         let rest = manageName.replace(/^\s*\[[^\]]+\]\s*/, "");
         const lastSlashIndex = rest.lastIndexOf("/");
         let title = lastSlashIndex !== -1 ? rest.substring(0, lastSlashIndex).trim() : rest.trim();
-        // 従来形式は全て free:true とする
         const free = true;
         importedEntries.push({ url: urlField, timestamp, boothID, title, filename: "", free });
       }
@@ -383,8 +398,6 @@ document.addEventListener('DOMContentLoaded', function() {
         history.push(newEntry);
       });
       chrome.storage.local.set({ downloadHistory: history }, function() {
-        console.log("CSVインポート完了。インポート件数:", importedEntries.length);
-        // 表示更新
         renderHistory();
       });
     });
@@ -393,11 +406,21 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // 履歴全削除ボタン
   document.getElementById("btn-clear").addEventListener("click", function() {
-    if (confirm("履歴を全削除しますか？")) {
+    if (confirm(chrome.i18n.getMessage("confirmClearHistory"))) {
       chrome.storage.local.remove("downloadHistory", function() {
         renderHistory();
       });
     }
   });
-  
+
+
+  const uiLang = chrome.i18n.getUILanguage();
+  let feedbackUrl;
+  if (uiLang.startsWith("en")) {
+    feedbackUrl = "https://forms.gle/U6GDvbx5n3zDRpTh9";  // 英語用のURL
+  } else {
+    feedbackUrl = "https://forms.gle/otwhoXKzc5EQQDti8";  // 日本語用のURL
+  }
+  document.getElementById("feedback-button").href = feedbackUrl;
+
 });

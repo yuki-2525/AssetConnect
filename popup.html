@@ -50,20 +50,20 @@
 <body>
   <!-- ダウンロードフォルダの設定 -->
   <div class="folder-setting">
-    <label for="downloadFolder">ダウンロードフォルダのパス:</label>
-    <input type="text" id="downloadFolder" placeholder="C:\Users\USERNAME\Downloads">
-    <button id="saveFolder">保存</button>
+    <label for="downloadFolder" data-i18n="downloadFolderLabel">ダウンロードフォルダのパス:</label>
+    <input type="text" id="downloadFolder" style="width: 300px;" placeholder="C:\Users\USERNAME\Downloads">
+    <button id="saveFolder" data-i18n="saveButton">保存</button>
   </div>
 
   <div class="toggle-container">
-    <label for="toggleFree">無料ダウンロードのみ</label>
+    <label for="toggleFree" data-i18n="toggleFreeLabel">無料ダウンロードのみ</label>
     <input type="checkbox" id="toggleFree">
   </div>
   <div class="button-container">
-    <button id="export-ae">JSON 出力(AE Tools形式)</button>
-    <button id="btn-csv-export">CSV 出力</button>
-    <button id="btn-import">CSVインポート</button>
-    <button id="btn-clear">履歴削除</button>
+    <button id="export-ae" data-i18n="exportAe">JSON 出力(AE Tools形式)</button>
+    <button id="btn-csv-export" data-i18n="exportCsv">CSV 出力</button>
+    <button id="btn-import" data-i18n="importCsv">CSVインポート</button>
+    <button id="btn-clear" data-i18n="clearHistory">履歴削除</button>
     <!-- 隠しファイル入力 -->
     <input type="file" id="csvInput" accept=".csv" style="display: none;">
   </div>
@@ -75,12 +75,12 @@
   <div id="fixed-bar">
     <!-- 左側：タブで表示ボタン -->
     <div id="fixed-bar-left">
-      <a href="popup.html" target="_blank" id="popup-tab-button">タブで表示</a>
+      <a href="popup.html" target="_blank" id="popup-tab-button" data-i18n="popupTab">タブで表示</a>
     </div>
     <!-- 右側：既存のボタン群 -->
     <div id="fixed-bar-right">
-      <a href="https://x.com/yuk1_vrc" target="_blank" id="author-x-button">作者X</a>
-      <a href="https://forms.gle/otwhoXKzc5EQQDti8" target="_blank" id="inquiry-button">お問い合わせ</a>
+      <a href="https://x.com/yuk1_vrc" target="_blank" id="author-x-button" data-i18n="authorX">作者X</a>
+      <a href="" target="_blank" id="feedback-button" data-i18n="feedback">お問い合わせ</a>
     </div>
   </div>
 </body>

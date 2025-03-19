@@ -1,0 +1,44 @@
+{
+    "title": {
+        "message": "Booth Download Log"
+    },
+    "downloadFolderLabel": {
+        "message": "Download Folder Path:"
+    },
+    "saveButton": {
+        "message": "Save"
+    },
+    "toggleFreeLabel": {
+        "message": "Free Downloads Only"
+    },
+    "exportAe": {
+        "message": "Export JSON (AE Tools format)"
+    },
+    "exportCsv": {
+        "message": "Export CSV"
+    },
+    "importCsv": {
+        "message": "Import CSV"
+    },
+    "clearHistory": {
+        "message": "Clear History"
+    },
+    "noHistory": {
+        "message": "No history"
+    },
+    "popupTab": {
+        "message": "Open in Tab"
+    },
+    "authorX": {
+        "message": "Author X"
+    },
+    "feedback": {
+        "message": "Feedback"
+    },
+    "saveFolderNotSet": {
+        "message": "Download folder is not set. Please set it in the folder input field above."
+    },
+    "confirmClearHistory": {
+        "message": "Are you sure you want to clear all history?"
+    }
+}

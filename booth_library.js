@@ -59,10 +59,6 @@ document.addEventListener('click', function(e) {
     return;
   }
 
-  console.log('Library Page - title:', title);
-  console.log('Library Page - fileName:', fileName);
-  console.log('Library Page - boothID:', boothID);
-
   const timestamp = formatDate(new Date());
 
   const newEntry = {
@@ -80,7 +76,6 @@ document.addEventListener('click', function(e) {
     history = history.filter(entry => !(entry.boothID === newEntry.boothID && entry.filename === newEntry.filename));
     history.push(newEntry);
     chrome.storage.local.set({ downloadHistory: history }, function() {
-      console.log("Library entry saved:", newEntry);
       window.location.href = downloadLink.href;
     });
   });
