@@ -3,13 +3,13 @@
         "message": "Booth Download Log"
     },
     "downloadFolderLabel": {
-        "message": "Download Folder Path:"
+        "message": "Download folder path:"
     },
     "saveButton": {
         "message": "Save"
     },
     "toggleFreeLabel": {
-        "message": "Free Downloads Only"
+        "message": "Only free downloads"
     },
     "exportAe": {
         "message": "Export JSON (AE Tools format)"
@@ -30,15 +30,15 @@
         "message": "Open in Tab"
     },
     "authorX": {
-        "message": "Author X"
+        "message": "Developer X"
     },
     "feedback": {
         "message": "Feedback"
     },
     "saveFolderNotSet": {
-        "message": "Download folder is not set. Please set it in the folder input field above."
+        "message": "The download folder is not set. Please configure it in the input field above."
     },
     "confirmClearHistory": {
-        "message": "Are you sure you want to clear all history?"
+        "message": "Are you sure you want to delete all history?"
     }
 }
