@@ -1,0 +1,44 @@
+{
+    "title": {
+        "message": "Booth Download Log"
+    },
+    "downloadFolderLabel": {
+        "message": "ダウンロードフォルダのパス:"
+    },
+    "saveButton": {
+        "message": "保存"
+    },
+    "toggleFreeLabel": {
+        "message": "無料ダウンロードのみ"
+    },
+    "exportAe": {
+        "message": "JSON 出力(AE Tools形式)"
+    },
+    "exportCsv": {
+        "message": "CSV 出力"
+    },
+    "importCsv": {
+        "message": "CSVインポート"
+    },
+    "clearHistory": {
+        "message": "履歴削除"
+    },
+    "noHistory": {
+        "message": "履歴なし"
+    },
+    "popupTab": {
+        "message": "タブで表示"
+    },
+    "DeveloperX": {
+        "message": "作者X"
+    },
+    "feedback": {
+        "message": "お問い合わせ"
+    },
+    "saveFolderNotSet": {
+        "message": "ダウンロード先フォルダが設定されていません。上部のフォルダ入力欄から設定してください。"
+    },
+    "confirmClearHistory": {
+        "message": "履歴を全削除しますか？"
+    }
+}

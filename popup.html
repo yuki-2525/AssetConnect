@@ -4,37 +4,84 @@
   <meta charset="UTF-8">
   <title>Download History</title>
   <style>
-    body { font-family: sans-serif; width: 700px; padding: 10px; }
+    body { font-family: sans-serif; width: 700px; padding: 10px; margin-bottom: 20px;}
     .toggle-container { margin-bottom: 10px; }
     .toggle-container label { margin-right: 10px; }
     .button-container { margin-bottom: 10px; }
     .button-container button { margin-right: 5px; margin-bottom: 5px; }
     .entry { border-bottom: 1px solid #ccc; padding: 5px 0; font-size: 12px; }
     .entry a { color: blue; text-decoration: none; }
+    /* 固定バーのスタイル */
+    #fixed-bar {
+      position: fixed;
+      bottom: 0;
+      left: 10px;
+      width: calc(100% - 20px);
+      background: #f8f8f8;
+      border-top: 1px solid #ccc;
+      padding: 4px 8px;
+      box-shadow: 0 -1px 3px rgba(0,0,0,0.15);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 1000;
+    }
+    #fixed-bar a {
+      background: #f8f8f8;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      padding: 4px 8px;
+      text-decoration: none;
+      color: #0073e6;
+      font-size: 0.8em;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+    }
+    #fixed-bar a:hover {
+      text-decoration: underline;
+    }
+    /* 固定バー内の左右のコンテナ */
+    #fixed-bar-left,
+    #fixed-bar-right {
+      display: flex;
+      gap: 10px;
+    }
   </style>
 </head>
 <body>
   <!-- ダウンロードフォルダの設定 -->
   <div class="folder-setting">
-    <label for="downloadFolder">ダウンロードフォルダのパス:</label>
-    <input type="text" id="downloadFolder" placeholder="C:\Users\USERNAME\Downloads">
-    <button id="saveFolder">保存</button>
+    <label for="downloadFolder" data-i18n="downloadFolderLabel">ダウンロードフォルダのパス:</label>
+    <input type="text" id="downloadFolder" style="width: 300px;" placeholder="C:\Users\USERNAME\Downloads">
+    <button id="saveFolder" data-i18n="saveButton">保存</button>
   </div>
 
   <div class="toggle-container">
-    <label for="toggleFree">無料ダウンロードのみ</label>
+    <label for="toggleFree" data-i18n="toggleFreeLabel">無料ダウンロードのみ</label>
     <input type="checkbox" id="toggleFree">
   </div>
   <div class="button-container">
-    <button id="export-ae">JSON 出力(AE Tools形式)</button>
-    <button id="btn-csv-export">CSV 出力</button>
-    <button id="btn-import">CSVインポート</button>
-    <button id="btn-clear">履歴削除</button>
+    <button id="export-ae" data-i18n="exportAe">JSON 出力(AE Tools形式)</button>
+    <button id="btn-csv-export" data-i18n="exportCsv">CSV 出力</button>
+    <button id="btn-import" data-i18n="importCsv">CSVインポート</button>
+    <button id="btn-clear" data-i18n="clearHistory">履歴削除</button>
     <!-- 隠しファイル入力 -->
     <input type="file" id="csvInput" accept=".csv" style="display: none;">
   </div>
   
   <div id="history-list"></div>
   <script src="popup.js"></script>
+  
+  <!-- ページ下部に固定配置するバー -->
+  <div id="fixed-bar">
+    <!-- 左側：タブで表示ボタン -->
+    <div id="fixed-bar-left">
+      <a href="popup.html" target="_blank" id="popup-tab-button" data-i18n="popupTab">タブで表示</a>
+    </div>
+    <!-- 右側：既存のボタン群 -->
+    <div id="fixed-bar-right">
+      <a href="https://x.com/yuk1_vrc" target="_blank" id="Developer-x-button" data-i18n="DeveloperX">作者X</a>
+      <a href="" target="_blank" id="feedback-button" data-i18n="feedback">お問い合わせ</a>
+    </div>
+  </div>
 </body>
 </html>

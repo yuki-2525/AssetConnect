@@ -36,10 +36,6 @@ document.addEventListener('click', function(e) {
   // ファイル名の取得：ダウンロードリンクの title 属性を利用
   const fileName = downloadLink.getAttribute('title') || '不明';
 
-  console.log('Shop Page - title:', title);
-  console.log('Shop Page - fileName:', fileName);
-  console.log('Shop Page - boothID:', boothID);
-
   const timestamp = formatDate(new Date());
 
   const newEntry = {
@@ -57,7 +53,6 @@ document.addEventListener('click', function(e) {
     history = history.filter(entry => !(entry.boothID === newEntry.boothID && entry.filename === newEntry.filename));
     history.push(newEntry);
     chrome.storage.local.set({ downloadHistory: history }, function() {
-      console.log("Shop entry saved:", newEntry);
       window.location.href = downloadLink.href;
     });
   });

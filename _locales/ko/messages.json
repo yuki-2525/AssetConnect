@@ -1,0 +1,44 @@
+{
+    "title": {
+      "message": "Booth Download Log"
+    },
+    "downloadFolderLabel": {
+      "message": "다운로드 폴더 경로:"
+    },
+    "saveButton": {
+      "message": "저장"
+    },
+    "toggleFreeLabel": {
+      "message": "무료 다운로드만"
+    },
+    "exportAe": {
+      "message": "JSON 내보내기 (AE Tools 형식)"
+    },
+    "exportCsv": {
+      "message": "CSV 내보내기"
+    },
+    "importCsv": {
+      "message": "CSV 가져오기"
+    },
+    "clearHistory": {
+      "message": "기록 삭제"
+    },
+    "noHistory": {
+      "message": "기록 없음"
+    },
+    "popupTab": {
+      "message": "탭에서 열기"
+    },
+    "DeveloperX": {
+      "message": "개발자 X"
+    },
+    "feedback": {
+      "message": "피드백"
+    },
+    "saveFolderNotSet": {
+      "message": "다운로드 폴더가 설정되지 않았습니다. 위의 입력란에서 설정하세요."
+    },
+    "confirmClearHistory": {
+      "message": "모든 기록을 삭제하시겠습니까?"
+    }
+  }

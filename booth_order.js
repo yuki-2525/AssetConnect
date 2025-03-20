@@ -57,10 +57,6 @@ document.addEventListener('click', function(e) {
     return;
   }
   
-  console.log('Order Page - title:', title);
-  console.log('Order Page - fileName:', fileName);
-  console.log('Order Page - boothID:', boothID);
-  
   const timestamp = formatDate(new Date());
   
   const newEntry = {
@@ -78,8 +74,6 @@ document.addEventListener('click', function(e) {
     history = history.filter(entry => !(entry.boothID === newEntry.boothID && entry.filename === newEntry.filename));
     history.push(newEntry);
     chrome.storage.local.set({ downloadHistory: history }, function() {
-      console.log("Order entry saved:", newEntry);
-      // ダウンロードリンクの URL に遷移（実際のダウンロードを実行）
       window.location.href = downloadLink.href;
     });
   });
