@@ -2,6 +2,9 @@
     "title": {
         "message": "Booth Download Log"
     },
+    "description": {
+        "message": "This browser extension simplifies the process of registering downloaded assets from Booth into asset management tools."
+    },
     "downloadFolderLabel": {
         "message": "Download folder path:"
     },
