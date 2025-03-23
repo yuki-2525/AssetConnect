@@ -3,6 +3,7 @@
   "name": "Booth Download Log",
   "version": "1.2.4",
   "default_locale": "ja",
+  "description": "__MSG_description__",
   "permissions": [
     "downloads",
     "storage",

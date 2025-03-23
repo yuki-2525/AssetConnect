@@ -225,7 +225,7 @@ document.addEventListener('DOMContentLoaded', function() {
       chrome.downloads.download({
         url: url,
         filename: "downloadHistory_AE.json",
-        conflictAction: "uniquify",
+        conflictAction: "overwrite",
         saveAs: true
       }, (downloadId) => {
         setTimeout(() => URL.revokeObjectURL(url), 10000);
@@ -245,7 +245,7 @@ document.addEventListener('DOMContentLoaded', function() {
       const lines = [header];
       
       history.forEach(entry => {
-        // URLが空の場合はbooth.pm/lang/items/で埋める
+        // URLが空の場合はbooth.pm/(lang)/items/で埋める
         const uiLang = chrome.i18n.getUILanguage();
         let lang;
         if (uiLang.startsWith("ja")) {
@@ -276,7 +276,7 @@ document.addEventListener('DOMContentLoaded', function() {
       chrome.downloads.download({
         url: urlBlob,
         filename: "downloadHistory.csv",
-        conflictAction: "uniquify",
+        conflictAction: "overwrite",
         saveAs: true
       }, (downloadId) => {
         setTimeout(() => URL.revokeObjectURL(urlBlob), 10000);

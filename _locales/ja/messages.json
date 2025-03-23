@@ -2,6 +2,9 @@
     "title": {
         "message": "Booth Download Log"
     },
+    "description": {
+        "message": "この拡張機能はBoothでダウンロードしたアイテムのアセット管理ツールへの登録を楽にする拡張機能です。"
+    },
     "downloadFolderLabel": {
         "message": "ダウンロードフォルダのパス:"
     },
