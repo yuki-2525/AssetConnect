@@ -1,9 +1,9 @@
 {
     "title": {
-        "message": "Booth Download Log"
+        "message": "BOOTH Download Log"
     },
     "description": {
-        "message": "This browser extension simplifies the process of registering downloaded assets from Booth into asset management tools."
+        "message": "This browser extension simplifies the process of registering downloaded assets from BOOTH into asset management tools."
     },
     "downloadFolderLabel": {
         "message": "Download folder path:"
@@ -13,6 +13,12 @@
     },
     "toggleFreeLabel": {
         "message": "Only free downloads"
+    },
+    "toggleGroupLabel": {
+        "message": "Group items by ID"
+    },
+    "toggleBulkRegisterLabel": {
+        "message": "Add all items with the same ID"
     },
     "exportAe": {
         "message": "Export JSON (AE Tools format)"

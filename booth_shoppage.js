@@ -4,17 +4,17 @@
 function formatDate(date) {
   const pad = n => n.toString().padStart(2, '0');
   return date.getFullYear() + '-' +
-         pad(date.getMonth() + 1) + '-' +
-         pad(date.getDate()) + ' ' +
-         pad(date.getHours()) + ':' +
-         pad(date.getMinutes()) + ':' +
-         pad(date.getSeconds());
+    pad(date.getMonth() + 1) + '-' +
+    pad(date.getDate()) + ' ' +
+    pad(date.getHours()) + ':' +
+    pad(date.getMinutes()) + ':' +
+    pad(date.getSeconds());
 }
 
-document.addEventListener('click', function(e) {
+document.addEventListener('click', function (e) {
   const downloadLink = e.target.closest('a[href^="https://booth.pm/downloadables/"]');
   if (!downloadLink) return;
-  
+
   // ページ遷移を防ぐ
   e.preventDefault();
 
@@ -29,10 +29,10 @@ document.addEventListener('click', function(e) {
   const idMatch = window.location.href.match(/\/items\/(\d+)/);
   const boothID = idMatch ? idMatch[1] : null;
   if (!boothID) {
-    console.error("Shop: boothID not found");
+    console.error("Shop: BOOTHID not found");
     return;
   }
-  
+
   // ファイル名の取得：ダウンロードリンクの title 属性を利用
   const fileName = downloadLink.getAttribute('title') || '不明';
 
@@ -47,12 +47,12 @@ document.addEventListener('click', function(e) {
     free: true
   };
 
-  // 既存の "downloadHistory" に同一 boothID & filename があれば除外して追加
-  chrome.storage.local.get("downloadHistory", function(result) {
+  // 既存の "downloadHistory" に同一 BOOTHID & filename があれば除外して追加
+  chrome.storage.local.get("downloadHistory", function (result) {
     let history = result.downloadHistory || [];
     history = history.filter(entry => !(entry.boothID === newEntry.boothID && entry.filename === newEntry.filename));
     history.push(newEntry);
-    chrome.storage.local.set({ downloadHistory: history }, function() {
+    chrome.storage.local.set({ downloadHistory: history }, function () {
       window.location.href = downloadLink.href;
     });
   });
