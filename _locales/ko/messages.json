@@ -1,18 +1,24 @@
 {
     "title": {
-      "message": "Booth Download Log"
+        "message": "BOOTH Download Log"
     },
     "description": {
-        "message": "이 확장 기능은 Booth에서 다운로드한 아이템을 툴 에 쉽게 등록할 수 있도록 도와주는 확장 기능입니다."
+        "message": "이 확장 기능은 BOOTH에서 다운로드한 아이템을 툴 에 쉽게 등록할 수 있도록 도와주는 확장 기능입니다."
     },
     "downloadFolderLabel": {
-      "message": "Download folder path:"
+        "message": "Download folder path:"
     },
     "saveButton": {
         "message": "Save"
     },
     "toggleFreeLabel": {
         "message": "Only free downloads"
+    },
+    "toggleGroupLabel": {
+        "message": "Group items by ID"
+    },
+    "toggleBulkRegisterLabel": {
+        "message": "Add all items with the same ID"
     },
     "exportAe": {
         "message": "Export JSON (AE Tools format)"
@@ -39,9 +45,9 @@
         "message": "Feedback"
     },
     "saveFolderNotSet": {
-      "message": "다운로드 폴더가 설정되지 않았습니다. 위의 입력란에서 설정하세요."
+        "message": "다운로드 폴더가 설정되지 않았습니다. 위의 입력란에서 설정하세요."
     },
     "confirmClearHistory": {
-      "message": "모든 기록을 삭제하시겠습니까?"
+        "message": "모든 기록을 삭제하시겠습니까?"
     }
-  }
+}

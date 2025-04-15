@@ -1,87 +1,248 @@
 <!DOCTYPE html>
 <html lang="ja" xml:lang="ja">
+
 <head>
   <meta charset="UTF-8">
   <title>Download History</title>
   <style>
-    body { font-family: sans-serif; width: 700px; padding: 10px; margin-bottom: 20px;}
-    .toggle-container { margin-bottom: 10px; }
-    .toggle-container label { margin-right: 10px; }
-    .button-container { margin-bottom: 10px; }
-    .button-container button { margin-right: 5px; margin-bottom: 5px; }
-    .entry { border-bottom: 1px solid #ccc; padding: 5px 0; font-size: 12px; }
-    .entry a { color: blue; text-decoration: none; }
-    /* 固定バーのスタイル */
+    :root {
+      --primary-color: #4a90e2;
+      --secondary-color: #f8f9fa;
+      --border-color: #e0e0e0;
+      --text-color: #333;
+      --spacing-unit: 12px;
+    }
+
+    body {
+      font-family: "Segoe UI", "Meiryo UI", system-ui, -apple-system, sans-serif;
+      width: 700px;
+      padding: 10px;
+      margin-bottom: 40px;
+      color: var(--text-color);
+      background-color: #fff;
+    }
+
+    .settings-section {
+      background-color: var(--secondary-color);
+      padding: 8px;
+      border-radius: 4px;
+      margin-bottom: 10px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+    }
+
+    .folder-setting {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding-bottom: 8px;
+      margin-bottom: 8px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .folder-setting label {
+      white-space: nowrap;
+      font-size: 12px;
+    }
+
+    .folder-setting input[type="text"] {
+      padding: 4px 8px;
+      border: 1px solid var(--border-color);
+      border-radius: 3px;
+      margin: 0;
+      width: 280px;
+      font-size: 12px;
+      flex-grow: 1;
+    }
+
+    .toggle-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .toggle-item {
+      display: flex;
+      align-items: center;
+      padding: 3px 6px;
+      background-color: white;
+      border-radius: 3px;
+      border: 1px solid var(--border-color);
+      font-size: 12px;
+    }
+
+    .toggle-item input[type="checkbox"] {
+      margin: 0 4px 0 0;
+      width: 12px;
+      height: 12px;
+      cursor: pointer;
+    }
+
+    .toggle-item label {
+      font-size: 12px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .button-container {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      padding: 4px 8px;
+      border: none;
+      border-radius: 3px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      background-color: var(--primary-color);
+      color: white;
+      white-space: nowrap;
+    }
+
+    #saveFolder {
+      padding: 4px 6px;
+      font-size: 12px;
+      min-width: 50px;
+    }
+
+    #btn-clear {
+      background-color: #dc3545;
+    }
+
+    .entry {
+      border: none;
+      border-bottom: 1px solid var(--border-color);
+      border-radius: 0;
+      padding: 8px 0;
+      margin-bottom: 0;
+      font-size: 13px;
+      background-color: transparent;
+      transition: none;
+    }
+
+    .entry:hover {
+      box-shadow: none;
+      background-color: var(--secondary-color);
+    }
+
+    .entry a {
+      color: var(--primary-color);
+      text-decoration: none;
+    }
+
+    .entry a:hover {
+      text-decoration: underline;
+    }
+
     #fixed-bar {
       position: fixed;
       bottom: 0;
-      left: 10px;
+      left: 0;
       width: calc(100% - 20px);
-      background: #f8f8f8;
-      border-top: 1px solid #ccc;
-      padding: 4px 8px;
-      box-shadow: 0 -1px 3px rgba(0,0,0,0.15);
+      background: white;
+      border-top: 1px solid var(--border-color);
+      padding: 8px 10px;
+      box-shadow: 0 -1px 4px rgba(0, 0, 0, 0.1);
       display: flex;
       justify-content: space-between;
       align-items: center;
       z-index: 1000;
     }
+
     #fixed-bar a {
-      background: #f8f8f8;
-      border: 1px solid #ccc;
-      border-radius: 4px;
       padding: 4px 8px;
+      border-radius: 4px;
       text-decoration: none;
-      color: #0073e6;
-      font-size: 0.8em;
-      box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+      color: var(--primary-color);
+      font-size: 13px;
+      transition: all 0.2s ease;
     }
+
     #fixed-bar a:hover {
-      text-decoration: underline;
+      background-color: var(--secondary-color);
     }
-    /* 固定バー内の左右のコンテナ */
+
     #fixed-bar-left,
     #fixed-bar-right {
       display: flex;
-      gap: 10px;
+      gap: 12px;
+    }
+
+    /* ダークモード対応 */
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --primary-color: #5c9ce6;
+        --secondary-color: #2d2d2d;
+        --border-color: #404040;
+        --text-color: #e0e0e0;
+      }
+
+      body {
+        background-color: #1a1a1a;
+      }
+
+      .toggle-item {
+        background-color: #333;
+      }
+
+      #fixed-bar {
+        background-color: #1a1a1a;
+      }
+
+      .entry:hover {
+        background-color: #333;
+      }
     }
   </style>
 </head>
+
 <body>
-  <!-- ダウンロードフォルダの設定 -->
-  <div class="folder-setting">
-    <label for="downloadFolder" data-i18n="downloadFolderLabel">ダウンロードフォルダのパス:</label>
-    <input type="text" id="downloadFolder" style="width: 300px;" placeholder="C:\Users\USERNAME\Downloads">
-    <button id="saveFolder" data-i18n="saveButton">保存</button>
+  <div class="settings-section">
+    <div class="folder-setting">
+      <label for="downloadFolder" data-i18n="downloadFolderLabel">ダウンロードフォルダのパス:</label>
+      <input type="text" id="downloadFolder" placeholder="C:\Users\USERNAME\Downloads">
+      <button id="saveFolder" data-i18n="saveButton">保存</button>
+    </div>
+
+    <div class="toggle-container">
+      <div class="toggle-item">
+        <input type="checkbox" id="toggleFree">
+        <label for="toggleFree" data-i18n="toggleFreeLabel">無料ダウンロードのみ</label>
+      </div>
+      <div class="toggle-item">
+        <input type="checkbox" id="toggleGroup">
+        <label for="toggleGroup" data-i18n="toggleGroupLabel">同一IDのアイテムをまとめる</label>
+      </div>
+      <div class="toggle-item" id="bulkRegisterToggle" style="display: none;">
+        <input type="checkbox" id="toggleBulkRegister">
+        <label for="toggleBulkRegister" data-i18n="toggleBulkRegisterLabel">同一IDのアイテムを一括登録する</label>
+      </div>
+    </div>
+
+    <div class="button-container">
+      <button id="export-ae" data-i18n="exportAe">JSON 出力(AE Tools形式)</button>
+      <button id="btn-csv-export" data-i18n="exportCsv">CSV 出力</button>
+      <button id="btn-import" data-i18n="importCsv">CSVインポート</button>
+      <button id="btn-clear" data-i18n="clearHistory">履歴削除</button>
+      <input type="file" id="csvInput" accept=".csv" style="display: none;">
+    </div>
   </div>
 
-  <div class="toggle-container">
-    <label for="toggleFree" data-i18n="toggleFreeLabel">無料ダウンロードのみ</label>
-    <input type="checkbox" id="toggleFree">
-  </div>
-  <div class="button-container">
-    <button id="export-ae" data-i18n="exportAe">JSON 出力(AE Tools形式)</button>
-    <button id="btn-csv-export" data-i18n="exportCsv">CSV 出力</button>
-    <button id="btn-import" data-i18n="importCsv">CSVインポート</button>
-    <button id="btn-clear" data-i18n="clearHistory">履歴削除</button>
-    <!-- 隠しファイル入力 -->
-    <input type="file" id="csvInput" accept=".csv" style="display: none;">
-  </div>
-  
   <div id="history-list"></div>
   <script src="popup.js"></script>
-  
-  <!-- ページ下部に固定配置するバー -->
+
   <div id="fixed-bar">
-    <!-- 左側：タブで表示ボタン -->
     <div id="fixed-bar-left">
       <a href="popup.html" target="_blank" id="popup-tab-button" data-i18n="popupTab">タブで表示</a>
     </div>
-    <!-- 右側：既存のボタン群 -->
     <div id="fixed-bar-right">
       <a href="https://x.com/yuk1_vrc" target="_blank" id="Developer-x-button" data-i18n="DeveloperX">作者X</a>
       <a href="" target="_blank" id="feedback-button" data-i18n="feedback">お問い合わせ</a>
     </div>
   </div>
 </body>
+
 </html>
