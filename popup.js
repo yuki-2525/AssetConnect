@@ -163,6 +163,32 @@ document.addEventListener('DOMContentLoaded', function () {
               btnContainer.style.flexShrink = "0";
               btnContainer.style.marginLeft = "10px";
 
+              // AvatarExplorerボタン
+              const avatarBtn = document.createElement("button");
+              avatarBtn.textContent = "AvatarExplorer";
+              Object.assign(avatarBtn.style, {
+                fontSize: "1em",
+                padding: "6px 12px",
+                minWidth: "130px",
+                cursor: "pointer"
+              });
+              avatarBtn.addEventListener("click", function (event) {
+                event.stopPropagation();
+                event.preventDefault();
+                chrome.storage.local.get("downloadFolderPath", function (result) {
+                  const dir = result.downloadFolderPath || "";
+                  if (dir.trim() === "") {
+                    showFolderNotSetAlert();
+                    return;
+                  }
+                  const pathParams = group.entries
+                    .map(entry => `dir=${encodeURIComponent(dir + "/" + entry.filename)}`)
+                    .join("&");
+                  const assetUrl = `vrcae://addAsset?${pathParams}&id=${group.boothID}`;
+                  window.location.href = assetUrl;
+                });
+              });
+
               // KonoAssetボタン
               const konoBtn = document.createElement("button");
               konoBtn.textContent = "KonoAsset";
@@ -189,6 +215,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
               });
 
+              btnContainer.appendChild(avatarBtn);
               btnContainer.appendChild(konoBtn);
               infoLine.appendChild(fileListDiv);
               infoLine.appendChild(btnContainer);
