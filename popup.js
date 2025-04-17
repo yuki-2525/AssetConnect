@@ -1,4 +1,338 @@
 document.addEventListener('DOMContentLoaded', function () {
+  // 共通の定数と変数
+  const ELEMENTS = {
+    toggleFree: document.getElementById("toggleFree"),
+    toggleGroup: document.getElementById("toggleGroup"),
+    toggleBulkRegister: document.getElementById("toggleBulkRegister"),
+    folderInput: document.getElementById("downloadFolder"),
+    saveFolderBtn: document.getElementById("saveFolder"),
+    historyList: document.getElementById("history-list"),
+    csvInput: document.getElementById("csvInput"),
+    exportAe: document.getElementById("export-ae"),
+    btnCsvExport: document.getElementById("btn-csv-export"),
+    btnImport: document.getElementById("btn-import"),
+    btnClear: document.getElementById("btn-clear"),
+    feedbackButton: document.getElementById("feedback-button"),
+    bulkRegisterToggle: document.getElementById("bulkRegisterToggle")
+  };
+
+  // 共通のスタイル設定
+  const STYLES = {
+    button: {
+      fontSize: "1em",
+      padding: "6px 12px",
+      minWidth: "130px",
+      cursor: "pointer"
+    },
+    entry: {
+      display: "flex",
+      flexDirection: "column",
+      borderBottom: "1px solid #ccc",
+      padding: "5px 0",
+      marginBottom: "4px"
+    },
+    titleLink: {
+      fontSize: "0.9em",
+      whiteSpace: "nowrap",
+      overflow: "hidden",
+      textOverflow: "ellipsis"
+    },
+    infoText: {
+      fontSize: "0.9em",
+      whiteSpace: "nowrap",
+      overflow: "hidden",
+      textOverflow: "ellipsis",
+      flexGrow: "1"
+    },
+    btnContainer: {
+      display: "flex",
+      gap: "10px",
+      flexShrink: "0"
+    }
+  };
+
+  // ヘルパー関数
+  const Helpers = {
+    formatTimestamp(ts) {
+      const date = new Date(ts);
+      const pad = n => n.toString().padStart(2, '0');
+      return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
+    },
+
+    escapeCSV(value) {
+      if (value == null) return "";
+      let str = value.toString();
+      str = str.replace(/"/g, '""');
+      return `"${str}"`;
+    },
+
+    showFolderNotSetAlert() {
+      alert(chrome.i18n.getMessage("saveFolderNotSet"));
+    },
+
+    createButton(text, onClick) {
+      const button = document.createElement("button");
+      button.textContent = text;
+      Object.assign(button.style, STYLES.button);
+      button.addEventListener("click", onClick);
+      return button;
+    },
+
+    createAssetButton(text, protocol, paramName, entries, boothID) {
+      return this.createButton(text, function (event) {
+        event.stopPropagation();
+        event.preventDefault();
+        chrome.storage.local.get("downloadFolderPath", function (result) {
+          const path = result.downloadFolderPath || "";
+          if (path.trim() === "") {
+            Helpers.showFolderNotSetAlert();
+            return;
+          }
+          const pathParams = entries
+            .map(entry => `${paramName}=${encodeURIComponent(path + "/" + entry.filename)}`)
+            .join("&");
+          const assetUrl = `${protocol}://addAsset?${pathParams}&id=${boothID}`;
+          window.location.href = assetUrl;
+        });
+      });
+    }
+  };
+
+  // 履歴の初期化
+  function initializeHistory() {
+    // 保存済みのフォルダパスを読み込む
+    chrome.storage.local.get("downloadFolderPath", function (result) {
+      if (result.downloadFolderPath) {
+        ELEMENTS.folderInput.value = result.downloadFolderPath;
+      }
+    });
+
+    chrome.storage.local.get("downloadHistory", function (result) {
+      let history = result.downloadHistory || [];
+      let updated = false;
+      for (let i = 0; i < history.length; i++) {
+        if (history[i].free === undefined || history[i].free === null || history[i].free === "") {
+          history[i].free = false;
+          updated = true;
+        }
+      }
+      if (updated) {
+        chrome.storage.local.set({ downloadHistory: history }, renderHistory);
+      } else {
+        renderHistory();
+      }
+    });
+  }
+
+  // 履歴の描画
+  function renderHistory() {
+    chrome.storage.local.get("downloadHistory", function (result) {
+      let history = result.downloadHistory || [];
+      if (ELEMENTS.toggleFree.checked) {
+        history = history.filter(entry => entry.free === true);
+      }
+      history.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+      const container = ELEMENTS.historyList;
+      container.innerHTML = "";
+
+      if (history.length === 0) {
+        container.innerHTML = `<p>${chrome.i18n.getMessage("noHistory")}</p>`;
+        return;
+      }
+
+      if (ELEMENTS.toggleGroup.checked) {
+        renderGroupedHistory(history);
+      } else {
+        renderIndividualHistory(history);
+      }
+    });
+  }
+
+  // グループ化された履歴の描画
+  function renderGroupedHistory(history) {
+    const groupedHistory = {};
+    history.forEach(entry => {
+      if (!groupedHistory[entry.boothID]) {
+        groupedHistory[entry.boothID] = {
+          title: entry.title,
+          url: entry.url,
+          boothID: entry.boothID,
+          entries: [],
+          latestTimestamp: new Date(entry.timestamp)
+        };
+      }
+      groupedHistory[entry.boothID].entries.push(entry);
+      const entryTime = new Date(entry.timestamp);
+      if (entryTime > groupedHistory[entry.boothID].latestTimestamp) {
+        groupedHistory[entry.boothID].latestTimestamp = entryTime;
+      }
+    });
+
+    const sortedGroups = Object.values(groupedHistory).sort((a, b) =>
+      b.latestTimestamp - a.latestTimestamp
+    );
+
+    // 一括登録モードの場合、複数アイテムのグループのみをフィルタリング
+    const filteredGroups = ELEMENTS.toggleBulkRegister.checked
+      ? sortedGroups.filter(group => group.entries.length > 1)
+      : sortedGroups;
+
+    filteredGroups.forEach(group => {
+      group.entries.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+      const latestEntry = group.entries[0];
+      group.title = latestEntry.title;
+      group.url = latestEntry.url;
+
+      if (ELEMENTS.toggleBulkRegister.checked) {
+        renderBulkGroup(group);
+      } else {
+        renderIndividualGroup(group);
+      }
+    });
+  }
+
+  // 一括登録グループの描画
+  function renderBulkGroup(group) {
+    const entryDiv = createEntryDiv();
+    const titleLine = createTitleLine(group);
+    const infoLine = createBulkInfoLine(group);
+
+    entryDiv.appendChild(titleLine);
+    entryDiv.appendChild(infoLine);
+    ELEMENTS.historyList.appendChild(entryDiv);
+  }
+
+  // 個別グループの描画
+  function renderIndividualGroup(group) {
+    const entryDiv = createEntryDiv();
+    const titleLine = createTitleLine(group);
+    entryDiv.appendChild(titleLine);
+
+    group.entries.forEach(entry => {
+      const infoLine = createIndividualInfoLine(entry);
+      entryDiv.appendChild(infoLine);
+    });
+
+    ELEMENTS.historyList.appendChild(entryDiv);
+  }
+
+  // 個別履歴の描画
+  function renderIndividualHistory(history) {
+    history.forEach(entry => {
+      const entryDiv = createEntryDiv();
+      const titleLine = createTitleLine(entry);
+      const infoLine = createIndividualInfoLine(entry);
+
+      entryDiv.appendChild(titleLine);
+      entryDiv.appendChild(infoLine);
+      ELEMENTS.historyList.appendChild(entryDiv);
+    });
+  }
+
+  // 共通のUI要素作成関数
+  function createEntryDiv() {
+    const div = document.createElement("div");
+    div.className = "entry";
+    Object.assign(div.style, STYLES.entry);
+    return div;
+  }
+
+  function createTitleLine(data) {
+    const div = document.createElement("div");
+    const link = document.createElement("a");
+    link.href = data.url && data.url.trim() ? data.url : `https://booth.pm/ja/items/${data.boothID}`;
+    link.target = "_blank";
+    link.textContent = data.title;
+    Object.assign(link.style, STYLES.titleLink);
+    div.appendChild(link);
+    return div;
+  }
+
+  function createBulkInfoLine(group) {
+    const infoLine = document.createElement("div");
+    infoLine.style.display = "flex";
+    infoLine.style.alignItems = "flex-start";
+    infoLine.style.marginTop = "2px";
+
+    const fileListDiv = document.createElement("div");
+    fileListDiv.style.flexGrow = "1";
+    fileListDiv.style.fontSize = "0.9em";
+    group.entries.forEach(entry => {
+      const fileEntry = document.createElement("div");
+      fileEntry.style.whiteSpace = "nowrap";
+      fileEntry.style.overflow = "hidden";
+      fileEntry.style.textOverflow = "ellipsis";
+      fileEntry.textContent = `[${Helpers.formatTimestamp(entry.timestamp)}] ${entry.filename}`;
+      fileListDiv.appendChild(fileEntry);
+    });
+
+    const btnContainer = document.createElement("div");
+    Object.assign(btnContainer.style, STYLES.btnContainer);
+    btnContainer.style.marginLeft = "10px";
+
+    const avatarBtn = Helpers.createAssetButton("AvatarExplorer", "vrcae", "dir", group.entries, group.boothID);
+    const konoBtn = Helpers.createAssetButton("KonoAsset", "konoasset", "path", group.entries, group.boothID);
+
+    btnContainer.appendChild(avatarBtn);
+    btnContainer.appendChild(konoBtn);
+    infoLine.appendChild(fileListDiv);
+    infoLine.appendChild(btnContainer);
+
+    return infoLine;
+  }
+
+  function createIndividualInfoLine(entry) {
+    const infoLine = document.createElement("div");
+    infoLine.style.display = "flex";
+    infoLine.style.alignItems = "center";
+    infoLine.style.marginTop = "2px";
+
+    const infoText = document.createElement("span");
+    infoText.textContent = `[${Helpers.formatTimestamp(entry.timestamp)}] ${entry.filename}`;
+    Object.assign(infoText.style, STYLES.infoText);
+
+    const btnContainer = document.createElement("div");
+    Object.assign(btnContainer.style, STYLES.btnContainer);
+
+    if ((entry.filename || "").trim() !== "") {
+      const avatarBtn = Helpers.createAssetButton("AvatarExplorer", "vrcae", "dir", [entry], entry.boothID);
+      const konoBtn = Helpers.createAssetButton("KonoAsset", "konoasset", "path", [entry], entry.boothID);
+      btnContainer.appendChild(avatarBtn);
+      btnContainer.appendChild(konoBtn);
+    }
+
+    infoLine.appendChild(infoText);
+    infoLine.appendChild(btnContainer);
+    return infoLine;
+  }
+
+  // イベントリスナーの設定
+  function setupEventListeners() {
+    ELEMENTS.toggleFree.addEventListener("change", renderHistory);
+    ELEMENTS.toggleGroup.addEventListener("change", function () {
+      renderHistory();
+      ELEMENTS.bulkRegisterToggle.style.display = this.checked ? 'flex' : 'none';
+      if (!this.checked) {
+        ELEMENTS.toggleBulkRegister.checked = false;
+      }
+    });
+    ELEMENTS.toggleBulkRegister.addEventListener("change", renderHistory);
+    ELEMENTS.saveFolderBtn.addEventListener("click", function () {
+      const folderPath = ELEMENTS.folderInput.value.trim();
+      if (folderPath) {
+        chrome.storage.local.set({ downloadFolderPath: folderPath });
+      }
+    });
+
+    // 初期表示時の状態を反映
+    ELEMENTS.bulkRegisterToggle.style.display = ELEMENTS.toggleGroup.checked ? 'flex' : 'none';
+  }
+
+  // 初期化
+  initializeHistory();
+  setupEventListeners();
+
   //HTML 内の data-i18n 属性をもつ要素のテキストを置換する
   document.querySelectorAll('[data-i18n]').forEach(function (el) {
     var msg = chrome.i18n.getMessage(el.getAttribute('data-i18n'));
@@ -7,417 +341,8 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   });
 
-  const toggleCheckbox = document.getElementById("toggleFree");
-  const toggleGroupCheckbox = document.getElementById("toggleGroup");
-  const toggleBulkRegisterCheckbox = document.getElementById("toggleBulkRegister");
-  const folderInput = document.getElementById("downloadFolder");
-  const saveFolderBtn = document.getElementById("saveFolder");
-
-  // 初回起動時に free 属性が空のエントリを false に更新
-  chrome.storage.local.get("downloadHistory", function (result) {
-    let history = result.downloadHistory || [];
-    let updated = false;
-    for (let i = 0; i < history.length; i++) {
-      if (history[i].free === undefined || history[i].free === null || history[i].free === "") {
-        history[i].free = false;
-        updated = true;
-      }
-    }
-    if (updated) {
-      chrome.storage.local.set({ downloadHistory: history }, function () {
-        renderHistory();
-      });
-    } else {
-      renderHistory();
-    }
-  });
-
-  // ヘルパー関数: タイムスタンプを "YYYY-MM-DD HH:mm:ss" 形式にフォーマット
-  function formatTimestamp(ts) {
-    const date = new Date(ts);
-    const pad = n => n.toString().padStart(2, '0');
-    return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`;
-  }
-
-  // CSVフィールド用のエスケープ関数
-  function escapeCSV(value) {
-    if (value == null) return "";
-    let str = value.toString();
-    str = str.replace(/"/g, '""');
-    return `"${str}"`;
-  }
-
-  // 保存済みのフォルダパスを読み込む
-  chrome.storage.local.get("downloadFolderPath", function (result) {
-    if (result.downloadFolderPath) {
-      folderInput.value = result.downloadFolderPath;
-    }
-  });
-
-  // 「保存」ボタンのクリックイベントで値を保存
-  saveFolderBtn.addEventListener("click", function () {
-    const folderPath = folderInput.value.trim();
-    chrome.storage.local.set({ downloadFolderPath: folderPath });
-  });
-
-  // alert で使用する多言語メッセージの例（フォルダパス未設定時）
-  function showFolderNotSetAlert() {
-    alert(chrome.i18n.getMessage("saveFolderNotSet"));
-  }
-
-  // 履歴一覧を描画する関数（toggleCheckboxがチェックなら free:true のものだけ表示）
-  function renderHistory() {
-    chrome.storage.local.get("downloadHistory", function (result) {
-      let history = result.downloadHistory || [];
-      if (toggleCheckbox.checked) {
-        history = history.filter(entry => entry.free === true);
-      }
-      // タイムスタンプ降順にソート（最新が先頭）
-      history.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-      const container = document.getElementById("history-list");
-      container.innerHTML = "";
-      if (history.length === 0) {
-        container.innerHTML = `<p>${chrome.i18n.getMessage("noHistory")}</p>`;
-        return;
-      }
-
-      if (toggleGroupCheckbox.checked) {
-        // 同一アイテムをまとめる処理
-        const groupedHistory = {};
-        history.forEach(entry => {
-          if (!groupedHistory[entry.boothID]) {
-            groupedHistory[entry.boothID] = {
-              title: entry.title,
-              url: entry.url,
-              boothID: entry.boothID,
-              entries: [],
-              latestTimestamp: new Date(entry.timestamp)
-            };
-          }
-          groupedHistory[entry.boothID].entries.push(entry);
-          const entryTime = new Date(entry.timestamp);
-          if (entryTime > groupedHistory[entry.boothID].latestTimestamp) {
-            groupedHistory[entry.boothID].latestTimestamp = entryTime;
-          }
-        });
-
-        const sortedGroups = Object.values(groupedHistory).sort((a, b) =>
-          b.latestTimestamp - a.latestTimestamp
-        );
-
-        sortedGroups.forEach(group => {
-          group.entries.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-          const latestEntry = group.entries[0];
-          group.title = latestEntry.title;
-          group.url = latestEntry.url;
-
-          const entryDiv = document.createElement("div");
-          entryDiv.className = "entry";
-          entryDiv.style.display = "flex";
-          entryDiv.style.flexDirection = "column";
-          entryDiv.style.borderBottom = "1px solid #ccc";
-          entryDiv.style.padding = "5px 0";
-          entryDiv.style.marginBottom = "4px";
-
-          // タイトル行
-          const titleLine = document.createElement("div");
-          const titleLink = document.createElement("a");
-          titleLink.href = group.url && group.url.trim() ? group.url : `https://booth.pm/ja/items/${group.boothID}`;
-          titleLink.target = "_blank";
-          titleLink.textContent = group.title;
-          titleLink.style.fontSize = "0.9em";
-          titleLink.style.whiteSpace = "nowrap";
-          titleLink.style.overflow = "hidden";
-          titleLink.style.textOverflow = "ellipsis";
-          titleLine.appendChild(titleLink);
-          entryDiv.appendChild(titleLine);
-
-          // 一括登録モードの場合、複数ファイルのグループのみ表示
-          if (toggleBulkRegisterCheckbox.checked) {
-            // 複数のアイテムがある場合のみ表示
-            if (group.entries.length > 1) {
-              // ファイル一覧とボタンのコンテナ
-              const infoLine = document.createElement("div");
-              infoLine.style.display = "flex";
-              infoLine.style.alignItems = "flex-start";
-              infoLine.style.marginTop = "2px";
-
-              // ファイル一覧
-              const fileListDiv = document.createElement("div");
-              fileListDiv.style.flexGrow = "1";
-              fileListDiv.style.fontSize = "0.9em";
-              group.entries.forEach(entry => {
-                const fileEntry = document.createElement("div");
-                fileEntry.style.whiteSpace = "nowrap";
-                fileEntry.style.overflow = "hidden";
-                fileEntry.style.textOverflow = "ellipsis";
-                const formattedTime = formatTimestamp(entry.timestamp);
-                fileEntry.textContent = `[${formattedTime}] ${entry.filename}`;
-                fileListDiv.appendChild(fileEntry);
-              });
-
-              // ボタンコンテナ
-              const btnContainer = document.createElement("div");
-              btnContainer.style.display = "flex";
-              btnContainer.style.gap = "10px";
-              btnContainer.style.flexShrink = "0";
-              btnContainer.style.marginLeft = "10px";
-
-              // AvatarExplorerボタン
-              const avatarBtn = document.createElement("button");
-              avatarBtn.textContent = "AvatarExplorer";
-              Object.assign(avatarBtn.style, {
-                fontSize: "1em",
-                padding: "6px 12px",
-                minWidth: "130px",
-                cursor: "pointer"
-              });
-              avatarBtn.addEventListener("click", function (event) {
-                event.stopPropagation();
-                event.preventDefault();
-                chrome.storage.local.get("downloadFolderPath", function (result) {
-                  const dir = result.downloadFolderPath || "";
-                  if (dir.trim() === "") {
-                    showFolderNotSetAlert();
-                    return;
-                  }
-                  const pathParams = group.entries
-                    .map(entry => `dir=${encodeURIComponent(dir + "/" + entry.filename)}`)
-                    .join("&");
-                  const assetUrl = `vrcae://addAsset?${pathParams}&id=${group.boothID}`;
-                  window.location.href = assetUrl;
-                });
-              });
-
-              // KonoAssetボタン
-              const konoBtn = document.createElement("button");
-              konoBtn.textContent = "KonoAsset";
-              Object.assign(konoBtn.style, {
-                fontSize: "1em",
-                padding: "6px 12px",
-                minWidth: "130px",
-                cursor: "pointer"
-              });
-              konoBtn.addEventListener("click", function (event) {
-                event.stopPropagation();
-                event.preventDefault();
-                chrome.storage.local.get("downloadFolderPath", function (result) {
-                  const path = result.downloadFolderPath || "";
-                  if (path.trim() === "") {
-                    showFolderNotSetAlert();
-                    return;
-                  }
-                  const pathParams = group.entries
-                    .map(entry => `path=${encodeURIComponent(path + "/" + entry.filename)}`)
-                    .join("&");
-                  const assetUrl = `konoasset://addAsset?${pathParams}&id=${group.boothID}`;
-                  window.location.href = assetUrl;
-                });
-              });
-
-              btnContainer.appendChild(avatarBtn);
-              btnContainer.appendChild(konoBtn);
-              infoLine.appendChild(fileListDiv);
-              infoLine.appendChild(btnContainer);
-              entryDiv.appendChild(infoLine);
-              container.appendChild(entryDiv);
-            }
-          } else {
-            // 通常の表示（各ファイルごとにボタンを表示）
-            group.entries.forEach(entry => {
-              const infoLine = document.createElement("div");
-              infoLine.style.display = "flex";
-              infoLine.style.alignItems = "center";
-              infoLine.style.marginTop = "2px";
-
-              const formattedTime = formatTimestamp(entry.timestamp);
-              const infoText = document.createElement("span");
-              infoText.textContent = `[${formattedTime}] ${entry.filename}`;
-              infoText.style.fontSize = "0.9em";
-              infoText.style.whiteSpace = "nowrap";
-              infoText.style.overflow = "hidden";
-              infoText.style.textOverflow = "ellipsis";
-              infoText.style.flexGrow = "1";
-
-              const btnContainer = document.createElement("div");
-              btnContainer.style.display = "flex";
-              btnContainer.style.gap = "10px";
-              btnContainer.style.flexShrink = "0";
-
-              if ((entry.filename || "").trim() !== "") {
-                const btnStyle = {
-                  fontSize: "1em",
-                  padding: "6px 12px",
-                  minWidth: "130px",
-                  cursor: "pointer"
-                };
-
-                // AvatarExplorerボタン
-                const avatarBtn = document.createElement("button");
-                avatarBtn.textContent = "AvatarExplorer";
-                Object.assign(avatarBtn.style, btnStyle);
-                avatarBtn.addEventListener("click", function (event) {
-                  event.stopPropagation();
-                  event.preventDefault();
-                  chrome.storage.local.get("downloadFolderPath", function (result) {
-                    const dir = result.downloadFolderPath || "";
-                    if (dir.trim() === "") {
-                      showFolderNotSetAlert();
-                      return;
-                    }
-                    const assetUrl = `vrcae://addAsset?dir=${encodeURIComponent(dir + "/" + entry.filename)}&id=${entry.boothID}`;
-                    window.location.href = assetUrl;
-                  });
-                });
-
-                // KonoAssetボタン
-                const konoBtn = document.createElement("button");
-                konoBtn.textContent = "KonoAsset";
-                Object.assign(konoBtn.style, btnStyle);
-                konoBtn.addEventListener("click", function (event) {
-                  event.stopPropagation();
-                  event.preventDefault();
-                  chrome.storage.local.get("downloadFolderPath", function (result) {
-                    const path = result.downloadFolderPath || "";
-                    if (path.trim() === "") {
-                      showFolderNotSetAlert();
-                      return;
-                    }
-                    const assetUrl = `konoasset://addAsset?path=${encodeURIComponent(path + "/" + entry.filename)}&id=${entry.boothID}`;
-                    window.location.href = assetUrl;
-                  });
-                });
-
-                btnContainer.appendChild(avatarBtn);
-                btnContainer.appendChild(konoBtn);
-              }
-
-              infoLine.appendChild(infoText);
-              infoLine.appendChild(btnContainer);
-              entryDiv.appendChild(infoLine);
-            });
-            container.appendChild(entryDiv);
-          }
-        });
-      } else {
-        // 従来の表示方法
-        history.forEach(entry => {
-          const formattedTime = formatTimestamp(entry.timestamp);
-          const linkUrl = entry.url && entry.url.trim() ? entry.url : `https://booth.pm/ja/items/${entry.boothID}`;
-
-          // エントリ全体のコンテナ（2段表示）
-          const entryDiv = document.createElement("div");
-          entryDiv.className = "entry";
-          entryDiv.style.display = "flex";
-          entryDiv.style.flexDirection = "column";
-          entryDiv.style.borderBottom = "1px solid #ccc";
-          entryDiv.style.padding = "5px 0";
-          entryDiv.style.marginBottom = "4px";
-
-          // 上段：タイトル（リンク付き）
-          const titleLine = document.createElement("div");
-          const titleLink = document.createElement("a");
-          titleLink.href = linkUrl;
-          titleLink.target = "_blank";
-          titleLink.textContent = entry.title;
-          titleLink.style.fontSize = "0.9em";
-          titleLink.style.whiteSpace = "nowrap";
-          titleLink.style.overflow = "hidden";
-          titleLink.style.textOverflow = "ellipsis";
-          titleLine.appendChild(titleLink);
-
-          // 下段：タイムスタンプ、ファイル名、ボタン群
-          const infoLine = document.createElement("div");
-          infoLine.style.display = "flex";
-          infoLine.style.alignItems = "center";
-          infoLine.style.marginTop = "2px";
-
-          // 左側：タイムスタンプとファイル名
-          const infoText = document.createElement("span");
-          infoText.textContent = `[${formattedTime}] ${entry.filename}`;
-          infoText.style.fontSize = "0.9em";
-          infoText.style.whiteSpace = "nowrap";
-          infoText.style.overflow = "hidden";
-          infoText.style.textOverflow = "ellipsis";
-          infoText.style.flexGrow = "1";
-
-          // 右側：ボタン群（ファイル名が空でない場合のみ追加）
-          const btnContainer = document.createElement("div");
-          btnContainer.style.display = "flex";
-          btnContainer.style.gap = "10px";
-          btnContainer.style.flexShrink = "0";
-          if ((entry.filename || "").trim() !== "") {
-            // 共通ボタンスタイル
-            const btnStyle = {
-              fontSize: "1em",
-              padding: "6px 12px",
-              minWidth: "130px",
-              cursor: "pointer"
-            };
-
-            // AvatarExplorerボタン
-            const avatarBtn = document.createElement("button");
-            avatarBtn.textContent = "AvatarExplorer";
-            Object.assign(avatarBtn.style, btnStyle);
-            avatarBtn.addEventListener("click", function (event) {
-              event.stopPropagation();
-              event.preventDefault();
-              chrome.storage.local.get("downloadFolderPath", function (result) {
-                const dir = result.downloadFolderPath || "";
-                if (dir.trim() === "") {
-                  showFolderNotSetAlert();
-                  return;
-                }
-                const assetUrl = `vrcae://addAsset?dir=${encodeURIComponent(dir + "/" + entry.filename)}&id=${entry.boothID}`;
-                window.location.href = assetUrl;
-              });
-            });
-
-            // KonoAssetボタン
-            const konoBtn = document.createElement("button");
-            konoBtn.textContent = "KonoAsset";
-            Object.assign(konoBtn.style, btnStyle);
-            konoBtn.addEventListener("click", function (event) {
-              event.stopPropagation();
-              event.preventDefault();
-              chrome.storage.local.get("downloadFolderPath", function (result) {
-                const path = result.downloadFolderPath || "";
-                if (path.trim() === "") {
-                  showFolderNotSetAlert();
-                  return;
-                }
-                const assetUrl = `konoasset://addAsset?path=${encodeURIComponent(path + "/" + entry.filename)}&id=${entry.boothID}`;
-                window.location.href = assetUrl;
-              });
-            });
-
-            btnContainer.appendChild(avatarBtn);
-            btnContainer.appendChild(konoBtn);
-          }
-
-          infoLine.appendChild(infoText);
-          infoLine.appendChild(btnContainer);
-
-          entryDiv.appendChild(titleLine);
-          entryDiv.appendChild(infoLine);
-
-          container.appendChild(entryDiv);
-        });
-      }
-    });
-  }
-
-  // トグル変更時に再描画
-  toggleCheckbox.addEventListener("change", function () {
-    renderHistory();
-  });
-
-  // トグルチェックボックスのイベントリスナーを追加
-  toggleGroupCheckbox.addEventListener("change", renderHistory);
-  toggleBulkRegisterCheckbox.addEventListener("change", renderHistory);
-
   // JSON 出力 (AE Tools形式)
-  document.getElementById("export-ae").addEventListener("click", () => {
+  ELEMENTS.exportAe.addEventListener("click", () => {
     chrome.storage.local.get("downloadHistory", function (result) {
       const history = result.downloadHistory || [];
       const grouped = {};
@@ -461,14 +386,14 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   // CSV 出力ボタン
-  document.getElementById("btn-csv-export").addEventListener("click", () => {
+  ELEMENTS.btnCsvExport.addEventListener("click", () => {
     chrome.storage.local.get("downloadHistory", function (result) {
       let history = result.downloadHistory || [];
       // タイムスタンプの降順にソート（最新のものが先頭になるように）
       history.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
       // CSVヘッダー
-      const header = ['URL', 'timestamp', 'boothID', 'title', 'fileName', 'free'].map(escapeCSV).join(',');
+      const header = ['URL', 'timestamp', 'boothID', 'title', 'fileName', 'free'].map(Helpers.escapeCSV).join(',');
       const lines = [header];
 
       history.forEach(entry => {
@@ -490,7 +415,7 @@ document.addEventListener('DOMContentLoaded', function () {
           entry.title,
           entry.filename,
           entry.free
-        ].map(escapeCSV).join(',');
+        ].map(Helpers.escapeCSV).join(',');
         lines.push(line);
       });
 
@@ -511,13 +436,11 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
-
   // CSVインポート処理
-  const csvInput = document.getElementById("csvInput");
-  document.getElementById("btn-import").addEventListener("click", function () {
-    csvInput.click();
+  ELEMENTS.btnImport.addEventListener("click", function () {
+    ELEMENTS.csvInput.click();
   });
-  csvInput.addEventListener("change", function (e) {
+  ELEMENTS.csvInput.addEventListener("change", function (e) {
     const file = e.target.files[0];
     if (!file) return;
     const reader = new FileReader();
@@ -630,16 +553,14 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-
   // 履歴全削除ボタン
-  document.getElementById("btn-clear").addEventListener("click", function () {
+  ELEMENTS.btnClear.addEventListener("click", function () {
     if (confirm(chrome.i18n.getMessage("confirmClearHistory"))) {
       chrome.storage.local.remove("downloadHistory", function () {
         renderHistory();
       });
     }
   });
-
 
   const uiLang = chrome.i18n.getUILanguage();
   let feedbackUrl;
@@ -648,19 +569,5 @@ document.addEventListener('DOMContentLoaded', function () {
   } else {
     feedbackUrl = "https://forms.gle/otwhoXKzc5EQQDti8";  // 日本語用のURL
   }
-  document.getElementById("feedback-button").href = feedbackUrl;
-
-  // 同一IDのアイテムをまとめるチェックボックスの状態変更イベント
-  document.getElementById('toggleGroup').addEventListener('change', function () {
-    const bulkRegisterToggle = document.getElementById('bulkRegisterToggle');
-    bulkRegisterToggle.style.display = this.checked ? 'flex' : 'none';
-    if (!this.checked) {
-      document.getElementById('toggleBulkRegister').checked = false;
-    }
-  });
-
-  // 初期表示時の状態を反映
-  const groupCheckbox = document.getElementById('toggleGroup');
-  const bulkRegisterToggle = document.getElementById('bulkRegisterToggle');
-  bulkRegisterToggle.style.display = groupCheckbox.checked ? 'flex' : 'none';
+  ELEMENTS.feedbackButton.href = feedbackUrl;
 });
