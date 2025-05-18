@@ -49,5 +49,8 @@
     },
     "confirmClearHistory": {
         "message": "모든 기록을 삭제하시겠습니까?"
+    },
+    "updateHistory": {
+        "message": "Update History"
     }
 }

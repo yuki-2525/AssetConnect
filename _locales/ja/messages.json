@@ -49,5 +49,8 @@
     },
     "confirmClearHistory": {
         "message": "履歴を全削除しますか？"
+    },
+    "updateHistory": {
+        "message": "更新履歴"
     }
 }

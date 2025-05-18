@@ -49,5 +49,8 @@
     },
     "confirmClearHistory": {
         "message": "Are you sure you want to delete all history?"
+    },
+    "updateHistory": {
+        "message": "Update History"
     }
 }

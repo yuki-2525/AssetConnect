@@ -13,7 +13,10 @@ document.addEventListener('DOMContentLoaded', function () {
     btnImport: document.getElementById("btn-import"),
     btnClear: document.getElementById("btn-clear"),
     feedbackButton: document.getElementById("feedback-button"),
-    bulkRegisterToggle: document.getElementById("bulkRegisterToggle")
+    bulkRegisterToggle: document.getElementById("bulkRegisterToggle"),
+    updateHistoryBtn: document.getElementById("btn-update-history"),
+    updateHistoryModal: document.getElementById("update-history-modal"),
+    updateHistoryClose: document.querySelector("#update-history-modal .close")
   };
 
   // 共通のスタイル設定
@@ -356,6 +359,56 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // 初期表示時の状態を反映
     ELEMENTS.bulkRegisterToggle.style.display = ELEMENTS.toggleGroup.checked ? 'flex' : 'none';
+
+    // アップデート履歴モーダルの制御
+    ELEMENTS.updateHistoryBtn.addEventListener("click", function () {
+      fetch(chrome.runtime.getURL('CHANGELOG.json'))
+        .then(response => response.json())
+        .then(data => {
+          const modalBody = document.querySelector('.modal-body');
+          modalBody.innerHTML = '';
+
+          data.versions.forEach(version => {
+            const entry = document.createElement('div');
+            entry.className = 'update-entry';
+
+            const title = document.createElement('h3');
+            title.textContent = `v${version.version}`;
+
+            const date = document.createElement('p');
+            date.textContent = version.date;
+
+            const changes = document.createElement('ul');
+            version.changes.forEach(change => {
+              const li = document.createElement('li');
+              li.textContent = change;
+              changes.appendChild(li);
+            });
+
+            entry.appendChild(title);
+            entry.appendChild(date);
+            entry.appendChild(changes);
+            modalBody.appendChild(entry);
+          });
+
+          ELEMENTS.updateHistoryModal.style.display = "block";
+        })
+        .catch(error => {
+          console.error('アップデート履歴の読み込みに失敗しました:', error);
+          alert('アップデート履歴の読み込みに失敗しました。');
+        });
+    });
+
+    ELEMENTS.updateHistoryClose.addEventListener("click", function () {
+      ELEMENTS.updateHistoryModal.style.display = "none";
+    });
+
+    // モーダル外をクリックしたら閉じる
+    window.addEventListener("click", function (event) {
+      if (event.target === ELEMENTS.updateHistoryModal) {
+        ELEMENTS.updateHistoryModal.style.display = "none";
+      }
+    });
   }
 
   // 初期化
