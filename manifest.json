@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "BOOTH Download Log",
-  "version": "1.3.2",
+  "version": "1.3.3",
   "default_locale": "ja",
   "description": "__MSG_description__",
   "permissions": [
