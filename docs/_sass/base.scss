@@ -1,0 +1,26 @@
+// Reset and Base Styles
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  @include theme(light);
+}
+
+[data-theme="dark"] {
+  @include theme(dark);
+}
+
+body {
+  font-family: $font-stack;
+  line-height: $line-height-base;
+  color: var(--text-color);
+  background-color: var(--bg-color);
+  transition: background-color $transition-base, color $transition-base;
+}
+
+.container {
+  @include container;
+}

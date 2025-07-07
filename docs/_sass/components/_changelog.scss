@@ -1,0 +1,164 @@
+// Changelog Styles
+.changelog-status {
+  text-align: center;
+  padding: 3rem 0;
+}
+
+.loading-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--border-color);
+  border-top: 4px solid $accent-color;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin: 0 auto $spacing-unit auto;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+#changelog-content {
+  h1 {
+    color: var(--text-color);
+    border-bottom: 2px solid $accent-color;
+    padding-bottom: 0.5rem;
+    margin-bottom: 2rem;
+  }
+
+  h2 {
+    background: $primary-gradient;
+    color: white;
+    padding: 1.2rem;
+    border-radius: 12px;
+    margin: 3rem 0 1.5rem 0;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+    position: relative;
+
+    .version-anchor {
+      color: white;
+      text-decoration: none;
+      display: block;
+
+      &:hover {
+        text-decoration: underline;
+      }
+    }
+
+    &::before {
+      content: "📦";
+      margin-right: 0.5rem;
+    }
+  }
+
+  h3 {
+    color: var(--text-color);
+    margin: 2rem 0 $spacing-unit 0;
+    font-weight: 600;
+    font-size: 1.2rem;
+    border-left: 4px solid $accent-color;
+    padding: 0.8rem $spacing-unit;
+    background: var(--section-bg);
+    border-radius: 0 8px 8px 0;
+  }
+
+  ul {
+    margin: $spacing-unit 0 2rem 0;
+    padding-left: 0;
+  }
+
+  li {
+    margin: 0.8rem 0;
+    line-height: 1.7;
+    padding: 0.6rem $spacing-unit 0.6rem 2.5rem;
+    background: var(--card-bg);
+    border-radius: 6px;
+    box-shadow: 0 2px 8px var(--shadow);
+    border-left: 3px solid var(--border-color);
+    list-style: none;
+    position: relative;
+
+    &::before {
+      content: "✨";
+      position: absolute;
+      left: 0.8rem;
+      top: 0.6rem;
+    }
+  }
+}
+
+// Legacy changelog section
+#legacy-changelog {
+  margin-top: 3rem;
+  border-top: 2px solid var(--border-color);
+  padding-top: 2rem;
+
+  details {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem;
+
+    summary {
+      cursor: pointer;
+      font-weight: bold;
+      margin-bottom: 0;
+      padding: 0.5rem;
+      border-radius: 4px;
+      transition: background-color $transition-base;
+
+      &:hover {
+        background-color: var(--hover-bg);
+      }
+
+      h3 {
+        display: inline;
+        margin: 0;
+        color: var(--text-color);
+      }
+    }
+
+    &[open] summary {
+      margin-bottom: 1rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+  }
+
+  #legacy-changelog-content {
+    h1, h2, h3 {
+      color: var(--text-color);
+    }
+
+    h2 {
+      background: linear-gradient(135deg, #6b7280, #9ca3af);
+      color: white;
+      padding: 1rem;
+      border-radius: 8px;
+      margin: 2rem 0 1rem 0;
+
+      &::before {
+        content: "📜";
+        margin-right: 0.5rem;
+      }
+    }
+
+    ul {
+      margin: $spacing-unit 0;
+    }
+
+    li {
+      margin: 0.5rem 0;
+      padding: 0.5rem $spacing-unit;
+      background: var(--section-bg);
+      border-radius: 4px;
+      border-left: 3px solid #6b7280;
+      list-style: none;
+
+      &::marker {
+        content: none;
+        display: none;
+      }
+    }
+  }
+}
