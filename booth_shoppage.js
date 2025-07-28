@@ -18,23 +18,39 @@ document.addEventListener('click', function (e) {
   // ページ遷移を防ぐ
   e.preventDefault();
 
+  // フォールバックデータを初期化
+  let title = "何らかの理由でデータを取得できませんでした。作者に報告してください。";
+  let boothID = "unknown";
+  let itemUrl = "https://forms.gle/otwhoXKzc5EQQDti8";
+  let fileName = "何らかの理由でデータを取得できませんでした。作者に報告してください。";
+
   // タイトルの取得：h2.font-bold または summary 内の h2 を試す
   let titleElement = document.querySelector('h2.font-bold');
   if (!titleElement) {
     titleElement = document.querySelector('div.summary h2');
   }
-  const title = titleElement ? titleElement.textContent.trim() : '不明';
+  if (titleElement) {
+    title = titleElement.textContent.trim();
+  } else {
+    console.warn("Shop: Title element not found - using fallback data");
+  }
 
   // boothID の取得：URL から /items/数字 を抽出
   const idMatch = window.location.href.match(/\/items\/(\d+)/);
-  const boothID = idMatch ? idMatch[1] : null;
-  if (!boothID) {
-    console.error("Shop: BOOTHID not found");
-    return;
+  if (idMatch && idMatch[1]) {
+    boothID = idMatch[1];
+    itemUrl = window.location.href;
+  } else {
+    console.warn("Shop: BOOTHID not found - using fallback data");
   }
 
   // ファイル名の取得：ダウンロードリンクの title 属性を利用
-  const fileName = downloadLink.getAttribute('title') || '不明';
+  const fileNameFromTitle = downloadLink.getAttribute('title');
+  if (fileNameFromTitle) {
+    fileName = fileNameFromTitle;
+  } else {
+    console.warn("Shop: File name not found - using fallback data");
+  }
 
   const timestamp = formatDate(new Date());
 
@@ -43,7 +59,7 @@ document.addEventListener('click', function (e) {
     boothID: boothID,
     filename: fileName,
     timestamp: timestamp,
-    url: window.location.href,
+    url: itemUrl,
     free: true
   };
 

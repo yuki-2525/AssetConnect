@@ -18,45 +18,54 @@ document.addEventListener('click', function (e) {
   // ページ遷移を防ぐ
   e.preventDefault();
 
+  // フォールバックデータを初期化
+  let fileName = "何らかの理由でデータを取得できませんでした。作者に報告してください。";
+  let title = "何らかの理由でデータを取得できませんでした。作者に報告してください。";
+  let boothID = "unknown";
+  let itemUrl = "https://forms.gle/otwhoXKzc5EQQDti8";
+
   // ダウンロードエントリの取得（ファイル名が含まれる部分）
   const downloadEntry = downloadLink.closest('div.desktop\\:flex.desktop\\:justify-between.desktop\\:items-center');
-  if (!downloadEntry) {
-    console.error("Library: Download entry not found");
-    return;
+  if (downloadEntry) {
+    // ファイル名の取得
+    const fileNameElement = downloadEntry.querySelector('div.min-w-0.break-words.whitespace-pre-line > div.typography-14');
+    if (fileNameElement) {
+      fileName = fileNameElement.textContent.trim();
+    } else {
+      console.warn("Library: File name element not found - using fallback data");
+    }
+  } else {
+    console.warn("Library: Download entry not found - using fallback data");
   }
-
-  // ファイル名の取得
-  const fileNameElement = downloadEntry.querySelector('div.min-w-0.break-words.whitespace-pre-line > div.typography-14');
-  if (!fileNameElement) {
-    console.error("Library: File name element not found");
-    return;
-  }
-  const fileName = fileNameElement.textContent.trim();
 
   // 外側コンテナの取得
   const outerContainer = downloadLink.closest('div.mb-16');
-  if (!outerContainer) {
-    console.error("Library: Outer container not found");
-    return;
-  }
+  if (outerContainer) {
+    // タイトルの取得：外側コンテナ内の指定要素から取得
+    const titleElement = outerContainer.querySelector(
+      'div[class*="text-text-default"][class*="font-bold"][class*="typography-16"][class*="mb-8"][class*="break-all"]'
+    );
+    if (titleElement) {
+      title = titleElement.textContent.trim();
+    } else {
+      console.warn("Library: Title element not found - using fallback data");
+    }
 
-  // タイトルの取得：外側コンテナ内の指定要素から取得
-  const titleElement = outerContainer.querySelector(
-    'div[class*="text-text-default"][class*="font-bold"][class*="typography-16"][class*="mb-8"][class*="break-all"]'
-  );
-  const title = titleElement ? titleElement.textContent.trim() : '不明';
-
-  // BOOTHID の取得：外側コンテナ内のアイテムリンクから抽出
-  const itemLink = outerContainer.querySelector('a[href*="/items/"]');
-  if (!itemLink) {
-    console.error("Library: Item link not found");
-    return;
-  }
-  const idMatch = itemLink.href.match(/\/items\/(\d+)/);
-  const boothID = idMatch ? idMatch[1] : null;
-  if (!boothID) {
-    console.error("Library: BOOTHID not found");
-    return;
+    // BOOTHID の取得：外側コンテナ内のアイテムリンクから抽出
+    const itemLink = outerContainer.querySelector('a[href*="/items/"]');
+    if (itemLink) {
+      const idMatch = itemLink.href.match(/\/items\/(\d+)/);
+      if (idMatch && idMatch[1]) {
+        boothID = idMatch[1];
+        itemUrl = itemLink.href;
+      } else {
+        console.warn("Library: BOOTHID not found in item link - using fallback data");
+      }
+    } else {
+      console.warn("Library: Item link not found - using fallback data");
+    }
+  } else {
+    console.warn("Library: Outer container not found - using fallback data");
   }
 
   const timestamp = formatDate(new Date());
@@ -66,7 +75,7 @@ document.addEventListener('click', function (e) {
     boothID: boothID,
     filename: fileName,
     timestamp: timestamp,
-    url: itemLink.href,
+    url: itemUrl,
     free: false
   };
 

@@ -37,24 +37,22 @@ document.addEventListener('click', function (e) {
   // この .legacy-list-item が属する .sheet を探す
   // → そのシート内のタイトルリンク (.u-tpg-title4 a.nav) を取得
   const sheet = downloadLink.closest('.sheet');
-  if (!sheet) {
-    console.error("Order: sheet not found");
-    return;
-  }
-  const productLink = sheet.querySelector('.u-tpg-title4 a.nav');
-  if (!productLink) {
-    console.error("Order: productLink (title link) not found");
-    return;
-  }
+  let title = "何らかの理由でデータを取得できませんでした。作者に報告してください。";
+  let boothID = "unknown";
+  let itemUrl = "https://forms.gle/otwhoXKzc5EQQDti8";
 
-  // タイトルと BOOTHID を取得
-  const title = productLink.textContent.trim();
-  const itemUrl = productLink.href;
-  const idMatch = itemUrl.match(/\/items\/(\d+)/);
-  const boothID = idMatch ? idMatch[1] : null;
-  if (!boothID) {
-    console.error("Order: BOOTHID not found in productLink.href:", itemUrl);
-    return;
+  if (sheet) {
+    const productLink = sheet.querySelector('b a.nav[href*="/items/"]');
+    if (productLink) {
+      title = productLink.textContent.trim();
+      itemUrl = productLink.href;
+      const idMatch = itemUrl.match(/\/items\/(\d+)/);
+      boothID = idMatch ? idMatch[1] : "unknown";
+    } else {
+      console.warn("Order: productLink (title link) not found - using fallback data");
+    }
+  } else {
+    console.warn("Order: sheet not found - using fallback data");
   }
 
   const timestamp = formatDate(new Date());
