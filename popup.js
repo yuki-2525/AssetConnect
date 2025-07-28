@@ -299,13 +299,16 @@ document.addEventListener('DOMContentLoaded', function () {
     Object.assign(btnContainer.style, STYLES.btnContainer);
     btnContainer.style.marginLeft = "10px";
 
-    // 未登録状態を確認（registeredが明示的にfalseの場合のみ）
-    const isUnregistered = group.entries.some(entry => entry.registered === false);
-    const avatarBtn = Helpers.createAssetButton("AvatarExplorer", "vrcae", "dir", group.entries, group.boothID, isUnregistered);
-    const konoBtn = Helpers.createAssetButton("KonoAsset", "konoasset", "path", group.entries, group.boothID, isUnregistered);
+    // boothIDが数字の場合のみボタンを表示
+    if (/^\d+$/.test(group.boothID)) {
+      // 未登録状態を確認（registeredが明示的にfalseの場合のみ）
+      const isUnregistered = group.entries.some(entry => entry.registered === false);
+      const AEBtn = Helpers.createAssetButton("AvatarExplorer", "vrcae", "dir", group.entries, group.boothID, isUnregistered);
+      const KABtn = Helpers.createAssetButton("KonoAsset", "konoasset", "path", group.entries, group.boothID, isUnregistered);
 
-    btnContainer.appendChild(avatarBtn);
-    btnContainer.appendChild(konoBtn);
+      btnContainer.appendChild(AEBtn);
+      btnContainer.appendChild(KABtn);
+    }
     infoLine.appendChild(fileListDiv);
     infoLine.appendChild(btnContainer);
 
@@ -325,13 +328,13 @@ document.addEventListener('DOMContentLoaded', function () {
     const btnContainer = document.createElement("div");
     Object.assign(btnContainer.style, STYLES.btnContainer);
 
-    if ((entry.filename || "").trim() !== "") {
+    if ((entry.filename || "").trim() !== "" && /^\d+$/.test(entry.boothID)) {
       // 未登録状態を確認（registeredが明示的にfalseの場合のみ）
       const isUnregistered = entry.registered === false;
-      const avatarBtn = Helpers.createAssetButton("AvatarExplorer", "vrcae", "dir", [entry], entry.boothID, isUnregistered);
-      const konoBtn = Helpers.createAssetButton("KonoAsset", "konoasset", "path", [entry], entry.boothID, isUnregistered);
-      btnContainer.appendChild(avatarBtn);
-      btnContainer.appendChild(konoBtn);
+      const AEBtn = Helpers.createAssetButton("AvatarExplorer", "vrcae", "dir", [entry], entry.boothID, isUnregistered);
+      const KABtn = Helpers.createAssetButton("KonoAsset", "konoasset", "path", [entry], entry.boothID, isUnregistered);
+      btnContainer.appendChild(AEBtn);
+      btnContainer.appendChild(KABtn);
     }
 
     infoLine.appendChild(infoText);
