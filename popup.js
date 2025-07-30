@@ -13,7 +13,10 @@ document.addEventListener('DOMContentLoaded', function () {
     btnImport: document.getElementById("btn-import"),
     btnClear: document.getElementById("btn-clear"),
     feedbackButton: document.getElementById("feedback-button"),
-    bulkRegisterToggle: document.getElementById("bulkRegisterToggle")
+    bulkRegisterToggle: document.getElementById("bulkRegisterToggle"),
+    updateHistoryBtn: document.getElementById("btn-update-history"),
+    updateHistoryModal: document.getElementById("update-history-modal"),
+    updateHistoryClose: document.querySelector("#update-history-modal .close")
   };
 
   // 共通のスタイル設定
@@ -23,6 +26,15 @@ document.addEventListener('DOMContentLoaded', function () {
       padding: "6px 12px",
       minWidth: "130px",
       cursor: "pointer"
+    },
+    unregisteredButton: {
+      fontSize: "1em",
+      padding: "6px 12px",
+      minWidth: "130px",
+      cursor: "pointer",
+      backgroundColor: "#FF8C00",  // ダークオレンジ
+      color: "white",
+      border: "1px solid #FF8C00",
     },
     entry: {
       display: "flex",
@@ -70,15 +82,15 @@ document.addEventListener('DOMContentLoaded', function () {
       alert(chrome.i18n.getMessage("saveFolderNotSet"));
     },
 
-    createButton(text, onClick) {
+    createButton(text, onClick, isUnregistered = false) {
       const button = document.createElement("button");
       button.textContent = text;
-      Object.assign(button.style, STYLES.button);
+      Object.assign(button.style, isUnregistered ? STYLES.unregisteredButton : STYLES.button);
       button.addEventListener("click", onClick);
       return button;
     },
 
-    createAssetButton(text, protocol, paramName, entries, boothID) {
+    createAssetButton(text, protocol, paramName, entries, boothID, isUnregistered = false) {
       return this.createButton(text, function (event) {
         event.stopPropagation();
         event.preventDefault();
@@ -92,9 +104,25 @@ document.addEventListener('DOMContentLoaded', function () {
             .map(entry => `${paramName}=${encodeURIComponent(path + "/" + entry.filename)}`)
             .join("&");
           const assetUrl = `${protocol}://addAsset?${pathParams}&id=${boothID}`;
-          window.location.href = assetUrl;
+
+          // 登録状態を更新
+          chrome.storage.local.get("downloadHistory", function (result) {
+            let history = result.downloadHistory || [];
+            entries.forEach(entry => {
+              const index = history.findIndex(h =>
+                h.boothID === entry.boothID &&
+                h.filename === entry.filename
+              );
+              if (index !== -1) {
+                history[index].registered = true;
+              }
+            });
+            chrome.storage.local.set({ downloadHistory: history }, function () {
+              window.location.href = assetUrl;
+            });
+          });
         });
-      });
+      }, isUnregistered);
     }
   };
 
@@ -271,11 +299,16 @@ document.addEventListener('DOMContentLoaded', function () {
     Object.assign(btnContainer.style, STYLES.btnContainer);
     btnContainer.style.marginLeft = "10px";
 
-    const avatarBtn = Helpers.createAssetButton("AvatarExplorer", "vrcae", "dir", group.entries, group.boothID);
-    const konoBtn = Helpers.createAssetButton("KonoAsset", "konoasset", "path", group.entries, group.boothID);
+    // boothIDが数字の場合のみボタンを表示
+    if (/^\d+$/.test(group.boothID)) {
+      // 未登録状態を確認（registeredが明示的にfalseの場合のみ）
+      const isUnregistered = group.entries.some(entry => entry.registered === false);
+      const AEBtn = Helpers.createAssetButton("AvatarExplorer", "vrcae", "dir", group.entries, group.boothID, isUnregistered);
+      const KABtn = Helpers.createAssetButton("KonoAsset", "konoasset", "path", group.entries, group.boothID, isUnregistered);
 
-    btnContainer.appendChild(avatarBtn);
-    btnContainer.appendChild(konoBtn);
+      btnContainer.appendChild(AEBtn);
+      btnContainer.appendChild(KABtn);
+    }
     infoLine.appendChild(fileListDiv);
     infoLine.appendChild(btnContainer);
 
@@ -295,11 +328,13 @@ document.addEventListener('DOMContentLoaded', function () {
     const btnContainer = document.createElement("div");
     Object.assign(btnContainer.style, STYLES.btnContainer);
 
-    if ((entry.filename || "").trim() !== "") {
-      const avatarBtn = Helpers.createAssetButton("AvatarExplorer", "vrcae", "dir", [entry], entry.boothID);
-      const konoBtn = Helpers.createAssetButton("KonoAsset", "konoasset", "path", [entry], entry.boothID);
-      btnContainer.appendChild(avatarBtn);
-      btnContainer.appendChild(konoBtn);
+    if ((entry.filename || "").trim() !== "" && /^\d+$/.test(entry.boothID)) {
+      // 未登録状態を確認（registeredが明示的にfalseの場合のみ）
+      const isUnregistered = entry.registered === false;
+      const AEBtn = Helpers.createAssetButton("AvatarExplorer", "vrcae", "dir", [entry], entry.boothID, isUnregistered);
+      const KABtn = Helpers.createAssetButton("KonoAsset", "konoasset", "path", [entry], entry.boothID, isUnregistered);
+      btnContainer.appendChild(AEBtn);
+      btnContainer.appendChild(KABtn);
     }
 
     infoLine.appendChild(infoText);
@@ -327,6 +362,56 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // 初期表示時の状態を反映
     ELEMENTS.bulkRegisterToggle.style.display = ELEMENTS.toggleGroup.checked ? 'flex' : 'none';
+
+    // アップデート履歴モーダルの制御
+    ELEMENTS.updateHistoryBtn.addEventListener("click", function () {
+      fetch(chrome.runtime.getURL('CHANGELOG.json'))
+        .then(response => response.json())
+        .then(data => {
+          const modalBody = document.querySelector('.modal-body');
+          modalBody.innerHTML = '';
+
+          data.versions.forEach(version => {
+            const entry = document.createElement('div');
+            entry.className = 'update-entry';
+
+            const title = document.createElement('h3');
+            title.textContent = `v${version.version}`;
+
+            const date = document.createElement('p');
+            date.textContent = version.date;
+
+            const changes = document.createElement('ul');
+            version.changes.forEach(change => {
+              const li = document.createElement('li');
+              li.textContent = change;
+              changes.appendChild(li);
+            });
+
+            entry.appendChild(title);
+            entry.appendChild(date);
+            entry.appendChild(changes);
+            modalBody.appendChild(entry);
+          });
+
+          ELEMENTS.updateHistoryModal.style.display = "block";
+        })
+        .catch(error => {
+          console.error('アップデート履歴の読み込みに失敗しました:', error);
+          alert('アップデート履歴の読み込みに失敗しました。');
+        });
+    });
+
+    ELEMENTS.updateHistoryClose.addEventListener("click", function () {
+      ELEMENTS.updateHistoryModal.style.display = "none";
+    });
+
+    // モーダル外をクリックしたら閉じる
+    window.addEventListener("click", function (event) {
+      if (event.target === ELEMENTS.updateHistoryModal) {
+        ELEMENTS.updateHistoryModal.style.display = "none";
+      }
+    });
   }
 
   // 初期化
@@ -393,7 +478,7 @@ document.addEventListener('DOMContentLoaded', function () {
       history.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
       // CSVヘッダー
-      const header = ['URL', 'timestamp', 'boothID', 'title', 'fileName', 'free'].map(Helpers.escapeCSV).join(',');
+      const header = ['URL', 'timestamp', 'boothID', 'title', 'fileName', 'free', 'registered'].map(Helpers.escapeCSV).join(',');
       const lines = [header];
 
       history.forEach(entry => {
@@ -414,7 +499,8 @@ document.addEventListener('DOMContentLoaded', function () {
           entry.boothID,
           entry.title,
           entry.filename,
-          entry.free
+          entry.free,
+          entry.registered === true ? "true" : (entry.registered === false ? "false" : "")  // registeredが未設定の場合は空文字列
         ].map(Helpers.escapeCSV).join(',');
         lines.push(line);
       });
@@ -455,12 +541,32 @@ document.addEventListener('DOMContentLoaded', function () {
   function importCSV(csvText) {
     const lines = csvText.split(/\r?\n/);
     if (lines.length === 0) return;
-    // ヘッダー判定: 1行目が "URL","timestamp","boothID","title","fileName","free" なら独自形式
+    // ヘッダー判定: 1行目が "URL","timestamp","boothID","title","fileName","free","registered" なら新形式
     let headerLine = lines[0].trim().replace(/^\uFEFF/, '');
     const headerColumns = headerLine.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(s => s.replace(/^"|"$/g, '').trim());
     let importedEntries = [];
-    if (headerColumns.join(',') === "URL,timestamp,boothID,title,fileName,free") {
-      // 新形式
+    if (headerColumns.join(',') === "URL,timestamp,boothID,title,fileName,free,registered") {
+      // v1.3.3以降の形式（registeredフラグを含む）
+      for (let i = 1; i < lines.length; i++) {
+        let line = lines[i].trim();
+        if (!line) continue;
+        const columns = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+        if (columns.length < 7) {
+          console.error("CSVインポート: カラム数不足", line);
+          continue;
+        }
+        const urlField = columns[0].replace(/^"|"$/g, '').trim();
+        const timestamp = columns[1].replace(/^"|"$/g, '').trim();
+        const boothID = columns[2].replace(/^"|"$/g, '').trim();
+        const title = columns[3].replace(/^"|"$/g, '').trim();
+        const fileName = columns[4].replace(/^"|"$/g, '').trim();
+        const free = columns[5].replace(/^"|"$/g, '').trim().toLowerCase() === "true";
+        const registeredValue = columns[6].replace(/^"|"$/g, '').trim();
+        const registered = registeredValue === "" ? undefined : registeredValue.toLowerCase() === "true";
+        importedEntries.push({ url: urlField, timestamp, boothID, title, filename: fileName, free, registered });
+      }
+    } else if (headerColumns.join(',') === "URL,timestamp,boothID,title,fileName,free") {
+      // v1.3.3以前の形式（registeredフラグなし）
       for (let i = 1; i < lines.length; i++) {
         let line = lines[i].trim();
         if (!line) continue;
@@ -474,12 +580,11 @@ document.addEventListener('DOMContentLoaded', function () {
         const boothID = columns[2].replace(/^"|"$/g, '').trim();
         const title = columns[3].replace(/^"|"$/g, '').trim();
         const fileName = columns[4].replace(/^"|"$/g, '').trim();
-        // free属性は新形式の場合も、CSV側の値をそのまま利用
         const free = columns[5].replace(/^"|"$/g, '').trim().toLowerCase() === "true";
         importedEntries.push({ url: urlField, timestamp, boothID, title, filename: fileName, free });
       }
     } else {
-      // 従来形式のCSVパース処理（改良版）
+      // "booth無料ダウンロード履歴"形式のCSVパース処理
       for (let i = 0; i < lines.length; i++) {
         let line = lines[i].trim();
         if (!line) continue;
