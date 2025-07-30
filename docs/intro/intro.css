@@ -1,0 +1,235 @@
+/* Intro page specific styles */
+
+.active {
+    background-color: #34495e !important;
+}
+
+.requirement-box {
+    background: white;
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    margin-top: 1rem;
+}
+
+.requirement-box h3 {
+    color: #2c3e50;
+    margin-bottom: 1rem;
+    border-bottom: 2px solid #667eea;
+    padding-bottom: 0.5rem;
+}
+
+.requirement-box ul {
+    list-style: none;
+    padding: 0;
+}
+
+.requirement-box li {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #eee;
+}
+
+.requirement-box li:last-child {
+    border-bottom: none;
+}
+
+.requirement-box strong {
+    color: #2c3e50;
+    display: inline-block;
+    width: 120px;
+}
+
+.install-method {
+    background: white;
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    margin-bottom: 2rem;
+}
+
+.install-method h3 {
+    color: #2c3e50;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #667eea;
+}
+
+.step-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+}
+
+.step {
+    display: flex;
+    align-items: flex-start;
+    gap: 1.5rem;
+    padding: 1.5rem;
+    border-left: 4px solid #667eea;
+    background: #f8f9ff;
+    border-radius: 0 10px 10px 0;
+}
+
+.step-number {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.step-content h4 {
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+    font-size: 1.2rem;
+}
+
+.step-content p {
+    color: #666;
+    margin-bottom: 1rem;
+    line-height: 1.6;
+}
+
+.code-block {
+    background: #2c3e50;
+    color: #fff;
+    padding: 1rem;
+    border-radius: 5px;
+    margin: 1rem 0;
+    font-family: 'Courier New', monospace;
+    overflow-x: auto;
+}
+
+.code-block code {
+    background: none;
+    color: #fff;
+    font-size: 0.9rem;
+}
+
+.path-example {
+    background: #e8f4fd;
+    border-left: 4px solid #3498db;
+    padding: 1rem;
+    margin: 1rem 0;
+    border-radius: 0 5px 5px 0;
+    font-family: 'Courier New', monospace;
+    color: #2c3e50;
+}
+
+.setup-section {
+    background: white;
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    margin-bottom: 2rem;
+}
+
+.setup-section h3 {
+    color: #2c3e50;
+    margin-bottom: 1.5rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #667eea;
+}
+
+.image-placeholder {
+    background: linear-gradient(135deg, #ffeaa7 0%, #fab1a0 100%);
+    border: 2px dashed #e17055;
+    border-radius: 10px;
+    padding: 1rem;
+    margin: 1rem 0;
+    text-align: center;
+    color: #2d3436;
+    font-style: italic;
+}
+
+.image-placeholder p {
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+.troubleshoot-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+}
+
+.troubleshoot-item {
+    background: white;
+    padding: 2rem;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    border-left: 4px solid #e74c3c;
+}
+
+.troubleshoot-item h3 {
+    color: #e74c3c;
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+}
+
+.troubleshoot-item ul {
+    list-style: none;
+    padding: 0;
+}
+
+.troubleshoot-item li {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #eee;
+    color: #666;
+    position: relative;
+    padding-left: 1.5rem;
+}
+
+.troubleshoot-item li:before {
+    content: "→";
+    position: absolute;
+    left: 0;
+    color: #e74c3c;
+    font-weight: bold;
+}
+
+.troubleshoot-item li:last-child {
+    border-bottom: none;
+}
+
+#next-steps {
+    text-align: center;
+    background: white;
+    padding: 3rem 2rem;
+    border-radius: 10px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+
+#next-steps p {
+    font-size: 1.1rem;
+    color: #666;
+    margin-bottom: 2rem;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .step {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .step-number {
+        align-self: center;
+    }
+    
+    .install-method,
+    .setup-section {
+        padding: 1rem;
+    }
+    
+    .troubleshoot-grid {
+        grid-template-columns: 1fr;
+    }
+}
