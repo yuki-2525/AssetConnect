@@ -60,7 +60,8 @@ document.addEventListener('click', function (e) {
     filename: fileName,
     timestamp: timestamp,
     url: itemUrl,
-    free: true
+    free: true,
+    registered: false
   };
 
   // 既存の "downloadHistory" に同一 BOOTHID & filename があれば除外して追加
