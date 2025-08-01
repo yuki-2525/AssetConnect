@@ -1,64 +1,5 @@
 {
   "manifest_version": 3,
-  "name": "BOOTH Download Log",
-  "version": "1.3.5",
-  "default_locale": "ja",
-  "description": "__MSG_description__",
-  "permissions": [
-    "downloads",
-    "storage",
-    "unlimitedStorage"
-  ],
-  "host_permissions": [
-    "*://*.booth.pm/*"
-  ],
-  "action": {
-    "default_popup": "popup.html"
-  },
-  "icons": {
-    "16": "icon/icon16.png",
-    "48": "icon/icon48.png",
-    "128": "icon/icon128.png"
-  },
-  "content_scripts": [
-    {
-      "matches": [
-        "https://accounts.booth.pm/library*"
-      ],
-      "js": [
-        "booth_library.js"
-      ]
-    },
-    {
-      "matches": [
-        "https://*.booth.pm/items/*",
-        "https://booth.pm/*/items/*",
-        "https://booth.pm/items/*"
-      ],
-      "js": [
-        "booth_shoppage.js"
-      ]
-    },
-    {
-      "matches": [
-        "https://accounts.booth.pm/orders/*"
-      ],
-      "js": [
-        "booth_order.js"
-      ]
-    },
-    {
-      "matches": [
-        "https://booth.pm/gifts/*"
-      ],
-      "js": [
-        "booth_gift.js"
-      ]
-    }
-  ]
-=======
-{
-  "manifest_version": 3,
   "name": "AssetConnect",
   "version": "1.4.0",
   "default_locale": "ja",
@@ -66,7 +7,9 @@
   "permissions": [
     "downloads",
     "storage",
-    "unlimitedStorage"
+    "unlimitedStorage",
+    "activeTab",
+    "contextMenus"
   ],
   "host_permissions": [
     "*://*.booth.pm/*"
@@ -79,13 +22,16 @@
     "48": "icon/icon48.png",
     "128": "icon/icon128.png"
   },
+  "background": {
+    "service_worker": "background/background.js"
+  },
   "content_scripts": [
     {
       "matches": [
         "https://accounts.booth.pm/library*"
       ],
       "js": [
-        "booth_library.js"
+        "download-log/booth_library.js"
       ]
     },
     {
@@ -95,15 +41,35 @@
         "https://booth.pm/items/*"
       ],
       "js": [
-        "booth_shoppage.js"
+        "download-log/booth_shoppage.js"
       ]
+    },
+    {
+      "matches": [
+        "https://*.booth.pm/items/*",
+        "https://booth.pm/*/items/*"
+      ],
+      "js": [
+        "shared/debug-logger.js",
+        "shared/error-handler.js", 
+        "avatar-clipboard/utils/storage-manager.js",
+        "avatar-clipboard/utils/ui-manager.js",
+        "avatar-clipboard/utils/booth-json-client.js",
+        "avatar-clipboard/utils/page-parser.js",
+        "avatar-clipboard/utils/clipboard-manager.js",
+        "avatar-clipboard/booth_item_management.js"
+      ],
+      "css": [
+        "avatar-clipboard/styles/item_management.css"
+      ],
+      "run_at": "document_idle"
     },
     {
       "matches": [
         "https://accounts.booth.pm/orders/*"
       ],
       "js": [
-        "booth_order.js"
+        "download-log/booth_order.js"
       ]
     },
     {
@@ -111,8 +77,14 @@
         "https://booth.pm/gifts/*"
       ],
       "js": [
-        "booth_gift.js"
+        "download-log/booth_gift.js"
       ]
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": ["avatar-clipboard/styles/*", "storage-management/storage-overview.html", "storage-management/storage-overview.js", "storage-management/import.html", "storage-management/import.js"],
+      "matches": ["*://*.booth.pm/*", "*://booth.pm/*"]
     }
   ]
 }
