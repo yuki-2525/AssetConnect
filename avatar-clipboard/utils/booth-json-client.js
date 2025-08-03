@@ -1,14 +1,23 @@
+/**
+ * BOOTHアイテムの情報をJSON API経由で取得するクライアントクラス
+ * アイテムURLをJSON API URLに変換し、アイテム名や情報を取得する
+ */
 class BoothJsonClient {
   constructor() {
-    this.baseUrl = 'https://booth.pm';
+    this.baseUrl = 'https://booth.pm'; // BOOTHのベースURL
   }
 
+  /**
+   * 指定したアイテムURLからアイテムデータを取得する
+   * @param {string} itemUrl - BOOTHアイテムのURL
+   * @returns {Promise<Object>} 取得結果（success, name, errorなど）
+   */
   async fetchItemData(itemUrl) {
     try {
       const jsonUrl = this.convertToJsonUrl(itemUrl);
       window.debugLogger?.log('Fetching JSON from:', jsonUrl);
       
-      // Try direct fetch first
+      // まず直接フェッチを試行
       let response;
       try {
         response = await fetch(jsonUrl, {
@@ -23,7 +32,7 @@ class BoothJsonClient {
       } catch (fetchError) {
         window.debugLogger?.log('Direct fetch failed, will try background script:', fetchError.message);
         
-        // Check if this is a CORS-related error that should not be reported as an error
+        // エラーとして報告すべきでないCORS関連エラーかどうかをチェック
         const isCorsError = this.isCorsRelatedError(fetchError.message);
         
         return {
@@ -50,7 +59,7 @@ class BoothJsonClient {
       return this.processJsonResponse(jsonData);
 
     } catch (error) {
-      // Only report to error handler if it's not a CORS-related error
+      // CORS関連エラーでない場合のみエラーハンドラーに報告
       const isCorsError = this.isCorsRelatedError(error.message);
       if (!isCorsError) {
         window.errorHandler?.handleNetworkError(error, itemUrl, 'GET');
@@ -60,10 +69,10 @@ class BoothJsonClient {
   }
 
   convertToJsonUrl(itemUrl) {
-    // Extract item ID from various BOOTH URL formats
+    // さまざまなBOOTH URLフォーマットからアイテムIDを抽出
     const itemId = this.extractItemId(itemUrl);
     if (!itemId) {
-      // Fallback to original URL + .json if ID extraction fails
+      // ID抽出に失敗した場合は元のURL + .jsonにフォールバック
       if (itemUrl.endsWith('.json')) {
         return itemUrl;
       }
@@ -73,12 +82,12 @@ class BoothJsonClient {
       return itemUrl + '.json';
     }
     
-    // Always use the standardized booth.pm/ja/items/(id).json format
+    // 常に標準化されたbooth.pm/ja/items/(id).jsonフォーマットを使用
     return `https://booth.pm/ja/items/${itemId}.json`;
   }
 
   extractItemId(itemUrl) {
-    // Match various BOOTH URL patterns
+    // さまざまなBOOTH URLパターンにマッチ
     const patterns = [
       /https?:\/\/(?:[\w-]+\.)?booth\.pm\/(?:[\w-]+\/)?items\/(\d+)/,
       /https?:\/\/booth\.pm\/(?:[\w-]+\/)?items\/(\d+)/
@@ -142,7 +151,7 @@ class BoothJsonClient {
       timestamp: new Date().toISOString()
     };
 
-    // Check for common CORS/network errors that require background fetch
+    // バックグラウンドフェッチが必要な一般的なCORS/ネットワークエラーをチェック
     const corsIndicators = [
       'CORS',
       'Failed to fetch',
@@ -182,23 +191,5 @@ class BoothJsonClient {
     return corsIndicators.some(indicator => 
       errorMessage.includes(indicator)
     );
-  }
-
-  async testConnection() {
-    try {
-      const testUrl = 'https://booth.pm/items/1.json';
-      const response = await fetch(testUrl, { method: 'HEAD' });
-      return {
-        success: response.ok,
-        status: response.status,
-        available: true
-      };
-    } catch (error) {
-      return {
-        success: false,
-        error: error.message,
-        available: false
-      };
-    }
   }
 }

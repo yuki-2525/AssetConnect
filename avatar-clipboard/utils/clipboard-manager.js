@@ -1,15 +1,25 @@
+/**
+ * クリップボード操作とアイテムエクスポート機能を管理するクラス
+ */
 class ClipboardManager {
   constructor() {
+    // サポートされるクリップボードフォーマット
     this.supportedFormats = {
-      'plain': 'text/plain',
-      'html': 'text/html'
+      'plain': 'text/plain', // プレーンテキスト
+      'html': 'text/html'     // HTMLフォーマット
     };
   }
 
+  /**
+   * テキストをクリップボードにコピーする
+   * @param {string} text - コピーするテキスト
+   * @param {string} format - フォーマット ('plain' または 'html')
+   * @returns {Promise<Object>} コピー結果
+   */
   async copyToClipboard(text, format = 'plain') {
     try {
       if (!navigator.clipboard) {
-        // Fallback for older browsers
+        // 古いブラウザ用のフォールバック
         return await this.fallbackCopyToClipboard(text);
       }
 
@@ -125,12 +135,18 @@ class ClipboardManager {
     } catch (error) {
       // console.log('Permissions API not supported:', error);
       return {
-        granted: true, // Assume granted if can't check
+        granted: true, // チェックできない場合は許可されていると仮定
         state: 'unknown'
       };
     }
   }
 
+  /**
+   * 保存済み・新規アイテムをクリップボードにエクスポートする
+   * 現在のページに存在するアイテムのみを対象とする
+   * @param {StorageManager} storageManager - ストレージマネージャー
+   * @returns {Promise<Object>} エクスポート結果
+   */
   async exportSavedAndNewItems(storageManager) {
     try {
       const currentItemId = window.uiManager?.currentItemId;
@@ -141,9 +157,32 @@ class ClipboardManager {
         };
       }
       
-      const pageItems = await storageManager.getItemsForCurrentPage(currentItemId);
+      const allItems = await storageManager.getAllItems();
       
-      // Get saved items (all pages) and unsaved items (current page only) for clipboard export
+      // 現在のページに存在するアイテムのみを取得
+      const pageParser = window.pageParser || new PageParser();
+      const { parseResult } = await pageParser.fetchItemsFromPage();
+      const pageItemIds = new Set();
+      
+      // 現在のページのアイテムIDが存在する場合は追加
+      if (currentItemId) {
+        pageItemIds.add(currentItemId);
+      }
+      
+      // ページで見つかった全アイテムを追加
+      parseResult.externalItems.forEach(item => {
+        pageItemIds.add(item.itemId);
+      });
+      
+      // 現在のページに存在するアイテムのみにフィルタリング
+      const pageItems = {};
+      Object.entries(allItems).forEach(([itemId, item]) => {
+        if (pageItemIds.has(itemId)) {
+          pageItems[itemId] = item;
+        }
+      });
+      
+      // 現在のページに存在する保存済み・未保存アイテムのみを取得
       const savedItems = Object.values(pageItems).filter(item => item.category === 'saved');
       const newItems = Object.values(pageItems).filter(item => item.category === 'unsaved');
       const excludedItems = Object.values(pageItems).filter(item => item.category === 'excluded');
@@ -157,14 +196,14 @@ class ClipboardManager {
         };
       }
 
-      // Format items as list (names only, separated by newlines)
+      // アイテムをリスト形式（名前のみ、改行区切り）でフォーマット
       const formattedText = this.formatItemsForExport(exportItems, 'list');
       const result = await this.copyToClipboard(formattedText);
       
       if (result.success) {
         result.itemCount = exportItems.length;
         
-        // Process post-export actions (only for current page items)
+        // エクスポート後の処理を実行（現在のページのアイテムのみ）
         const persistResult = await this.processPostExportActions(storageManager, newItems, excludedItems, currentItemId);
         result.persistenceResult = persistResult;
         
@@ -206,7 +245,7 @@ class ClipboardManager {
         result.itemCount = categoryItems.length;
         result.category = category;
         
-        // Persist data after successful export
+        // 成功のエクスポート後にデータを永続化
         if (persistAfterExport) {
           const persistResult = await this.persistExportedItems(storageManager, categoryItems, category);
           result.persistenceResult = persistResult;
@@ -242,7 +281,7 @@ class ClipboardManager {
             category: 'saved',
             lastExported: timestamp,
             exportCount: (item.exportCount || 0) + 1,
-            currentPageId: undefined // Remove currentPageId when moving to saved
+            currentPageId: undefined // 保存済みに移動する際にcurrentPageIdを削除
           };
 
           const success = await storageManager.updateItem(item.id, updateData);
@@ -275,7 +314,7 @@ class ClipboardManager {
       // 3. Delete all editing items from other pages (not current page)
       const allItems = await storageManager.getAllItems();
       for (const [itemId, item] of Object.entries(allItems)) {
-        // Delete editing items that belong to other pages
+        // 他のページに属する編集中アイテムを削除
         if ((item.category === 'unsaved' || item.category === 'excluded') && 
             item.currentPageId && item.currentPageId !== currentPageId) {
           try {
@@ -319,7 +358,7 @@ class ClipboardManager {
       let successCount = 0;
       let failedItems = [];
 
-      // Update each exported item with export metadata
+      // エクスポートされた各アイテムをエクスポートメタデータで更新
       for (const item of exportedItems) {
         try {
           const updateData = {
@@ -328,19 +367,19 @@ class ClipboardManager {
             exportCount: (item.exportCount || 0) + 1
           };
 
-          // Handle different categories according to new specifications
+          // 新しい仕様に従って異なるカテゴリを処理
           if (category === 'unsaved') {
-            // New items: move to saved when exported
+            // 新規アイテム: エクスポート時に保存済みに移動
             updateData.category = 'saved';
             updateData.previousCategory = category;
           } else if (category === 'excluded') {
-            // Excluded items: don't save, and delete if exists in saved
+            // 除外アイテム: 保存せず、保存済みに存在する場合は削除
             updateData.shouldDelete = true;
           }
-          // Saved items: just update export metadata
+          // 保存済みアイテム: エクスポートメタデータのみ更新
 
           if (updateData.shouldDelete) {
-            // Delete excluded items from storage
+            // 除外アイテムをストレージから削除
             const success = await storageManager.deleteItem(item.id);
             if (success) {
               successCount++;
@@ -348,7 +387,7 @@ class ClipboardManager {
               failedItems.push(item.id);
             }
           } else {
-            // Update item normally
+            // アイテムを通常更新
             const success = await storageManager.updateItem(item.id, updateData);
             if (success) {
               successCount++;

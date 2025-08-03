@@ -1,26 +1,35 @@
+/**
+ * BOOTHアイテムページからアイテムURLを抽出・解析するクラス
+ * ページ内のテキストやリンクからBOOTHアイテムのURLを検出し、アイテムIDを抽出する
+ */
 class PageParser {
   constructor() {
+    // BOOTHアイテムURLのマッチングパターン
     this.boothUrlPatterns = [
-      /https?:\/\/(?:[\w-]+\.)?booth\.pm\/(?:[\w-]+\/)?items\/(\d+)/g,
-      /https?:\/\/booth\.pm\/(?:[\w-]+\/)?items\/(\d+)/g
+      /https?:\/\/(?:[\w-]+\.)?booth\.pm\/(?:[\w-]+\/)?items\/(\d+)/g, // サブドメイン対応
+      /https?:\/\/booth\.pm\/(?:[\w-]+\/)?items\/(\d+)/g                // メインドメイン
     ];
   }
 
+  /**
+   * ページからBOOTHアイテムURLを抽出する
+   * @returns {Array} 見つかったアイテムURLの配列
+   */
   extractBoothItemUrls() {
     const foundUrls = new Map();
     
-    // Determine target selector based on URL pattern
+    // URLパターンに基づいてターゲットセレクタを決定
     const currentUrl = window.location.href;
     let targetSelector;
     
     if (currentUrl.match(/^https?:\/\/booth\.pm\/.*\/items\/\d+/)) {
-      // booth.pm/*/items/(id) pattern: use div.u-pt-600.flex
+      // booth.pm/*/items/(id) パターン: div.u-pt-600.flexを使用
       targetSelector = 'div.u-pt-600.flex';
     } else if (currentUrl.match(/^https?:\/\/.*\.booth\.pm\/items\/\d+/)) {
-      // *.booth.pm/items/(id) pattern: use div.main-info-column
+      // *.booth.pm/items/(id) パターン: div.main-info-columnを使用
       targetSelector = 'div.main-info-column';
     } else {
-      // Default fallback
+      // デフォルトフォールバック
       targetSelector = 'div.main-info-column';
     }
     
@@ -34,7 +43,7 @@ class PageParser {
 
     window.debugLogger?.log('Found target section, searching for BOOTH URLs...');
 
-    // Get text content from the target section
+    // ターゲットセクションからテキストコンテンツを取得
     const text = targetSection.textContent || targetSection.innerText || '';
     const urls = this.findBoothUrlsInText(text);
     
@@ -48,7 +57,7 @@ class PageParser {
       }
     });
 
-    // Also check href attributes in links within the target section
+    // ターゲットセクション内のリンクのhref属性もチェック
     const linkElements = targetSection.querySelectorAll('a[href*="booth.pm"]');
     linkElements.forEach(link => {
       const href = link.href;
@@ -69,7 +78,7 @@ class PageParser {
     return Array.from(foundUrls.values());
   }
 
-  // These methods are no longer used since we only search in the target div
+  // ターゲットdiv内でのみ検索するようになったため、これらのメソッドは使用されなくなった
   getDescriptionElements() {
     return [];
   }
@@ -107,7 +116,7 @@ class PageParser {
   }
 
   cleanUrl(url) {
-    // Remove query parameters and fragments for cleaner URLs
+    // よりクリーンなURLのためにクエリパラメータとフラグメントを削除
     try {
       const urlObj = new URL(url);
       return `${urlObj.protocol}//${urlObj.host}${urlObj.pathname}`;
@@ -122,7 +131,7 @@ class PageParser {
     const foundItems = this.extractBoothItemUrls();
     window.debugLogger?.log(`Found ${foundItems.length} BOOTH item URLs on page`);
     
-    // Filter out the current page's item if we're on a BOOTH page
+    // BOOTHページにいる場合は現在のページのアイテムをフィルタリングで除外
     const currentUrl = window.location.href;
     const currentItemId = this.getCurrentPageItemId();
     

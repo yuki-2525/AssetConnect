@@ -1,33 +1,44 @@
+/**
+ * 対応アバター一括コピー機能のUI管理を行うクラス
+ * 管理ウィンドウの表示、アイテムの追加・編集・削除、通知表示などを管理
+ */
 class UIManager {
   constructor() {
-    this.managementWindow = null;
-    this.windowId = 'booth-clipboard-manager';
-    this.nameEditTimeouts = new Map(); // デバウンス用タイマー管理
-    this.currentItemId = null; // 現在表示中の商品ID
-    this.initializeCurrentItemId(); // 商品ID取得
+    this.managementWindow = null;                // 管理ウィンドウのDOM要素
+    this.windowId = 'booth-clipboard-manager';   // ウィンドウのID
+    this.nameEditTimeouts = new Map();          // デバウンス用タイマー管理
+    this.currentItemId = null;                  // 現在表示中の商品ID
+    this.initializeCurrentItemId();             // 商品ID取得
   }
 
+  /**
+   * 現在のページURLからBOOTH商品IDを取得して初期化
+   */
   initializeCurrentItemId() {
-    // URLから商品IDを取得
+    // URLから商品IDを取得するための正規表現パターン
     const urlPatterns = [
-      /^https?:\/\/.*\.booth\.pm\/items\/(\d+)/,
-      /^https?:\/\/booth\.pm\/.*\/items\/(\d+)/
+      /^https?:\/\/.*\.booth\.pm\/items\/(\d+)/, // サブドメイン形式
+      /^https?:\/\/booth\.pm\/.*\/items\/(\d+)/   // パス形式
     ];
     
     const url = window.location.href;
     for (const pattern of urlPatterns) {
       const match = url.match(pattern);
       if (match) {
-        this.currentItemId = match[1];
+        this.currentItemId = match[1]; // マッチした最初のキャプチャグループ（商品ID）
         break;
       }
     }
   }
 
 
+  /**
+   * 管理ウィンドウを作成し、DOMに追加する
+   * @returns {HTMLElement} 作成された管理ウィンドウの要素
+   */
   createManagementWindow() {
     if (this.managementWindow) {
-      return this.managementWindow;
+      return this.managementWindow; // 既に存在する場合はそのまま返す
     }
 
     const windowContainer = document.createElement('div');
@@ -101,7 +112,7 @@ class UIManager {
     manualAddToggleBtn.addEventListener('click', () => this.showManualAddModal());
 
 
-    // Section toggle functionality
+    // セクショントグル機能
     const sectionHeaders = container.querySelectorAll('.booth-section-header');
     sectionHeaders.forEach(header => {
       header.addEventListener('click', () => this.handleSectionToggle(header));
@@ -132,12 +143,12 @@ class UIManager {
         messageEl.textContent = `ページ内に${remainingItems.length}個のBOOTHアイテムが見つかりました!!`;
       }
       
-      // Hide notification if no items left
+      // アイテムが残っていない場合は通知を非表示
       if (remainingItems.length === 0) {
         this.hideNotification();
       }
       
-      // Dispatch event to update the items list in content script
+      // コンテンツスクリプトのアイテムリストを更新するイベントを発行
       const event = new CustomEvent('boothItemRemoved', {
         detail: { itemId: itemId }
       });
@@ -756,6 +767,7 @@ class UIManager {
       if (itemsList && countElement) {
         const itemCount = itemsList.querySelectorAll('.booth-item').length;
         countElement.textContent = itemCount;
+        window.debugLogger?.log(`UIManager: Updated ${sectionId} count to ${itemCount}`);
       }
     });
   }
@@ -768,15 +780,15 @@ class UIManager {
     itemEl.className = 'booth-item';
     itemEl.setAttribute('data-item-id', itemData.id);
     
-    // Generate buttons based on current category
+    // 現在のカテゴリに基づいてボタンを生成
     let buttonsHtml = '';
     if (sectionId === 'excluded') {
-      // Excluded items: show restore button
+      // 除外アイテム: 復元ボタンを表示
       buttonsHtml = `
         <button class="booth-restore-btn" data-original-category="${itemData.previousCategory || 'unsaved'}">戻す</button>
       `;
     } else {
-      // Saved and new items: show only exclude button (×)
+      // 保存済み・新規アイテム: 除外ボタン（×）のみ表示
       buttonsHtml = `
         <button class="booth-exclude-btn" data-target="excluded">×</button>
       `;
@@ -817,11 +829,31 @@ class UIManager {
         }
       });
 
-      // Reload items for current page only
+      // Get all items and items found on current page
       const pageItems = await storageManager.getItemsForCurrentPage(this.currentItemId);
+      const pageParser = window.pageParser || new PageParser();
+      const { parseResult } = await pageParser.fetchItemsFromPage();
+      const pageItemIds = new Set();
+      
+      // Add current page item ID if exists
+      if (this.currentItemId) {
+        pageItemIds.add(this.currentItemId);
+      }
+      
+      // Add all items found on page
+      parseResult.externalItems.forEach(item => {
+        pageItemIds.add(item.itemId);
+      });
+      
+      window.debugLogger?.log('RefreshItemDisplay: Items found on current page:', Array.from(pageItemIds));
+      
+      // Display only items that exist on the current page
       Object.values(pageItems).forEach(item => {
-        const category = item.category || 'unsaved';
-        this.addItemToSection(category, item);
+        if (pageItemIds.has(item.id)) {
+          const category = item.category || 'unsaved';
+          this.addItemToSection(category, item);
+          window.debugLogger?.log(`RefreshItemDisplay: Added item ${item.id} to ${category} category`);
+        }
       });
 
       // console.log('Item display refreshed for current page');

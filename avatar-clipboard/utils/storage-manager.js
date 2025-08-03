@@ -1,27 +1,35 @@
+/**
+ * BOOTHアイテムのストレージ管理を行うクラス
+ * Chromeのlocal storageを使用してアイテム情報を保存・管理する
+ */
 class StorageManager {
   constructor() {
-    this.storageKey = 'boothItems';
-    this.downloadHistoryKey = 'downloadHistory'; // AssetConnect compatibility
+    this.storageKey = 'boothItems'; // ストレージキー
   }
 
+  /**
+   * アイテムをストレージに保存する
+   * @param {string} itemId - アイテムID
+   * @param {Object} itemData - アイテムデータ
+   * @returns {Promise<boolean>} 保存成功時true
+   */
   async saveItem(itemId, itemData) {
     try {
       const existingData = await this.getAllItems();
       
-      // Build minimal item data
+      // 最小限のアイテムデータを構築
       const minimalItem = {
         id: itemId,
         name: itemData.name,
         category: itemData.category || 'unsaved'
       };
       
-      // Add currentPageId for editing items (unsaved/excluded)
+      // 編集中アイテム（未保存/除外）にcurrentPageIdを追加
       if (itemData.currentPageId && (minimalItem.category === 'unsaved' || minimalItem.category === 'excluded')) {
         minimalItem.currentPageId = itemData.currentPageId;
       }
       
-      
-      // Add previousCategory only for excluded items
+      // 除外アイテムのみにpreviousCategoryを追加
       if (minimalItem.category === 'excluded' && itemData.previousCategory) {
         minimalItem.previousCategory = itemData.previousCategory;
       }
@@ -30,11 +38,6 @@ class StorageManager {
       
       await chrome.storage.local.set({ [this.storageKey]: existingData });
       
-      // Also add to AssetConnect download history if saved
-      if (minimalItem.category === 'saved') {
-        await this.addToDownloadHistory(itemData);
-      }
-      
       return true;
     } catch (error) {
       window.errorHandler?.handleStorageError(error, 'save', itemId);
@@ -42,42 +45,12 @@ class StorageManager {
     }
   }
 
-  async addToDownloadHistory(itemData) {
-    try {
-      const history = await this.getDownloadHistory();
-      
-      const historyEntry = {
-        title: itemData.name,
-        boothID: itemData.id,
-        filename: '', // No specific file for item management
-        timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19),
-        url: `https://booth.pm/ja/items/${itemData.id}`,
-        free: true, // Assume free items for now
-        registered: false // Not registered to external tools yet
-      };
-      
-      // Remove duplicates based on boothID
-      const filteredHistory = history.filter(entry => entry.boothID !== itemData.id);
-      filteredHistory.push(historyEntry);
-      
-      await chrome.storage.local.set({ [this.downloadHistoryKey]: filteredHistory });
-      return true;
-    } catch (error) {
-      window.errorHandler?.handleStorageError(error, 'addToDownloadHistory', itemData.id);
-      return false;
-    }
-  }
 
-  async getDownloadHistory() {
-    try {
-      const data = await chrome.storage.local.get(this.downloadHistoryKey);
-      return data[this.downloadHistoryKey] || [];
-    } catch (error) {
-      window.errorHandler?.handleStorageError(error, 'getDownloadHistory');
-      return [];
-    }
-  }
-
+  /**
+   * 指定したアイテムIDのアイテムを取得する
+   * @param {string} itemId - アイテムID
+   * @returns {Promise<Object|null>} アイテムデータ、見つからない場合はnull
+   */
   async getItem(itemId) {
     try {
       const data = await chrome.storage.local.get(this.storageKey);
@@ -89,6 +62,10 @@ class StorageManager {
     }
   }
 
+  /**
+   * 全てのアイテムを取得する
+   * @returns {Promise<Object>} 全アイテムのオブジェクト（キー: アイテムID）
+   */
   async getAllItems() {
     try {
       const data = await chrome.storage.local.get(this.storageKey);
@@ -99,25 +76,31 @@ class StorageManager {
     }
   }
 
+  /**
+   * 指定したアイテムを更新する、存在しない場合は新規作成
+   * @param {string} itemId - アイテムID
+   * @param {Object} updateData - 更新データ
+   * @returns {Promise<boolean>} 更新成功時true
+   */
   async updateItem(itemId, updateData) {
     try {
       const existingItem = await this.getItem(itemId);
       
       if (!existingItem) {
-        // Create new item if it doesn't exist (e.g., for exclusions)
+        // 存在しない場合は新規アイテムを作成（例: 除外処理用）
         const newItem = {
           id: itemId,
           name: updateData.name || '',
           category: updateData.category || 'unsaved'
         };
         
-        // Add currentPageId for editing items (unsaved/excluded)
+        // 編集中アイテム（未保存/除外）にcurrentPageIdを追加
         if (updateData.currentPageId && (newItem.category === 'unsaved' || newItem.category === 'excluded')) {
           newItem.currentPageId = updateData.currentPageId;
         }
         
         
-        // Add previousCategory only for excluded items
+        // 除外アイテムのみにpreviousCategoryを追加
         if (newItem.category === 'excluded' && updateData.previousCategory) {
           newItem.previousCategory = updateData.previousCategory;
         }
@@ -126,22 +109,17 @@ class StorageManager {
         allItems[itemId] = newItem;
         await chrome.storage.local.set({ [this.storageKey]: allItems });
         
-        // Add to download history if saved
-        if (newItem.category === 'saved') {
-          await this.addToDownloadHistory(newItem);
-        }
-        
         return true;
       }
 
-      // Update existing item with minimal fields
+      // 最小限のフィールドで既存アイテムを更新
       const updatedItem = {
         id: itemId,
         name: updateData.name !== undefined ? updateData.name : existingItem.name,
         category: updateData.category !== undefined ? updateData.category : existingItem.category
       };
       
-      // Handle currentPageId for editing items
+      // 編集中アイテムのcurrentPageIdを処理
       if (updatedItem.category === 'unsaved' || updatedItem.category === 'excluded') {
         if (updateData.currentPageId !== undefined) {
           updatedItem.currentPageId = updateData.currentPageId;
@@ -149,30 +127,25 @@ class StorageManager {
           updatedItem.currentPageId = existingItem.currentPageId;
         }
       }
-      // Remove currentPageId when moving to saved category
+      // 保存済みカテゴリに移動する際にcurrentPageIdを削除
       else if (updatedItem.category === 'saved') {
-        // currentPageId is automatically omitted for saved items
+        // 保存済みアイテムのcurrentPageIdは自動的に省略される
       }
       
       
-      // Handle previousCategory logic
+      // previousCategoryロジックを処理
       if (updatedItem.category === 'excluded') {
         updatedItem.previousCategory = updateData.previousCategory || existingItem.previousCategory;
       }
-      // Remove previousCategory when moving to saved category
+      // 保存済みカテゴリに移動する際にpreviousCategoryを削除
       else if (updatedItem.category === 'saved' && existingItem.previousCategory) {
-        // previousCategory is automatically omitted for saved items
+        // 保存済みアイテムのpreviousCategoryは自動的に省略される
       }
 
       const allItems = await this.getAllItems();
       allItems[itemId] = updatedItem;
       
       await chrome.storage.local.set({ [this.storageKey]: allItems });
-      
-      // Add to download history if category changed to saved
-      if (updateData.category === 'saved' && existingItem.category !== 'saved') {
-        await this.addToDownloadHistory(updatedItem);
-      }
       
       return true;
     } catch (error) {
@@ -181,6 +154,11 @@ class StorageManager {
     }
   }
 
+  /**
+   * 指定したアイテムを削除する
+   * @param {string} itemId - 削除するアイテムID
+   * @returns {Promise<boolean>} 削除成功時true
+   */
   async deleteItem(itemId) {
     try {
       const allItems = await this.getAllItems();
@@ -194,22 +172,33 @@ class StorageManager {
     }
   }
 
+  /**
+   * 指定したアイテムが存在するかどうかをチェック
+   * @param {string} itemId - チェックするアイテムID
+   * @returns {Promise<boolean>} 存在する場合true
+   */
   async hasItem(itemId) {
     const item = await this.getItem(itemId);
     return item !== null;
   }
 
+  /**
+   * 現在のページに関連するアイテムを取得する
+   * 保存済みアイテムは全て、編集中アイテムは現在のページのもののみを返す
+   * @param {string} currentPageId - 現在のページID
+   * @returns {Promise<Object>} ページ関連アイテムのオブジェクト
+   */
   async getItemsForCurrentPage(currentPageId) {
     try {
       const allItems = await this.getAllItems();
       const pageItems = {};
       
       Object.entries(allItems).forEach(([itemId, item]) => {
-        // Include saved items (no currentPageId restriction)
+        // 保存済みアイテムを含める（currentPageId制限なし）
         if (item.category === 'saved') {
           pageItems[itemId] = item;
         }
-        // Include editing items (unsaved/excluded) only if they match current page
+        // 編集中アイテム（未保存/除外）は現在のページのもののみ含める
         else if ((item.category === 'unsaved' || item.category === 'excluded') && 
                  item.currentPageId === currentPageId) {
           pageItems[itemId] = item;
@@ -223,6 +212,10 @@ class StorageManager {
     }
   }
 
+  /**
+   * 全てのアイテムをストレージから削除する
+   * @returns {Promise<boolean>} 削除成功時true
+   */
   async clearAll() {
     try {
       await chrome.storage.local.remove(this.storageKey);

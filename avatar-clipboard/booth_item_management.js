@@ -1,27 +1,43 @@
+/**
+ * BOOTHアイテムページの検出とアイテムID抽出を行うクラス
+ */
 class BoothItemDetector {
   constructor() {
+    // BOOTHアイテムページのURLパターン
     this.urlPatterns = [
-      /^https?:\/\/.*\.booth\.pm\/items\/(\d+)/,
-      /^https?:\/\/booth\.pm\/.*\/items\/(\d+)/
+      /^https?:\/\/.*\.booth\.pm\/items\/(\d+)/, // サブドメイン形式: shop.booth.pm/items/123
+      /^https?:\/\/booth\.pm\/.*\/items\/(\d+)/   // パス形式: booth.pm/ja/items/123
     ];
   }
 
+  /**
+   * 現在のページがBOOTHアイテムページかどうかを判定
+   * @returns {boolean} BOOTHアイテムページの場合true
+   */
   isBoothItemPage() {
     const url = window.location.href;
     return this.urlPatterns.some(pattern => pattern.test(url));
   }
 
+  /**
+   * 現在のページのURLからBOOTHアイテムIDを抽出
+   * @returns {string|null} アイテムID（数字）、見つからない場合はnull
+   */
   extractItemId() {
     const url = window.location.href;
     for (const pattern of this.urlPatterns) {
       const match = url.match(pattern);
       if (match) {
-        return match[1];
+        return match[1]; // 正規表現の最初のキャプチャグループ（アイテムID）
       }
     }
     return null;
   }
 
+  /**
+   * 検出器を初期化し、現在のページがBOOTHアイテムページの場合はアイテムIDを返す
+   * @returns {string|null} アイテムID、BOOTHアイテムページでない場合はnull
+   */
   init() {
     if (this.isBoothItemPage()) {
       const itemId = this.extractItemId();
@@ -32,12 +48,12 @@ class BoothItemDetector {
   }
 }
 
-// Initialize managers with error handling
-const storageManager = new StorageManager();
-const uiManager = new UIManager();
-const pageParser = new PageParser();
+// 各種マネージャーの初期化（エラーハンドリング付き）
+const storageManager = new StorageManager(); // ストレージ管理
+const uiManager = new UIManager();           // UI管理
+const pageParser = new PageParser();         // ページ解析
 
-// Set up error handler for UI
+// UIエラーハンドラーの設定
 window.errorHandler.addEventListener((error) => {
   if (error.type === 'ui' || error.type === 'clipboard') {
     const message = window.errorHandler.getUserFriendlyMessage(error.type);
@@ -45,33 +61,37 @@ window.errorHandler.addEventListener((error) => {
   }
 });
 
-// Make managers globally accessible
+// マネージャーをグローバルからアクセス可能にする
 window.storageManager = storageManager;
 window.uiManager = uiManager;
+window.pageParser = pageParser;
 
 const detector = new BoothItemDetector();
 const currentItemId = detector.init();
 
-// Page analysis and item detection logic
+/**
+ * ページ解析とアイテム検出のメイン処理
+ * BOOTHアイテムURLを検索し、管理ウィンドウを表示する
+ */
 async function handlePageAnalysis() {
   return await window.errorHandler.safeExecute(async () => {
     window.debugLogger?.log('Analyzing page for BOOTH items...');
     
-    // Parse the page for BOOTH item URLs
+    // ページからBOOTHアイテムURLを解析
     const { parseResult, itemsToFetch } = await pageParser.fetchItemsFromPage();
   
-  // Show management window
+  // 管理ウィンドウを表示
   uiManager.showWindow();
   
   
-  // Load existing items first
+  // 既存アイテムを最初に読み込み
   await loadExistingItems();
   
-  // Check if current page item is already saved
+  // 現在のページアイテムが既に保存済みかチェック
   await checkAndDisplayCurrentPageItem();
   
   if (itemsToFetch.length > 0) {
-    // Check which items are already saved
+    // どのアイテムが既に保存されているかをチェック
     const newItems = [];
     for (const item of itemsToFetch) {
       const exists = await storageManager.hasItem(item.id);
@@ -85,13 +105,13 @@ async function handlePageAnalysis() {
     if (newItems.length > 0) {
       window.debugLogger?.log(`Found ${newItems.length} new BOOTH items in page content`);
       
-      // Store only new items for processing
+      // 処理用に新しいアイテムのみを保存
       window.boothItemsToFetch = newItems;
       
-      // Show found items notification with URLs
+      // 新しいアイテムの通知をURL付きで表示
       uiManager.showFoundItemsNotification(newItems);
       
-      // Listen for user choice to fetch items
+      // ユーザーのアイテム取得選択をリスン
       document.addEventListener('boothFetchItem', async (event) => {
         if (event.detail.action === 'fetch') {
           window.debugLogger?.log('User chose to fetch BOOTH items from page content');
@@ -99,7 +119,7 @@ async function handlePageAnalysis() {
         }
       }, { once: true });
       
-      // Listen for item removal
+      // アイテム削除イベントをリスン
       document.addEventListener('boothItemRemoved', (event) => {
         const removedItemId = event.detail.itemId;
         window.boothItemsToFetch = window.boothItemsToFetch.filter(item => item.id !== removedItemId);
@@ -114,10 +134,14 @@ async function handlePageAnalysis() {
   }, window.errorHandler.errorTypes.PARSE, { source: 'page-analysis' });
 }
 
+/**
+ * 選択されたBOOTHアイテムの情報を取得する処理
+ * @param {string} itemId - アイテムID（未使用）
+ */
 async function handleItemFetch(itemId) {
   return await window.errorHandler.safeExecute(async () => {
     window.debugLogger?.log('Fetching selected BOOTH items...');
-    // Get remaining items from UI (after user removals)
+    // UIから残っているアイテムを取得（ユーザーが削除した後）
     const remainingItems = uiManager.getRemainingFoundItems();
     const itemsToFetch = window.boothItemsToFetch?.filter(item => 
       remainingItems.some(remaining => remaining.id === item.id)
@@ -130,19 +154,19 @@ async function handleItemFetch(itemId) {
       return;
     }
 
-    // Process each found item with simple rate limiting
+    // シンプルなレート制限で各アイテムを処理
     const boothClient = new BoothJsonClient();
     let successCount = 0;
-    let failedItems = []; // Track failed items for manual input suggestion
-    const DELAY_BETWEEN_ITEMS = 300; // 0.3 second delay between individual items
+    let failedItems = []; // 手動入力推奨のために失敗アイテムを追跡
+    const DELAY_BETWEEN_ITEMS = 300; // アイテム間の0.3秒遅延
     
-    // Show progress notification
+    // 進行状況通知を表示
     uiManager.showNotification(`0/${itemsToFetch.length}個のアイテムを処理中...`);
     
     for (let i = 0; i < itemsToFetch.length; i++) {
       const item = itemsToFetch[i];
       try {
-        // Check if item already exists
+        // アイテムが既に存在するかチェック
         const exists = await storageManager.hasItem(item.id);
         if (exists) {
           window.debugLogger?.log(`Item ${item.id} already exists, skipping`);
@@ -169,7 +193,7 @@ async function handleItemFetch(itemId) {
             successCount++;
           }
         } else {
-          // Only log as error if it's not a CORS-related error
+          // CORS関連エラーでない場合のみエラーとしてログ出力
           if (result.isCorsError) {
             window.debugLogger?.log(`CORS fetch failed for item ${item.id}, trying background:`, result.error);
           } else {
@@ -209,7 +233,7 @@ async function handleItemFetch(itemId) {
               });
             }
           } else {
-            // Direct fetch failed without CORS/Network indication
+            // CORS/ネットワーク問題の兆候なしに直接フェッチが失敗
             failedItems.push({
               id: item.id,
               error: result.error
@@ -217,7 +241,7 @@ async function handleItemFetch(itemId) {
           }
         }
         
-        // Short delay between items (except for the last item)
+        // アイテム間の短い遅延（最後のアイテム以外）
         if (i < itemsToFetch.length - 1) {
           await delay(DELAY_BETWEEN_ITEMS);
         }
@@ -229,7 +253,7 @@ async function handleItemFetch(itemId) {
     
     uiManager.hideNotification();
     
-    // Show completion message and handle failed items
+    // 完了メッセージを表示し、失敗アイテムを処理
     if (successCount > 0 && failedItems.length === 0) {
       uiManager.showNotification(`${successCount}個のアイテムを取得しました`);
       setTimeout(() => uiManager.hideNotification(), 3000);
@@ -253,16 +277,20 @@ async function handleItemFetch(itemId) {
   }, window.errorHandler.errorTypes.NETWORK, { source: 'item-fetch' });
 }
 
+/**
+ * 取得に失敗したアイテムの手動入力プロンプトを表示
+ * @param {Array} failedItems - 失敗したアイテムの配列
+ */
 async function handleFailedItemsPrompt(failedItems) {
   window.debugLogger?.log('Handling failed items:', failedItems);
   
   if (failedItems.length === 0) return;
   
   try {
-    // Show the management window if not already visible
+    // 管理ウィンドウが非表示の場合は表示
     uiManager.showWindow();
     
-    // Show failed items confirmation modal
+    // 失敗アイテヤ確認モーダルを表示
     uiManager.showFailedItemsModal(failedItems);
     
   } catch (error) {
@@ -270,17 +298,23 @@ async function handleFailedItemsPrompt(failedItems) {
   }
 }
 
+/**
+ * CORS回避のためにバックグラウンドスクリプト経由でアイテム情報を取得
+ * @param {string} itemId - アイテムID
+ * @param {string} itemUrl - アイテムURL
+ * @returns {Promise} 取得結果のPromise
+ */
 async function handleBackgroundFetch(itemId, itemUrl) {
   window.debugLogger?.log('Attempting background fetch for CORS bypass');
   
   return new Promise((resolve, reject) => {
-    // Add timeout to prevent hanging
+    // ハングを防ぐためのタイムアウトを追加
     const timeout = setTimeout(() => {
       resolve({ success: false, error: 'Background fetch timeout' });
-    }, 10000); // 10 second timeout
+    }, 10000); // 10秒タイムアウト
     
     try {
-      // Send message to background script
+      // バックグラウンドスクリプトにメッセージを送信
       chrome.runtime.sendMessage({
         action: 'fetchItemData',
         itemId: itemId,
@@ -311,27 +345,30 @@ async function handleBackgroundFetch(itemId, itemUrl) {
 }
 
 
+/**
+ * 既存のアイテムを現在のページから読み込み、UIに表示する
+ */
 async function loadExistingItems() {
   const pageItems = await storageManager.getItemsForCurrentPage(currentItemId);
   window.debugLogger?.log('Loading existing items for current page:', Object.keys(pageItems).length);
   
-  // Get items found on current page
+  // 現在のページで見つかったアイテムを取得
   const { parseResult } = await pageParser.fetchItemsFromPage();
   const pageItemIds = new Set();
   
-  // Add current page item ID if exists
+  // 現在のページのアイテムIDが存在する場合は追加
   if (currentItemId) {
     pageItemIds.add(currentItemId);
   }
   
-  // Add all items found on page
+  // ページで見つかった全アイテムを追加
   parseResult.externalItems.forEach(item => {
     pageItemIds.add(item.itemId);
   });
   
   window.debugLogger?.log('Items found on current page:', Array.from(pageItemIds));
   
-  // Display items that exist on the current page
+  // 現在のページに存在するアイテムのみ表示
   Object.values(pageItems).forEach(item => {
     if (pageItemIds.has(item.id)) {
       const category = item.category || 'unsaved';
@@ -341,6 +378,9 @@ async function loadExistingItems() {
   });
 }
 
+/**
+ * 現在のページのアイテムが既に保存済みかどうかをチェックし、UIに表示する
+ */
 async function checkAndDisplayCurrentPageItem() {
   if (!currentItemId) {
     window.debugLogger?.log('Not on a BOOTH item page, skipping current item check');
@@ -353,10 +393,10 @@ async function checkAndDisplayCurrentPageItem() {
   if (existingItem) {
     window.debugLogger?.log(`Current page item ${currentItemId} found in database:`, existingItem.name);
     
-    // Check if item is already displayed in UI (it should be from loadExistingItems)
+    // アイテムが既にUIに表示されているかチェック（loadExistingItemsからのものであるはず）
     const existingElement = document.querySelector(`[data-item-id="${currentItemId}"]`);
     if (!existingElement) {
-      // Item exists in database but not displayed in UI, add it
+      // アイテムがデータベースには存在するがUIに表示されていない場合、追加
       const category = existingItem.category || 'saved';
       uiManager.addItemToSection(category, existingItem);
       window.debugLogger?.log(`Added current page item ${currentItemId} to ${category} category`);
@@ -368,10 +408,14 @@ async function checkAndDisplayCurrentPageItem() {
   }
 }
 
-// Utility function for delays
+/**
+ * 遅延処理用のユーティリティ関数
+ * @param {number} ms - 遅延時間（ミリ秒）
+ * @returns {Promise} 指定した時間後に解決されるPromise
+ */
 function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-// Initialize page analysis
+// ページ解析を初期化・実行
 handlePageAnalysis();
