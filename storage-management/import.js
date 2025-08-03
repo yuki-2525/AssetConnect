@@ -1,38 +1,14 @@
 // AssetConnect Import page JavaScript
-const translationManager = window.translationManager;
 let importData = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
-    await translationManager.initialize();
+    await initializeTranslations();
     updateUITexts();
     setupEventListeners();
 });
 
 
 
-function getMessage(key, replacements = {}) {
-    return translationManager.getMessage(key, replacements);
-}
-
-function updateUITexts() {
-    document.querySelectorAll('[data-i18n]').forEach(function (el) {
-        const key = el.getAttribute('data-i18n');
-        const message = getMessage(key);
-        if (message) {
-            if (el.tagName === 'TITLE') {
-                // For title tags, only update the span content if it exists
-                const span = el.querySelector('span[data-i18n]');
-                if (span) {
-                    span.textContent = message;
-                } else {
-                    el.textContent = `AssetConnect - ${message}`;
-                }
-            } else {
-                el.textContent = message;
-            }
-        }
-    });
-}
 
 function setupEventListeners() {
     const fileDropArea = document.getElementById('file-drop-area');
@@ -172,9 +148,22 @@ async function handleImport() {
         // Get merge mode
         const mergeMode = document.querySelector('input[name="merge-mode"]:checked').value;
         
-        // Get existing data
-        const result = await chrome.storage.local.get(['boothItems']);
-        const existingItems = result.boothItems || {};
+        // Get existing data (check parent window cache first)
+        let existingItems = {};
+        try {
+            // Try to get from parent/opener cache if available
+            if (window.opener && window.opener.getCachedStorageData) {
+                const result = await window.opener.getCachedStorageData(['boothItems']);
+                existingItems = result.boothItems || {};
+            } else {
+                const result = await chrome.storage.local.get(['boothItems']);
+                existingItems = result.boothItems || {};
+            }
+        } catch (error) {
+            // Fallback to direct API call
+            const result = await chrome.storage.local.get(['boothItems']);
+            existingItems = result.boothItems || {};
+        }
 
         let importedCount = 0;
         let skippedCount = 0;

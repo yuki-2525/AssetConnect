@@ -157,6 +157,30 @@ class TranslationManager {
   isReady() {
     return this.isInitialized;
   }
+
+  /**
+   * UI要素の翻訳テキストを更新
+   * data-i18n属性を持つ要素に翻訳テキストを設定
+   */
+  updateUITexts() {
+    document.querySelectorAll('[data-i18n]').forEach(el => {
+      const key = el.getAttribute('data-i18n');
+      const message = this.getMessage(key);
+      if (message) {
+        if (el.tagName === 'TITLE') {
+          // titleタグの場合、span要素があれば更新、なければ全体を更新
+          const span = el.querySelector('span[data-i18n]');
+          if (span) {
+            span.textContent = message;
+          } else {
+            el.textContent = `AssetConnect - ${message}`;
+          }
+        } else {
+          el.textContent = message;
+        }
+      }
+    });
+  }
 }
 
 // グローバル関数として便利なヘルパーを提供
@@ -178,4 +202,11 @@ async function initializeTranslations() {
  */
 function getMessage(key, replacements = {}) {
   return window.translationManager.getMessage(key, replacements);
+}
+
+/**
+ * UI要素の翻訳テキストを更新するヘルパー関数
+ */
+function updateUITexts() {
+  return window.translationManager.updateUITexts();
 }

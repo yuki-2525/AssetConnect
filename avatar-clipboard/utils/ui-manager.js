@@ -54,7 +54,12 @@ class UIManager {
       REMOVE_ITEM_BTN: 'booth-remove-item-btn',
       FOUND_ITEM: 'booth-found-item',
       FOUND_ITEM_URL: 'booth-found-item-url',
+      FOUND_ITEM_INFO: 'booth-found-item-info',
+      FOUND_ITEM_ID: 'booth-found-item-id',
       BOOTH_ITEM: 'booth-item',
+      ITEM_MAIN: 'booth-item-main',
+      ITEM_URL: 'booth-item-url',
+      URL_LINK: 'booth-url-link',
       SECTION_TOGGLE: 'booth-section-toggle',
       MANAGER_CLOSE: 'booth-manager-close',
       FETCH_BTN: 'booth-fetch-btn',
@@ -64,7 +69,12 @@ class UIManager {
       EXCLUDE_BTN: 'booth-exclude-btn',
       RESTORE_BTN: 'booth-restore-btn',
       ITEM_NAME: 'booth-item-name',
-      ITEMS_LIST: 'booth-items-list'
+      ITEMS_LIST: 'booth-items-list',
+      FAILED_ITEMS_MESSAGE: 'booth-failed-items-message',
+      FAILED_ITEMS_LIST: 'booth-failed-items-list',
+      MANUAL_ADD_FORM: 'booth-manual-add-form',
+      MANUAL_INPUTS: 'booth-manual-inputs',
+      MANUAL_INPUT: 'booth-manual-input'
     };
     
     this.initializeCurrentItemId();             // 商品ID取得
@@ -513,7 +523,7 @@ class UIManager {
       const messageEl = this.notificationEl.querySelector('p');
       if (messageEl) {
         if (itemUrl) {
-          messageEl.innerHTML = `${message}<br><small class="booth-item-url">${itemUrl}</small>`;
+          messageEl.innerHTML = `${message}<br><small class="${this.CSS_CLASSES.ITEM_URL}">${itemUrl}</small>`;
         } else {
           messageEl.innerHTML = message; // Use innerHTML to support HTML in progress messages
         }
@@ -546,8 +556,8 @@ class UIManager {
         itemDiv.setAttribute('data-item-id', item.id);
         
         itemDiv.innerHTML = `
-          <div class="booth-found-item-info">
-            <span class="booth-found-item-id">ID: ${item.id}</span>
+          <div class="${this.CSS_CLASSES.FOUND_ITEM_INFO}">
+            <span class="${this.CSS_CLASSES.FOUND_ITEM_ID}">ID: ${item.id}</span>
             <a href="${item.url}" target="_blank" class="${this.CSS_CLASSES.FOUND_ITEM_URL}">${item.url}</a>
           </div>
           <button class="${this.CSS_CLASSES.REMOVE_ITEM_BTN}" data-item-id="${item.id}" type="button">×</button>
@@ -741,9 +751,9 @@ class UIManager {
     
     const failedItemsList = failedItems.map(item => `・ID: ${item.id}`).join('<br>');
     const content = `
-      <div class="booth-failed-items-message">
+      <div class="${this.CSS_CLASSES.FAILED_ITEMS_MESSAGE}">
         <p>${this.getMessage('itemFetchFailedMessage')}</p>
-        <div class="booth-failed-items-list">
+        <div class="${this.CSS_CLASSES.FAILED_ITEMS_LIST}">
           ${failedItemsList}
         </div>
         <p>${this.getMessage('manualInputPrompt')}</p>
@@ -847,10 +857,10 @@ class UIManager {
     this.hideManualAddModal();
     
     const content = `
-      <div class="booth-manual-add-form">
-        <div class="booth-manual-inputs">
-          <input type="text" id="${this.ELEMENT_IDS.MANUAL_ITEM_ID}" placeholder="${this.getMessage('itemId')}" class="booth-manual-input">
-          <input type="text" id="${this.ELEMENT_IDS.MANUAL_ITEM_NAME}" placeholder="${this.getMessage('itemName')}" class="booth-manual-input">
+      <div class="${this.CSS_CLASSES.MANUAL_ADD_FORM}">
+        <div class="${this.CSS_CLASSES.MANUAL_INPUTS}">
+          <input type="text" id="${this.ELEMENT_IDS.MANUAL_ITEM_ID}" placeholder="${this.getMessage('itemId')}" class="${this.CSS_CLASSES.MANUAL_INPUT}">
+          <input type="text" id="${this.ELEMENT_IDS.MANUAL_ITEM_NAME}" placeholder="${this.getMessage('itemName')}" class="${this.CSS_CLASSES.MANUAL_INPUT}">
         </div>
         <div class="booth-manual-add-modal-actions">
           <button class="booth-manual-add-btn" type="button">${this.getMessage('add')}</button>
@@ -1029,10 +1039,10 @@ class UIManager {
     const itemUrl = this.createBoothUrl(itemData.id);
     
     itemEl.innerHTML = `
-      <div class="booth-item-main">
+      <div class="${this.CSS_CLASSES.ITEM_MAIN}">
         <input type="text" class="${this.CSS_CLASSES.ITEM_NAME}" value="${itemData.name || ''}" placeholder="${this.getMessage('itemName')}">
-        <div class="booth-item-url">
-          <a href="${itemUrl}" target="_blank" class="booth-url-link">${itemUrl}</a>
+        <div class="${this.CSS_CLASSES.ITEM_URL}">
+          <a href="${itemUrl}" target="_blank" class="${this.CSS_CLASSES.URL_LINK}">${itemUrl}</a>
         </div>
       </div>
       <div class="booth-item-actions">

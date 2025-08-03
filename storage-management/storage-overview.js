@@ -1,88 +1,127 @@
 // AssetConnect Storage overview page JavaScript
-let currentTranslations = {};
-let currentLanguage = 'ja';
-const SUPPORTED_LANGUAGES = ['ja', 'en', 'ko'];
+// DOM要素キャッシュ
+const domCache = new Map();
+
+// Storage データキャッシュ
+let storageDataCache = null;
+let storageDataCacheTimestamp = null;
+const STORAGE_CACHE_DURATION = 30000; // 30秒間キャッシュ
+
+/**
+ * DOM要素をキャッシュ付きで取得
+ * @param {string} id - 要素ID
+ * @returns {HTMLElement|null} DOM要素
+ */
+function getCachedElement(id) {
+    if (!domCache.has(id)) {
+        domCache.set(id, document.getElementById(id));
+    }
+    const element = domCache.get(id);
+    // 要素がDOMから削除されている場合はキャッシュをクリア
+    if (element && !document.contains(element)) {
+        domCache.delete(id);
+        const newElement = document.getElementById(id);
+        if (newElement) {
+            domCache.set(id, newElement);
+        }
+        return newElement;
+    }
+    return element;
+}
+
+/**
+ * Storage データをキャッシュ付きで取得
+ * @param {string[]|null} keys - 取得するキー（nullで全取得）
+ * @param {boolean} forceRefresh - キャッシュを無視して強制更新
+ * @returns {Promise<Object>} Storage データ
+ */
+async function getCachedStorageData(keys = null, forceRefresh = false) {
+    const now = Date.now();
+    
+    // 全データ取得でキャッシュが有効な場合はキャッシュを返す
+    if (!forceRefresh && keys === null && storageDataCache && 
+        storageDataCacheTimestamp && 
+        (now - storageDataCacheTimestamp) < STORAGE_CACHE_DURATION) {
+        return storageDataCache;
+    }
+    
+    // Storage から取得
+    const result = await chrome.storage.local.get(keys);
+    
+    // 全データ取得の場合はキャッシュに保存
+    if (keys === null) {
+        storageDataCache = result;
+        storageDataCacheTimestamp = now;
+    }
+    
+    return result;
+}
+
+/**
+ * Storage キャッシュをクリア
+ */
+function clearStorageCache() {
+    storageDataCache = null;
+    storageDataCacheTimestamp = null;
+}
 
 document.addEventListener('DOMContentLoaded', async () => {
     await initializeTranslations();
+    updateUITexts();
     await loadStorageData();
     setupEventListeners();
 });
 
-async function initializeTranslations() {
-    try {
-        // Get the current language setting
-        const result = await chrome.storage.local.get(['selectedLanguage']);
-        const selectedLang = result.selectedLanguage || chrome.i18n.getUILanguage().substring(0, 2);
-        currentLanguage = SUPPORTED_LANGUAGES.includes(selectedLang) ? selectedLang : 'en';
-        
-        await loadTranslations(currentLanguage);
-        updateUITexts();
-    } catch (error) {
-        console.error('Failed to initialize translations:', error);
-    }
-}
-
-async function loadTranslations(lang) {
-    try {
-        const response = await fetch(chrome.runtime.getURL(`_locales/${lang}/messages.json`));
-        if (!response.ok) throw new Error(`Failed to load translations for ${lang}`);
-        const translations = await response.json();
-        
-        // Convert to simple key-value pairs
-        currentTranslations = {};
-        for (const [key, value] of Object.entries(translations)) {
-            currentTranslations[key] = value.message;
-        }
-        return currentTranslations;
-    } catch (error) {
-        console.error('Translation loading error:', error);
-        if (lang !== 'en') {
-            return await loadTranslations('en');
-        }
-        return {};
-    }
-}
-
-function getMessage(key, replacements = {}) {
-    let message = currentTranslations[key] || chrome.i18n.getMessage(key) || key;
-    
-    // Replace placeholders like {count}, {key}, {error}
-    for (const [placeholder, value] of Object.entries(replacements)) {
-        message = message.replace(new RegExp(`{${placeholder}}`, 'g'), value);
-    }
-    
-    return message;
-}
-
-function updateUITexts() {
-    document.querySelectorAll('[data-i18n]').forEach(function (el) {
-        const key = el.getAttribute('data-i18n');
-        const message = getMessage(key);
-        if (message) {
-            if (el.tagName === 'TITLE') {
-                // For title tags, only update the span content if it exists
-                const span = el.querySelector('span[data-i18n]');
-                if (span) {
-                    span.textContent = message;
-                } else {
-                    el.textContent = `AssetConnect - ${message}`;
-                }
-            } else {
-                el.textContent = message;
-            }
-        }
-    });
-}
-
 function createBoothUrl(itemId) {
-    return `https://booth.pm/${currentLanguage}/items/${itemId}`;
+    return window.translationManager.createBoothUrl(itemId);
+}
+
+/**
+ * 統一されたHTML要素生成ヘルパー
+ * @param {Object} config - 設定オブジェクト
+ * @param {string} config.className - CSS クラス名
+ * @param {string} config.name - アイテム名
+ * @param {string} config.details - アイテム詳細
+ * @param {Object} config.action - アクション要素設定
+ * @param {string} config.action.type - 'link' または 'button'
+ * @param {string} config.action.href - リンクURL (type='link'の場合)
+ * @param {string} config.action.text - 表示テキスト
+ * @param {string} config.action.onClick - クリックハンドラー (type='button'の場合)
+ * @param {Object} config.action.dataset - data属性 (type='button'の場合)
+ * @returns {HTMLElement} 生成されたHTML要素
+ */
+function createUnifiedItemElement(config) {
+    const itemDiv = document.createElement('div');
+    itemDiv.className = `item ${config.className}`;
+    
+    let actionElement = '';
+    if (config.action.type === 'link') {
+        actionElement = `<a href="${config.action.href}" target="_blank" class="item-link">${config.action.text}</a>`;
+    } else if (config.action.type === 'button') {
+        let dataAttrs = '';
+        if (config.action.dataset) {
+            dataAttrs = Object.entries(config.action.dataset)
+                .map(([key, value]) => `data-${key}="${escapeHtml(value)}"`)
+                .join(' ');
+        }
+        actionElement = `<button class="${config.action.className || 'action-btn'}" ${dataAttrs} type="button">${config.action.text}</button>`;
+    }
+    
+    itemDiv.innerHTML = `
+        <div class="item-info">
+            <div class="item-name">${escapeHtml(config.name)}</div>
+            <div class="item-details">${config.details}</div>
+        </div>
+        ${actionElement}
+    `;
+    
+    return itemDiv;
 }
 
 async function loadStorageData() {
     try {
-        // Get all storage data
-        const result = await chrome.storage.local.get(null);
+        // Get all storage data with caching
+        const result = await getCachedStorageData(null);
         const boothItems = result.boothItems || {};
         const downloadHistory = result.downloadHistory || [];
         
@@ -98,19 +137,19 @@ async function loadStorageData() {
         
         // Calculate storage size
         const storageSize = calculateStorageSize(result);
-        document.getElementById('storage-size').textContent = formatBytes(storageSize);
+        getCachedElement('storage-size').textContent = formatBytes(storageSize);
         
         // Show clear button if there is data
         if (boothStats.total > 0 || downloadHistory.length > 0) {
-            document.getElementById('clear-storage').style.display = 'block';
+            getCachedElement('clear-storage').style.display = 'block';
         }
         
         // Hide loading
-        document.getElementById('loading').style.display = 'none';
+        getCachedElement('loading').style.display = 'none';
         
     } catch (error) {
         console.error('Error loading storage data:', error);
-        document.getElementById('loading').textContent = getMessage('loadingError');
+        getCachedElement('loading').textContent = getMessage('loadingError');
     }
 }
 
@@ -145,11 +184,11 @@ function calculateDownloadStats(downloadHistory) {
 }
 
 function updateStatistics(boothStats, downloadStats) {
-    document.getElementById('total-booth-items').textContent = boothStats.total;
-    document.getElementById('saved-count').textContent = boothStats.saved;
-    document.getElementById('unsaved-count').textContent = boothStats.unsaved;
-    document.getElementById('excluded-count').textContent = boothStats.excluded;
-    document.getElementById('download-history-count').textContent = downloadStats.total;
+    getCachedElement('total-booth-items').textContent = boothStats.total;
+    getCachedElement('saved-count').textContent = boothStats.saved;
+    getCachedElement('unsaved-count').textContent = boothStats.unsaved;
+    getCachedElement('excluded-count').textContent = boothStats.excluded;
+    getCachedElement('download-history-count').textContent = downloadStats.total;
 }
 
 function displayBoothItemsByCategory(items) {
@@ -172,25 +211,25 @@ function displayBoothItemsByCategory(items) {
     Object.entries(categories).forEach(([categoryName, categoryData]) => {
         if (categoryData.items.length > 0) {
             hasBoothItems = true;
-            document.getElementById(categoryData.section).style.display = 'block';
+            getCachedElement(categoryData.section).style.display = 'block';
             displayCategoryItems(categoryData.items, categoryData.container, categoryName);
         }
     });
     
     // Show "no items" message if needed
     if (!hasBoothItems) {
-        document.getElementById('no-booth-items').style.display = 'block';
+        getCachedElement('no-booth-items').style.display = 'block';
     }
 }
 
 function displayDownloadHistory(downloadHistory) {
     if (downloadHistory.length === 0) {
-        document.getElementById('no-download-history').style.display = 'block';
+        getCachedElement('no-download-history').style.display = 'block';
         return;
     }
     
-    document.getElementById('download-history-section').style.display = 'block';
-    const container = document.getElementById('download-history-items');
+    getCachedElement('download-history-section').style.display = 'block';
+    const container = getCachedElement('download-history-items');
     container.innerHTML = '';
     
     // Sort by timestamp (newest first)
@@ -205,7 +244,7 @@ function displayDownloadHistory(downloadHistory) {
 }
 
 function displayCategoryItems(items, containerId, category) {
-    const container = document.getElementById(containerId);
+    const container = getCachedElement(containerId);
     container.innerHTML = '';
     
     // Sort items by name (alphabetical)
@@ -222,45 +261,36 @@ function displayCategoryItems(items, containerId, category) {
 }
 
 function createItemElement(item, category) {
-    const itemDiv = document.createElement('div');
-    itemDiv.className = `item ${category}`;
-    
     const itemUrl = createBoothUrl(item.id);
+    const details = `ID: ${item.id} | ${getMessage('category')}: ${category}${item.previousCategory ? ` | ${getMessage('originalCategory')}: ${item.previousCategory}` : ''}`;
     
-    itemDiv.innerHTML = `
-        <div class="item-info">
-            <div class="item-name">${escapeHtml(item.name || getMessage('itemNameUnknown'))}</div>
-            <div class="item-details">
-                ID: ${item.id} | ${getMessage('category')}: ${category}
-                ${item.previousCategory ? ` | ${getMessage('originalCategory')}: ${item.previousCategory}` : ''}
-            </div>
-        </div>
-        <a href="${itemUrl}" target="_blank" class="item-link">${getMessage('openInBooth')}</a>
-    `;
-    
-    return itemDiv;
+    return createUnifiedItemElement({
+        className: category,
+        name: item.name || getMessage('itemNameUnknown'),
+        details: details,
+        action: {
+            type: 'link',
+            href: itemUrl,
+            text: getMessage('openInBooth')
+        }
+    });
 }
 
 function createDownloadHistoryElement(item) {
-    const itemDiv = document.createElement('div');
-    itemDiv.className = 'item download';
-    
     const itemUrl = item.url || createBoothUrl(item.boothID);
+    const registeredText = item.registered === true ? getMessage('yes') : (item.registered === false ? getMessage('no') : getMessage('unknown'));
+    const details = `ID: ${item.boothID} | ${getMessage('fileName')}: ${escapeHtml(item.filename || getMessage('none'))} | ${getMessage('dateTime')}: ${item.timestamp} | ${getMessage('free')}: ${item.free ? getMessage('yes') : getMessage('no')} | ${getMessage('registered')}: ${registeredText}`;
     
-    itemDiv.innerHTML = `
-        <div class="item-info">
-            <div class="item-name">${escapeHtml(item.title || getMessage('titleUnknown'))}</div>
-            <div class="item-details">
-                ID: ${item.boothID} | ${getMessage('fileName')}: ${escapeHtml(item.filename || getMessage('none'))} | 
-                ${getMessage('dateTime')}: ${item.timestamp} | 
-                ${getMessage('free')}: ${item.free ? getMessage('yes') : getMessage('no')} | 
-                ${getMessage('registered')}: ${item.registered === true ? getMessage('yes') : (item.registered === false ? getMessage('no') : getMessage('unknown'))}
-            </div>
-        </div>
-        <a href="${itemUrl}" target="_blank" class="item-link">${getMessage('openInBooth')}</a>
-    `;
-    
-    return itemDiv;
+    return createUnifiedItemElement({
+        className: 'download',
+        name: item.title || getMessage('titleUnknown'),
+        details: details,
+        action: {
+            type: 'link',
+            href: itemUrl,
+            text: getMessage('openInBooth')
+        }
+    });
 }
 
 function calculateStorageSize(data) {
@@ -300,10 +330,11 @@ function setupEventListeners() {
     });
     
     // Clear storage button
-    document.getElementById('clear-storage').addEventListener('click', async () => {
+    getCachedElement('clear-storage').addEventListener('click', async () => {
         if (confirm(getMessage('confirmClearStorage'))) {
             try {
                 await chrome.storage.local.clear();
+                clearStorageCache(); // キャッシュもクリア
                 alert(getMessage('storageCleared'));
                 location.reload();
             } catch (error) {
@@ -318,12 +349,12 @@ function displayRawStorage(allStorageData) {
     const rawStorageKeys = Object.keys(allStorageData);
     
     if (rawStorageKeys.length === 0) {
-        document.getElementById('no-raw-storage').style.display = 'block';
+        getCachedElement('no-raw-storage').style.display = 'block';
         return;
     }
     
-    document.getElementById('raw-storage-section').style.display = 'block';
-    const container = document.getElementById('raw-storage-items');
+    getCachedElement('raw-storage-section').style.display = 'block';
+    const container = getCachedElement('raw-storage-items');
     container.innerHTML = '';
     
     // Sort keys alphabetically
@@ -335,9 +366,7 @@ function displayRawStorage(allStorageData) {
 }
 
 function createRawStorageElement(key, value) {
-    const itemDiv = document.createElement('div');
-    itemDiv.className = 'item raw-key';
-    
+    // Value preview processing
     let valuePreview = '';
     let dataType = '';
     
@@ -368,17 +397,19 @@ function createRawStorageElement(key, value) {
         valuePreview = getMessage('dataParseError');
     }
     
-    itemDiv.innerHTML = `
-        <div class="item-info">
-            <div class="item-name">${escapeHtml(key)}</div>
-            <div class="item-details">
-                ${getMessage('dataType')}: ${dataType} | ${getMessage('size')}: ${formatBytes(new Blob([JSON.stringify(value)]).size)}
-                <br>
-                <code style="background: #f1f1f1; padding: 2px 4px; border-radius: 3px; font-size: 0.8em; white-space: pre-wrap;">${escapeHtml(valuePreview)}</code>
-            </div>
-        </div>
-        <button class="download-btn" data-key="${escapeHtml(key)}" type="button">${getMessage('download')}</button>
-    `;
+    const details = `${getMessage('dataType')}: ${dataType} | ${getMessage('size')}: ${formatBytes(new Blob([JSON.stringify(value)]).size)}<br><code style="background: #f1f1f1; padding: 2px 4px; border-radius: 3px; font-size: 0.8em; white-space: pre-wrap;">${escapeHtml(valuePreview)}</code>`;
+    
+    const itemDiv = createUnifiedItemElement({
+        className: 'raw-key',
+        name: key,
+        details: details,
+        action: {
+            type: 'button',
+            className: 'download-btn',
+            text: getMessage('download'),
+            dataset: { key: key }
+        }
+    });
     
     // Add event listener for download button
     const downloadBtn = itemDiv.querySelector('.download-btn');
@@ -389,9 +420,14 @@ function createRawStorageElement(key, value) {
 
 async function downloadStorageKey(keyName) {
     try {
-        // Get the specific storage key data
-        const result = await chrome.storage.local.get([keyName]);
-        const keyData = result[keyName];
+        // Try to get from cache first, fallback to specific key request
+        let keyData;
+        if (storageDataCache && storageDataCache.hasOwnProperty(keyName)) {
+            keyData = storageDataCache[keyName];
+        } else {
+            const result = await getCachedStorageData([keyName]);
+            keyData = result[keyName];
+        }
         
         if (keyData === undefined) {
             alert(getMessage('storageKeyNotFound', { key: keyName }));
@@ -448,5 +484,5 @@ function switchTab(tabId) {
     document.querySelectorAll('.tab-content').forEach(content => {
         content.classList.remove('active');
     });
-    document.getElementById(tabId).classList.add('active');
+    getCachedElement(tabId).classList.add('active');
 }
