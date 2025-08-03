@@ -32,8 +32,6 @@ class UIManager {
     }
   }
 
-
-
   /**
    * 翻訳されたメッセージを取得
    * @param {string} key - 翻訳キー
@@ -52,7 +50,6 @@ class UIManager {
   createBoothUrl(itemId) {
     return this.translationManager.createBoothUrl(itemId);
   }
-
 
   /**
    * 管理ウィンドウを作成し、DOMに追加する
@@ -132,7 +129,6 @@ class UIManager {
 
     const manualAddToggleBtn = container.querySelector('.booth-manual-add-toggle-btn');
     manualAddToggleBtn.addEventListener('click', () => this.showManualAddModal());
-
 
     // セクショントグル機能
     const sectionHeaders = container.querySelectorAll('.booth-section-header');
@@ -244,7 +240,7 @@ class UIManager {
       foundItemsEl.innerHTML = '';
       
       // 削除ボタン付きで各見つかったアイテムを追加
-      itemsToFetch.forEach((item, index) => {
+      itemsToFetch.forEach((item) => {
         const itemDiv = document.createElement('div');
         itemDiv.className = 'booth-found-item';
         itemDiv.setAttribute('data-item-id', item.id);
@@ -284,7 +280,6 @@ class UIManager {
     }
   }
 
-
   attachItemEventListeners(itemEl) {
     const nameInput = itemEl.querySelector('.booth-item-name');
     nameInput.addEventListener('input', (e) => {
@@ -295,7 +290,6 @@ class UIManager {
     const excludeBtn = itemEl.querySelector('.booth-exclude-btn');
     if (excludeBtn) {
       excludeBtn.addEventListener('click', (e) => {
-        const targetSection = e.target.getAttribute('data-target');
         const currentCategory = itemEl.closest('.booth-items-list').id.replace('-items', '');
         this.handleItemExclude(itemEl.getAttribute('data-item-id'), currentCategory);
       });
@@ -312,7 +306,7 @@ class UIManager {
   }
 
   handleFetchItem() {
-    // console.log('Fetching item information...');
+    window.debugLogger?.log('UIManager: Fetching item information...');
     this.hideNotification();
     
     // アイテム取得イベントを発火
@@ -323,7 +317,7 @@ class UIManager {
   }
 
   async handleExport() {
-    // console.log('Exporting to clipboard...');
+    window.debugLogger?.log('UIManager: Exporting to clipboard...');
     
     try {
       const clipboardManager = new ClipboardManager();
@@ -349,7 +343,7 @@ class UIManager {
           const persistResult = result.persistenceResult;
           if (persistResult.successCount > 0) {
             this.refreshItemDisplay();
-            // console.log(`${persistResult.successCount}個のアイテムを処理しました`);
+            window.debugLogger?.log(`UIManager: ${persistResult.successCount}個のアイテムを処理しました`);
           }
         }
         
@@ -381,7 +375,7 @@ class UIManager {
         if (storageManager) {
           const success = await storageManager.updateItem(itemId, { name: newName });
           if (success) {
-            // console.log(`Item ${itemId} name updated to: ${newName}`);
+            window.debugLogger?.log(`UIManager: Item ${itemId} name updated to: ${newName}`);
           }
         }
         // タイマー完了後にMapから削除
@@ -396,7 +390,7 @@ class UIManager {
   }
 
   async handleItemExclude(itemId, currentCategory) {
-    // console.log('Item excluded:', itemId, 'from', currentCategory);
+    window.debugLogger?.log('UIManager: Item excluded:', itemId, 'from', currentCategory);
     
     try {
       const storageManager = window.storageManager;
@@ -415,14 +409,14 @@ class UIManager {
       // 正しいボタンを表示するために表示を更新
       this.refreshItemDisplay();
       
-      // console.log(`Item ${itemId} moved to excluded section`);
+      window.debugLogger?.log(`UIManager: Item ${itemId} moved to excluded section`);
     } catch (error) {
       console.error('Error excluding item:', error);
     }
   }
 
   async handleItemRestore(itemId, originalCategory) {
-    // console.log('Item restored:', itemId, 'to', originalCategory);
+    window.debugLogger?.log('UIManager: Item restored:', itemId, 'to', originalCategory);
     
     try {
       const storageManager = window.storageManager;
@@ -441,12 +435,11 @@ class UIManager {
       // 正しいボタンを表示するために表示を更新
       this.refreshItemDisplay();
       
-      // console.log(`Item ${itemId} restored to ${originalCategory} section`);
+      window.debugLogger?.log(`UIManager: Item ${itemId} restored to ${originalCategory} section`);
     } catch (error) {
       console.error('Error restoring item:', error);
     }
   }
-
 
   showFailedItemsModal(failedItems) {
     // 既存のモーダルがある場合は削除
@@ -522,12 +515,6 @@ class UIManager {
       }
     });
     
-    // エスケープキーで閉じる
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
-        this.hideFailedItemsModal();
-      }
-    });
   }
 
   handleFailedItemsConfirm(failedItems) {
@@ -647,23 +634,17 @@ class UIManager {
       });
     });
     
-    // エスケープキーで閉じる
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
-        this.hideManualAddModal();
-      }
-    });
   }
 
   async handleModalManualAdd() {
-    // console.log('Modal manual add item requested');
+    window.debugLogger?.log('UIManager: Modal manual add item requested');
     
     try {
       const idInput = document.getElementById('modal-manual-item-id');
       const nameInput = document.getElementById('modal-manual-item-name');
       
       if (!idInput || !nameInput) {
-        this.showNotification('入力フィールドが見つかりません');
+        this.showNotification(this.getMessage('enterItemId'));
         return;
       }
 
@@ -719,7 +700,7 @@ class UIManager {
       // ストレージに保存
       const saved = await storageManager.saveItem(itemId, itemData);
       if (saved) {
-        // console.log(`Manual item ${itemId} saved: ${itemName}`);
+        window.debugLogger?.log(`UIManager: Manual item ${itemId} saved: ${itemName}`);
         
         // UIに追加
         this.addItemToSection('unsaved', itemData);
@@ -776,7 +757,7 @@ class UIManager {
       header.classList.add('collapsed');
     }
     
-    // console.log(`Section ${sectionId} ${isCollapsed ? 'expanded' : 'collapsed'}`);
+    window.debugLogger?.log(`UIManager: Section ${sectionId} ${isCollapsed ? 'expanded' : 'collapsed'}`);
   }
 
   updateSectionCounts() {
@@ -878,7 +859,7 @@ class UIManager {
         }
       });
 
-      // console.log('Item display refreshed for current page');
+      window.debugLogger?.log('UIManager: Item display refreshed for current page');
     } catch (error) {
       console.error('Error refreshing item display:', error);
     }
