@@ -5,6 +5,35 @@
 class BoothJsonClient {
   constructor() {
     this.baseUrl = 'https://booth.pm'; // BOOTHのベースURL
+    this.currentLanguage = null; // 言語設定（初期化前はnull）
+    this.languageInitialized = false; // 言語初期化フラグ
+    this.SUPPORTED_LANGUAGES = ['ja', 'en', 'ko']; // サポート対象言語
+    this.initializeLanguage(); // 言語設定を初期化
+  }
+
+  /**
+   * 現在の言語設定を初期化
+   */
+  async initializeLanguage() {
+    try {
+      const result = await chrome.storage.local.get(['selectedLanguage']);
+      const selectedLang = result.selectedLanguage || chrome.i18n.getUILanguage().substring(0, 2);
+      this.currentLanguage = this.SUPPORTED_LANGUAGES.includes(selectedLang) ? selectedLang : 'ja';
+      this.languageInitialized = true;
+    } catch (error) {
+      console.error('Failed to initialize language for BoothJsonClient:', error);
+      this.currentLanguage = 'ja'; // フォールバック
+      this.languageInitialized = true;
+    }
+  }
+
+  /**
+   * 現在の言語設定が利用可能であることを保証
+   */
+  async ensureLanguageLoaded() {
+    if (!this.languageInitialized) {
+      await this.initializeLanguage();
+    }
   }
 
   /**
@@ -14,7 +43,9 @@ class BoothJsonClient {
    */
   async fetchItemData(itemUrl) {
     try {
-      const jsonUrl = this.convertToJsonUrl(itemUrl);
+      // 言語設定が読み込まれていることを確認
+      await this.ensureLanguageLoaded();
+      const jsonUrl = await this.convertToJsonUrl(itemUrl);
       window.debugLogger?.log('Fetching JSON from:', jsonUrl);
       
       // まず直接フェッチを試行
@@ -68,7 +99,10 @@ class BoothJsonClient {
     }
   }
 
-  convertToJsonUrl(itemUrl) {
+  async convertToJsonUrl(itemUrl) {
+    // 言語設定が利用可能であることを確認
+    await this.ensureLanguageLoaded();
+    
     // さまざまなBOOTH URLフォーマットからアイテムIDを抽出
     const itemId = this.extractItemId(itemUrl);
     if (!itemId) {
@@ -82,8 +116,8 @@ class BoothJsonClient {
       return itemUrl + '.json';
     }
     
-    // 常に標準化されたbooth.pm/ja/items/(id).jsonフォーマットを使用
-    return `https://booth.pm/ja/items/${itemId}.json`;
+    // 現在の言語設定に基づいて標準化されたbooth.pm/(lang)/items/(id).jsonフォーマットを使用
+    return `https://booth.pm/${this.currentLanguage}/items/${itemId}.json`;
   }
 
   extractItemId(itemUrl) {
