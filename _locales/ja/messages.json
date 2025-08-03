@@ -298,5 +298,122 @@
     },
     "importError": {
         "message": "インポート中にエラーが発生しました: {error}"
+    },
+    "avatarClipboardTitle": {
+        "message": "対応アバター一括コピー"
+    },
+    "unregisteredItemsFound": {
+        "message": "未登録のアイテムが見つかりました!!"
+    },
+    "boothItemsFoundInPage": {
+        "message": "ページ内に{count}個のBOOTHアイテムが見つかりました!!"
+    },
+    "fetchItemInfo": {
+        "message": "アイテム情報を取得"
+    },
+    "copyToClipboard": {
+        "message": "クリップボードにコピー"
+    },
+    "manualAdd": {
+        "message": "手動追加"
+    },
+    "exclude": {
+        "message": "×"
+    },
+    "restore": {
+        "message": "戻す"
+    },
+    "savedSection": {
+        "message": "保存済み"
+    },
+    "unsavedSection": {
+        "message": "新規"
+    },
+    "excludedSection": {
+        "message": "除外"
+    },
+    "itemId": {
+        "message": "アイテムID"
+    },
+    "itemName": {
+        "message": "アイテム名"
+    },
+    "add": {
+        "message": "追加"
+    },
+    "cancel": {
+        "message": "キャンセル"
+    },
+    "storageManagerUnavailable": {
+        "message": "ストレージマネージャーが利用できません"
+    },
+    "enterItemId": {
+        "message": "アイテムIDを入力してください"
+    },
+    "enterItemName": {
+        "message": "アイテム名を入力してください"
+    },
+    "itemIdNumbersOnly": {
+        "message": "アイテムIDは数字のみで入力してください"
+    },
+    "itemIdAlreadyExists": {
+        "message": "アイテムID {id} は既に登録されています"
+    },
+    "itemSaveFailed": {
+        "message": "アイテムの保存に失敗しました"
+    },
+    "itemAddError": {
+        "message": "アイテム追加中にエラーが発生しました"
+    },
+    "itemsCopiedToClipboard": {
+        "message": "{count}個のアイテムをクリップボードにコピーしました"
+    },
+    "exportError": {
+        "message": "エクスポート中にエラーが発生しました"
+    },
+    "failedItemsTitle": {
+        "message": "取得失敗アイテム"
+    },
+    "itemFetchFailedMessage": {
+        "message": "以下のアイテムで情報取得に失敗しました："
+    },
+    "manualInputPrompt": {
+        "message": "手動でアイテム名を入力しますか？"
+    },
+    "confirmManualInput": {
+        "message": "手動入力する"
+    },
+    "noItemsToProcess": {
+        "message": "処理するアイテムがありません"
+    },
+    "processingItems": {
+        "message": "{count}個のアイテムを処理中..."
+    },
+    "itemsFetched": {
+        "message": "{count}個のアイテムを取得しました"
+    },
+    "itemsFetchFailed": {
+        "message": "{count}個のアイテムで取得に失敗しました。"
+    },
+    "fetchFailed": {
+        "message": "アイテムの取得に失敗しました"
+    },
+    "noItemsProcessed": {
+        "message": "処理するアイテムがありませんでした"
+    },
+    "processing": {
+        "message": "処理中: {item}"
+    },
+    "itemAdded": {
+        "message": "アイテム「{name}」を追加しました"
+    },
+    "nextItemSet": {
+        "message": "次のアイテム ID {id} を設定しました。残り{count}個"
+    },
+    "itemIdSet": {
+        "message": "ID {id} を設定しました。アイテム名を入力してください。"
+    },
+    "remainingItemsHelper": {
+        "message": "残り{count}個のアイテムも続けて入力できます。"
     }
 }

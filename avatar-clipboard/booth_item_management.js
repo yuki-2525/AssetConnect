@@ -53,6 +53,74 @@ const storageManager = new StorageManager(); // ストレージ管理
 const uiManager = new UIManager();           // UI管理
 const pageParser = new PageParser();         // ページ解析
 
+// 翻訳システム
+let currentTranslations = {};
+let currentLanguage = 'ja';
+const SUPPORTED_LANGUAGES = ['ja', 'en', 'ko'];
+
+/**
+ * 翻訳システムを初期化
+ */
+async function initializeTranslations() {
+  try {
+    // 保存された言語設定を読み込み
+    const result = await chrome.storage.local.get(['selectedLanguage']);
+    const selectedLang = result.selectedLanguage || chrome.i18n.getUILanguage().substring(0, 2);
+    currentLanguage = SUPPORTED_LANGUAGES.includes(selectedLang) ? selectedLang : 'ja';
+    
+    await loadTranslations(currentLanguage);
+  } catch (error) {
+    console.error('Translation initialization failed:', error);
+    // フォールバック: 日本語を使用
+    currentLanguage = 'ja';
+    currentTranslations = {};
+  }
+}
+
+/**
+ * 翻訳データを読み込み
+ * @param {string} lang - 言語コード
+ */
+async function loadTranslations(lang) {
+  try {
+    const response = await fetch(chrome.runtime.getURL(`_locales/${lang}/messages.json`));
+    if (!response.ok) throw new Error(`Failed to load translations for ${lang}`);
+    const translations = await response.json();
+    
+    // 簡単なkey-valueペアに変換
+    currentTranslations = {};
+    for (const [key, value] of Object.entries(translations)) {
+      currentTranslations[key] = value.message;
+    }
+    
+    currentLanguage = lang;
+    return currentTranslations;
+  } catch (error) {
+    console.error('Translation loading error:', error);
+    if (lang !== 'ja') {
+      return await loadTranslations('ja');
+    }
+    return {};
+  }
+}
+
+/**
+ * 翻訳されたメッセージを取得
+ * @param {string} key - 翻訳キー
+ * @param {Object} replacements - プレースホルダー置換用のオブジェクト
+ * @returns {string} 翻訳されたメッセージ
+ */
+function getMessage(key, replacements = {}) {
+  let message = currentTranslations[key] || chrome.i18n.getMessage(key) || key;
+  
+  // プレースホルダー置換 (例: {count}, {id}, {name})
+  for (const [placeholder, value] of Object.entries(replacements)) {
+    message = message.replace(new RegExp(`{${placeholder}}`, 'g'), value);
+  }
+  
+  return message;
+}
+
 // UIエラーハンドラーの設定
 window.errorHandler.addEventListener((error) => {
   if (error.type === 'ui' || error.type === 'clipboard') {
@@ -150,7 +218,7 @@ async function handleItemFetch(itemId) {
     window.debugLogger?.log(`Processing ${itemsToFetch.length} selected BOOTH items`);
     
     if (itemsToFetch.length === 0) {
-      uiManager.showNotification('処理するアイテムがありません');
+      uiManager.showNotification(getMessage('noItemsToProcess'));
       return;
     }
 
@@ -161,7 +229,7 @@ async function handleItemFetch(itemId) {
     const DELAY_BETWEEN_ITEMS = 300; // アイテム間の0.3秒遅延
     
     // 進行状況通知を表示
-    uiManager.showNotification(`0/${itemsToFetch.length}個のアイテムを処理中...`);
+    uiManager.showNotification(getMessage('processingItems', { count: itemsToFetch.length }).replace('{count}', '0'));
     
     for (let i = 0; i < itemsToFetch.length; i++) {
       const item = itemsToFetch[i];
@@ -255,22 +323,22 @@ async function handleItemFetch(itemId) {
     
     // 完了メッセージを表示し、失敗アイテムを処理
     if (successCount > 0 && failedItems.length === 0) {
-      uiManager.showNotification(`${successCount}個のアイテムを取得しました`);
+      uiManager.showNotification(getMessage('itemsFetched', { count: successCount }));
       setTimeout(() => uiManager.hideNotification(), 3000);
     } else if (successCount > 0 && failedItems.length > 0) {
-      uiManager.showNotification(`${successCount}個のアイテムを取得しました。${failedItems.length}個のアイテムで取得に失敗しました。`);
+      uiManager.showNotification(getMessage('itemsFetched', { count: successCount }) + ' ' + getMessage('itemsFetchFailed', { count: failedItems.length }));
       setTimeout(() => {
         uiManager.hideNotification();
         handleFailedItemsPrompt(failedItems);
       }, 3000);
     } else if (failedItems.length > 0) {
-      uiManager.showNotification('アイテムの取得に失敗しました');
+      uiManager.showNotification(getMessage('fetchFailed'));
       setTimeout(() => {
         uiManager.hideNotification();
         handleFailedItemsPrompt(failedItems);
       }, 3000);
     } else {
-      uiManager.showNotification('処理するアイテムがありませんでした');
+      uiManager.showNotification(getMessage('noItemsProcessed'));
       setTimeout(() => uiManager.hideNotification(), 3000);
     }
     
@@ -417,5 +485,8 @@ function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-// ページ解析を初期化・実行
-handlePageAnalysis();
+// 翻訳システムを初期化してからページ解析を実行
+(async () => {
+  await initializeTranslations();
+  handlePageAnalysis();
+})();

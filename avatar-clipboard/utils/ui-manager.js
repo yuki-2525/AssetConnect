@@ -8,7 +8,11 @@ class UIManager {
     this.windowId = 'booth-clipboard-manager';   // ウィンドウのID
     this.nameEditTimeouts = new Map();          // デバウンス用タイマー管理
     this.currentItemId = null;                  // 現在表示中の商品ID
+    this.currentTranslations = {};              // 現在の翻訳データ
+    this.currentLanguage = 'ja';                // 現在の言語設定
+    this.SUPPORTED_LANGUAGES = ['ja', 'en', 'ko']; // サポート対象言語
     this.initializeCurrentItemId();             // 商品ID取得
+    this.initializeTranslations();              // 翻訳システム初期化
   }
 
   /**
@@ -31,6 +35,78 @@ class UIManager {
     }
   }
 
+  /**
+   * 翻訳システムを初期化
+   */
+  async initializeTranslations() {
+    try {
+      // 保存された言語設定を読み込み
+      const result = await chrome.storage.local.get(['selectedLanguage']);
+      const selectedLang = result.selectedLanguage || chrome.i18n.getUILanguage().substring(0, 2);
+      this.currentLanguage = this.SUPPORTED_LANGUAGES.includes(selectedLang) ? selectedLang : 'ja';
+      
+      await this.loadTranslations(this.currentLanguage);
+    } catch (error) {
+      console.error('Translation initialization failed:', error);
+      // フォールバック: 日本語を使用
+      this.currentLanguage = 'ja';
+      this.currentTranslations = {};
+    }
+  }
+
+  /**
+   * 翻訳データを読み込み
+   * @param {string} lang - 言語コード
+   */
+  async loadTranslations(lang) {
+    try {
+      const response = await fetch(chrome.runtime.getURL(`_locales/${lang}/messages.json`));
+      if (!response.ok) throw new Error(`Failed to load translations for ${lang}`);
+      const translations = await response.json();
+      
+      // 簡単なkey-valueペアに変換
+      this.currentTranslations = {};
+      for (const [key, value] of Object.entries(translations)) {
+        this.currentTranslations[key] = value.message;
+      }
+      
+      this.currentLanguage = lang;
+      return this.currentTranslations;
+    } catch (error) {
+      console.error('Translation loading error:', error);
+      if (lang !== 'ja') {
+        return await this.loadTranslations('ja');
+      }
+      return {};
+    }
+  }
+
+  /**
+   * 翻訳されたメッセージを取得
+   * @param {string} key - 翻訳キー
+   * @param {Object} replacements - プレースホルダー置換用のオブジェクト
+   * @returns {string} 翻訳されたメッセージ
+   */
+  getMessage(key, replacements = {}) {
+    let message = this.currentTranslations[key] || chrome.i18n.getMessage(key) || key;
+    
+    // プレースホルダー置換 (例: {count}, {id}, {name})
+    for (const [placeholder, value] of Object.entries(replacements)) {
+      message = message.replace(new RegExp(`{${placeholder}}`, 'g'), value);
+    }
+    
+    return message;
+  }
+
+  /**
+   * 地域別BOOTH URLを生成
+   * @param {string} itemId - アイテムID
+   * @returns {string} 地域別BOOTH URL
+   */
+  createBoothUrl(itemId) {
+    return `https://booth.pm/${this.currentLanguage}/items/${itemId}`;
+  }
+
 
   /**
    * 管理ウィンドウを作成し、DOMに追加する
@@ -47,22 +123,22 @@ class UIManager {
     
     windowContainer.innerHTML = `
       <div class="booth-manager-header">
-        <h3>対応アバター一括コピー</h3>
+        <h3>${this.getMessage('avatarClipboardTitle')}</h3>
         <button class="booth-manager-close" type="button">×</button>
       </div>
       <div class="booth-manager-content">
         <div class="booth-manager-notification" id="booth-notification" style="display: none;">
-          <p>未登録のアイテムが見つかりました!!</p>
+          <p>${this.getMessage('unregisteredItemsFound')}</p>
           <div class="booth-found-items" id="booth-found-items" style="display: none;"></div>
           <div class="booth-notification-actions">
-            <button class="booth-fetch-btn" type="button">アイテム情報を取得</button>
+            <button class="booth-fetch-btn" type="button">${this.getMessage('fetchItemInfo')}</button>
           </div>
         </div>
         <div class="booth-manager-sections">
           <div class="booth-section" id="saved-section">
             <h4 class="booth-section-header collapsed" data-section="saved">
               <span class="booth-section-toggle">▶</span>
-              保存済み
+              ${this.getMessage('savedSection')}
               <span class="booth-section-count" id="saved-count">0</span>
             </h4>
             <div class="booth-items-list" id="saved-items" style="display: none;"></div>
@@ -70,7 +146,7 @@ class UIManager {
           <div class="booth-section" id="unsaved-section">
             <h4 class="booth-section-header" data-section="unsaved">
               <span class="booth-section-toggle">▼</span>
-              新規
+              ${this.getMessage('unsavedSection')}
               <span class="booth-section-count" id="unsaved-count">0</span>
             </h4>
             <div class="booth-items-list" id="unsaved-items"></div>
@@ -78,15 +154,15 @@ class UIManager {
           <div class="booth-section" id="excluded-section">
             <h4 class="booth-section-header" data-section="excluded">
               <span class="booth-section-toggle">▼</span>
-              除外
+              ${this.getMessage('excludedSection')}
               <span class="booth-section-count" id="excluded-count">0</span>
             </h4>
             <div class="booth-items-list" id="excluded-items"></div>
           </div>
         </div>
         <div class="booth-manager-actions">
-          <button class="booth-export-btn" type="button">クリップボードにコピー</button>
-          <button class="booth-manual-add-toggle-btn" type="button">手動追加</button>
+          <button class="booth-export-btn" type="button">${this.getMessage('copyToClipboard')}</button>
+          <button class="booth-manual-add-toggle-btn" type="button">${this.getMessage('manualAdd')}</button>
         </div>
       </div>
     `;
@@ -140,7 +216,7 @@ class UIManager {
       
       const messageEl = document.querySelector('#booth-notification p');
       if (messageEl) {
-        messageEl.textContent = `ページ内に${remainingItems.length}個のBOOTHアイテムが見つかりました!!`;
+        messageEl.textContent = this.getMessage('boothItemsFoundInPage', { count: remainingItems.length });
       }
       
       // アイテムが残っていない場合は通知を非表示
@@ -215,7 +291,7 @@ class UIManager {
       
       const messageEl = notification.querySelector('p');
       if (messageEl) {
-        messageEl.textContent = `ページ内に${itemsToFetch.length}個のBOOTHアイテムが見つかりました!!`;
+        messageEl.textContent = this.getMessage('boothItemsFoundInPage', { count: itemsToFetch.length });
       }
       
       // 前のアイテムをクリア
@@ -250,7 +326,7 @@ class UIManager {
         <div class="progress-bar" style="width: ${percentage}%"></div>
       </div>
       <span class="progress-text">${current}/${total} (${percentage}%)</span>
-      ${currentItem ? `<br><small>処理中: ${currentItem}</small>` : ''}
+      ${currentItem ? `<br><small>${this.getMessage('processing', { item: currentItem })}</small>` : ''}
     `;
     this.showNotification(progressBar);
   }
@@ -308,14 +384,14 @@ class UIManager {
       const storageManager = window.storageManager;
       
       if (!storageManager) {
-        this.showNotification('ストレージマネージャーが利用できません');
+        this.showNotification(this.getMessage('storageManagerUnavailable'));
         return;
       }
 
       const result = await clipboardManager.exportSavedAndNewItems(storageManager);
       
       if (result.success) {
-        let message = `${result.itemCount}個のアイテムをクリップボードにコピーしました`;
+        let message = this.getMessage('itemsCopiedToClipboard', { count: result.itemCount });
         
         // 永続化に失敗した場合は警告を表示
         if (result.warning) {
@@ -340,7 +416,7 @@ class UIManager {
       
     } catch (error) {
       window.errorHandler?.handleUIError(error, 'export-handler', 'clipboard-export');
-      this.showNotification('エクスポート中にエラーが発生しました');
+      this.showNotification(this.getMessage('exportError'));
       setTimeout(() => this.hideNotification(), 5000);
     }
   }
@@ -439,20 +515,20 @@ class UIManager {
     modalOverlay.innerHTML = `
       <div class="booth-manual-add-modal">
         <div class="booth-manual-add-modal-header">
-          <h3>取得失敗アイテム</h3>
+          <h3>${this.getMessage('failedItemsTitle')}</h3>
           <button class="booth-manual-add-modal-close" type="button">×</button>
         </div>
         <div class="booth-manual-add-modal-content">
           <div class="booth-failed-items-message">
-            <p>以下のアイテムで情報取得に失敗しました：</p>
+            <p>${this.getMessage('itemFetchFailedMessage')}</p>
             <div class="booth-failed-items-list">
               ${failedItemsList}
             </div>
-            <p>手動でアイテム名を入力しますか？</p>
+            <p>${this.getMessage('manualInputPrompt')}</p>
           </div>
           <div class="booth-manual-add-modal-actions">
-            <button class="booth-failed-items-confirm-btn" type="button">手動入力する</button>
-            <button class="booth-manual-add-cancel-btn" type="button">キャンセル</button>
+            <button class="booth-failed-items-confirm-btn" type="button">${this.getMessage('confirmManualInput')}</button>
+            <button class="booth-manual-add-cancel-btn" type="button">${this.getMessage('cancel')}</button>
           </div>
         </div>
       </div>
@@ -530,13 +606,13 @@ class UIManager {
           }
           
           // ヘルパー通知を表示
-          this.showNotification(`ID ${failedItems[0].id} を設定しました。アイテム名を入力してください。`);
+          this.showNotification(this.getMessage('itemIdSet', { id: failedItems[0].id }));
           setTimeout(() => this.hideNotification(), 4000);
           
           // 残りアイテム処理用のヘルパーを追加
           if (failedItems.length > 1) {
             setTimeout(() => {
-              this.showNotification(`残り${failedItems.length - 1}個のアイテムも続けて入力できます。`);
+              this.showNotification(this.getMessage('remainingItemsHelper', { count: failedItems.length - 1 }));
               setTimeout(() => this.hideNotification(), 3000);
             }, 4500);
           }
@@ -556,18 +632,18 @@ class UIManager {
     modalOverlay.innerHTML = `
       <div class="booth-manual-add-modal">
         <div class="booth-manual-add-modal-header">
-          <h3>手動追加</h3>
+          <h3>${this.getMessage('manualAdd')}</h3>
           <button class="booth-manual-add-modal-close" type="button">×</button>
         </div>
         <div class="booth-manual-add-modal-content">
           <div class="booth-manual-add-form">
             <div class="booth-manual-inputs">
-              <input type="text" id="modal-manual-item-id" placeholder="アイテムID" class="booth-manual-input">
-              <input type="text" id="modal-manual-item-name" placeholder="アイテム名" class="booth-manual-input">
+              <input type="text" id="modal-manual-item-id" placeholder="${this.getMessage('itemId')}" class="booth-manual-input">
+              <input type="text" id="modal-manual-item-name" placeholder="${this.getMessage('itemName')}" class="booth-manual-input">
             </div>
             <div class="booth-manual-add-modal-actions">
-              <button class="booth-manual-add-btn" type="button">追加</button>
-              <button class="booth-manual-add-cancel-btn" type="button">キャンセル</button>
+              <button class="booth-manual-add-btn" type="button">${this.getMessage('add')}</button>
+              <button class="booth-manual-add-cancel-btn" type="button">${this.getMessage('cancel')}</button>
             </div>
           </div>
         </div>
@@ -650,14 +726,14 @@ class UIManager {
 
       // バリデーション
       if (!itemId) {
-        this.showNotification('アイテムIDを入力してください');
+        this.showNotification(this.getMessage('enterItemId'));
         setTimeout(() => this.hideNotification(), 3000);
         idInput.focus();
         return;
       }
 
       if (!itemName) {
-        this.showNotification('アイテム名を入力してください');
+        this.showNotification(this.getMessage('enterItemName'));
         setTimeout(() => this.hideNotification(), 3000);
         nameInput.focus();
         return;
@@ -665,7 +741,7 @@ class UIManager {
 
       // ID形式をバリデーション
       if (!/^\d+$/.test(itemId)) {
-        this.showNotification('アイテムIDは数字のみで入力してください');
+        this.showNotification(this.getMessage('itemIdNumbersOnly'));
         setTimeout(() => this.hideNotification(), 3000);
         idInput.focus();
         return;
@@ -673,14 +749,14 @@ class UIManager {
 
       const storageManager = window.storageManager;
       if (!storageManager) {
-        this.showNotification('ストレージマネージャーが利用できません');
+        this.showNotification(this.getMessage('storageManagerUnavailable'));
         return;
       }
 
       // アイテムが既に存在するかチェック
       const existingItem = await storageManager.getItem(itemId);
       if (existingItem) {
-        this.showNotification(`アイテムID ${itemId} は既に登録されています`);
+        this.showNotification(this.getMessage('itemIdAlreadyExists', { id: itemId }));
         setTimeout(() => this.hideNotification(), 3000);
         idInput.focus();
         return;
@@ -703,7 +779,7 @@ class UIManager {
         this.addItemToSection('unsaved', itemData);
         
         // 成功メッセージを表示
-        this.showNotification(`アイテム「${itemName}」を追加しました`);
+        this.showNotification(this.getMessage('itemAdded', { name: itemName }));
         setTimeout(() => this.hideNotification(), 3000);
         
         // 処理すべき残りの失敗アイテムがあるかチェック
@@ -713,7 +789,7 @@ class UIManager {
           nameInput.value = '';
           nameInput.focus();
           
-          this.showNotification(`次のアイテム ID ${nextItem.id} を設定しました。残り${window.remainingFailedItems.length}個`);
+          this.showNotification(this.getMessage('nextItemSet', { id: nextItem.id, count: window.remainingFailedItems.length }));
           setTimeout(() => this.hideNotification(), 3000);
         } else {
           // 入力をクリアしてモーダルを閉じる
@@ -722,13 +798,13 @@ class UIManager {
           this.hideManualAddModal();
         }
       } else {
-        this.showNotification('アイテムの保存に失敗しました');
+        this.showNotification(this.getMessage('itemSaveFailed'));
         setTimeout(() => this.hideNotification(), 3000);
       }
 
     } catch (error) {
       window.errorHandler?.handleUIError(error, 'modal-manual-add', 'item-addition');
-      this.showNotification('アイテム追加中にエラーが発生しました');
+      this.showNotification(this.getMessage('itemAddError'));
       setTimeout(() => this.hideNotification(), 3000);
     }
   }
@@ -785,20 +861,20 @@ class UIManager {
     if (sectionId === 'excluded') {
       // 除外アイテム: 復元ボタンを表示
       buttonsHtml = `
-        <button class="booth-restore-btn" data-original-category="${itemData.previousCategory || 'unsaved'}">戻す</button>
+        <button class="booth-restore-btn" data-original-category="${itemData.previousCategory || 'unsaved'}">${this.getMessage('restore')}</button>
       `;
     } else {
       // 保存済み・新規アイテム: 除外ボタン（×）のみ表示
       buttonsHtml = `
-        <button class="booth-exclude-btn" data-target="excluded">×</button>
+        <button class="booth-exclude-btn" data-target="excluded">${this.getMessage('exclude')}</button>
       `;
     }
     
-    const itemUrl = `https://booth.pm/ja/items/${itemData.id}`;
+    const itemUrl = this.createBoothUrl(itemData.id);
     
     itemEl.innerHTML = `
       <div class="booth-item-main">
-        <input type="text" class="booth-item-name" value="${itemData.name || ''}" placeholder="アイテム名">
+        <input type="text" class="booth-item-name" value="${itemData.name || ''}" placeholder="${this.getMessage('itemName')}">
         <div class="booth-item-url">
           <a href="${itemUrl}" target="_blank" class="booth-url-link">${itemUrl}</a>
         </div>

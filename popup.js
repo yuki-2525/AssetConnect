@@ -549,17 +549,8 @@ document.addEventListener('DOMContentLoaded', function () {
       const lines = [header];
 
       history.forEach(entry => {
-        // URLが空の場合はbooth.pm/(lang)/items/で埋める
-        const uiLang = chrome.i18n.getUILanguage();
-        let lang;
-        if (uiLang.startsWith("ja")) {
-          lang = "ja";
-        } else if (uiLang.startsWith("ko")) {
-          lang = "ko";
-        } else {
-          lang = "en";
-        }
-        const url = entry.url && entry.url.trim() ? entry.url : `https://booth.pm/${lang}/items/${entry.boothID}`;
+        // URLが空の場合は現在の言語設定でbooth.pm/(lang)/items/で埋める
+        const url = entry.url && entry.url.trim() ? entry.url : createBoothUrl(entry.boothID);
         const line = [
           url,
           entry.timestamp,
