@@ -50,7 +50,8 @@
       ],
       "js": [
         "shared/debug-logger.js",
-        "shared/error-handler.js", 
+        "shared/error-handler.js",
+        "shared/translation-manager.js",
         "avatar-clipboard/utils/storage-manager.js",
         "avatar-clipboard/utils/ui-manager.js",
         "avatar-clipboard/utils/booth-json-client.js",

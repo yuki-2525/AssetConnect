@@ -300,120 +300,120 @@
         "message": "Import error occurred: {error}"
     },
     "avatarClipboardTitle": {
-        "message": "지원 아바타 일괄 복사"
+        "message": "Supported Avatars Batch Copy"
     },
     "unregisteredItemsFound": {
-        "message": "미등록 아이템이 발견되었습니다!!"
+        "message": "Unregistered items found!!"
     },
     "boothItemsFoundInPage": {
-        "message": "페이지에서 {count}개의 BOOTH 아이템을 발견했습니다!!"
+        "message": "{count} BOOTH items found on this page!!"
     },
     "fetchItemInfo": {
-        "message": "아이템 정보 가져오기"
+        "message": "Fetch Item Info"
     },
     "copyToClipboard": {
-        "message": "클립보드에 복사"
+        "message": "Copy to Clipboard"
     },
     "manualAdd": {
-        "message": "수동 추가"
+        "message": "Manual Add"
     },
     "exclude": {
         "message": "×"
     },
     "restore": {
-        "message": "복원"
+        "message": "Restore"
     },
     "savedSection": {
-        "message": "저장됨"
+        "message": "Saved"
     },
     "unsavedSection": {
-        "message": "새로운"
+        "message": "New"
     },
     "excludedSection": {
-        "message": "제외됨"
+        "message": "Excluded"
     },
     "itemId": {
-        "message": "아이템 ID"
+        "message": "Item ID"
     },
     "itemName": {
-        "message": "아이템 이름"
+        "message": "Item Name"
     },
     "add": {
-        "message": "추가"
+        "message": "Add"
     },
     "cancel": {
-        "message": "취소"
+        "message": "Cancel"
     },
     "storageManagerUnavailable": {
-        "message": "스토리지 매니저를 사용할 수 없습니다"
+        "message": "Storage manager is unavailable"
     },
     "enterItemId": {
-        "message": "아이템 ID를 입력하세요"
+        "message": "Please enter an item ID"
     },
     "enterItemName": {
-        "message": "아이템 이름을 입력하세요"
+        "message": "Please enter an item name"
     },
     "itemIdNumbersOnly": {
-        "message": "아이템 ID는 숫자만 입력해야 합니다"
+        "message": "Item ID must contain numbers only"
     },
     "itemIdAlreadyExists": {
-        "message": "아이템 ID {id}는 이미 등록되어 있습니다"
+        "message": "Item ID {id} is already registered"
     },
     "itemSaveFailed": {
-        "message": "아이템 저장에 실패했습니다"
+        "message": "Failed to save item"
     },
     "itemAddError": {
-        "message": "아이템 추가 중 오류가 발생했습니다"
+        "message": "Error occurred while adding item"
     },
     "itemsCopiedToClipboard": {
-        "message": "{count}개 아이템을 클립보드에 복사했습니다"
+        "message": "{count} items copied to clipboard"
     },
     "exportError": {
-        "message": "내보내기 중 오류가 발생했습니다"
+        "message": "Error occurred during export"
     },
     "failedItemsTitle": {
-        "message": "실패한 아이템"
+        "message": "Failed Items"
     },
     "itemFetchFailedMessage": {
-        "message": "다음 아이템들의 정보 가져오기에 실패했습니다:"
+        "message": "Failed to fetch information for the following items:"
     },
     "manualInputPrompt": {
-        "message": "수동으로 아이템 이름을 입력하시겠습니까?"
+        "message": "Do you want to manually enter item names?"
     },
     "confirmManualInput": {
-        "message": "수동 입력"
+        "message": "Manual Input"
     },
     "noItemsToProcess": {
-        "message": "처리할 아이템이 없습니다"
+        "message": "No items to process"
     },
     "processingItems": {
-        "message": "{count}개 아이템 처리 중..."
+        "message": "Processing {count} items..."
     },
     "itemsFetched": {
-        "message": "{count}개 아이템을 성공적으로 가져왔습니다"
+        "message": "{count} items fetched successfully"
     },
     "itemsFetchFailed": {
-        "message": "{count}개 아이템 가져오기에 실패했습니다."
+        "message": "Failed to fetch {count} items."
     },
     "fetchFailed": {
-        "message": "아이템 가져오기에 실패했습니다"
+        "message": "Failed to fetch items"
     },
     "noItemsProcessed": {
-        "message": "처리된 아이템이 없습니다"
+        "message": "No items were processed"
     },
     "processing": {
-        "message": "처리 중: {item}"
+        "message": "Processing: {item}"
     },
     "itemAdded": {
-        "message": "아이템 \"{name}\"을 추가했습니다"
+        "message": "Added item \"{name}\""
     },
     "nextItemSet": {
-        "message": "다음 아이템 ID {id} 설정. {count}개 남음"
+        "message": "Next item ID {id} set. {count} remaining"
     },
     "itemIdSet": {
-        "message": "ID {id} 설정됨. 아이템 이름을 입력하세요."
+        "message": "ID {id} set. Please enter item name."
     },
     "remainingItemsHelper": {
-        "message": "남은 {count}개 아이템을 계속 입력할 수 있습니다."
+        "message": "You can continue to input the remaining {count} items."
     }
 }

@@ -1,57 +1,17 @@
 // AssetConnect Import page JavaScript
-let currentTranslations = {};
-const SUPPORTED_LANGUAGES = ['ja', 'en', 'ko'];
+const translationManager = window.translationManager;
 let importData = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
-    await initializeTranslations();
+    await translationManager.initialize();
+    updateUITexts();
     setupEventListeners();
 });
 
-async function initializeTranslations() {
-    try {
-        // Get the current language setting
-        const result = await chrome.storage.local.get(['selectedLanguage']);
-        const selectedLang = result.selectedLanguage || chrome.i18n.getUILanguage().substring(0, 2);
-        const lang = SUPPORTED_LANGUAGES.includes(selectedLang) ? selectedLang : 'en';
-        
-        await loadTranslations(lang);
-        updateUITexts();
-    } catch (error) {
-        console.error('Failed to initialize translations:', error);
-    }
-}
 
-async function loadTranslations(lang) {
-    try {
-        const response = await fetch(chrome.runtime.getURL(`_locales/${lang}/messages.json`));
-        if (!response.ok) throw new Error(`Failed to load translations for ${lang}`);
-        const translations = await response.json();
-        
-        // Convert to simple key-value pairs
-        currentTranslations = {};
-        for (const [key, value] of Object.entries(translations)) {
-            currentTranslations[key] = value.message;
-        }
-        return currentTranslations;
-    } catch (error) {
-        console.error('Translation loading error:', error);
-        if (lang !== 'en') {
-            return await loadTranslations('en');
-        }
-        return {};
-    }
-}
 
 function getMessage(key, replacements = {}) {
-    let message = currentTranslations[key] || chrome.i18n.getMessage(key) || key;
-    
-    // Replace placeholders like {count}, {key}, {error}
-    for (const [placeholder, value] of Object.entries(replacements)) {
-        message = message.replace(new RegExp(`{${placeholder}}`, 'g'), value);
-    }
-    
-    return message;
+    return translationManager.getMessage(key, replacements);
 }
 
 function updateUITexts() {

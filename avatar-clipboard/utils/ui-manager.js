@@ -8,11 +8,8 @@ class UIManager {
     this.windowId = 'booth-clipboard-manager';   // ウィンドウのID
     this.nameEditTimeouts = new Map();          // デバウンス用タイマー管理
     this.currentItemId = null;                  // 現在表示中の商品ID
-    this.currentTranslations = {};              // 現在の翻訳データ
-    this.currentLanguage = 'ja';                // 現在の言語設定
-    this.SUPPORTED_LANGUAGES = ['ja', 'en', 'ko']; // サポート対象言語
+    this.translationManager = window.translationManager; // 共有翻訳マネージャー
     this.initializeCurrentItemId();             // 商品ID取得
-    this.initializeTranslations();              // 翻訳システム初期化
   }
 
   /**
@@ -35,51 +32,7 @@ class UIManager {
     }
   }
 
-  /**
-   * 翻訳システムを初期化
-   */
-  async initializeTranslations() {
-    try {
-      // 保存された言語設定を読み込み
-      const result = await chrome.storage.local.get(['selectedLanguage']);
-      const selectedLang = result.selectedLanguage || chrome.i18n.getUILanguage().substring(0, 2);
-      this.currentLanguage = this.SUPPORTED_LANGUAGES.includes(selectedLang) ? selectedLang : 'ja';
-      
-      await this.loadTranslations(this.currentLanguage);
-    } catch (error) {
-      console.error('Translation initialization failed:', error);
-      // フォールバック: 日本語を使用
-      this.currentLanguage = 'ja';
-      this.currentTranslations = {};
-    }
-  }
 
-  /**
-   * 翻訳データを読み込み
-   * @param {string} lang - 言語コード
-   */
-  async loadTranslations(lang) {
-    try {
-      const response = await fetch(chrome.runtime.getURL(`_locales/${lang}/messages.json`));
-      if (!response.ok) throw new Error(`Failed to load translations for ${lang}`);
-      const translations = await response.json();
-      
-      // 簡単なkey-valueペアに変換
-      this.currentTranslations = {};
-      for (const [key, value] of Object.entries(translations)) {
-        this.currentTranslations[key] = value.message;
-      }
-      
-      this.currentLanguage = lang;
-      return this.currentTranslations;
-    } catch (error) {
-      console.error('Translation loading error:', error);
-      if (lang !== 'ja') {
-        return await this.loadTranslations('ja');
-      }
-      return {};
-    }
-  }
 
   /**
    * 翻訳されたメッセージを取得
@@ -88,14 +41,7 @@ class UIManager {
    * @returns {string} 翻訳されたメッセージ
    */
   getMessage(key, replacements = {}) {
-    let message = this.currentTranslations[key] || chrome.i18n.getMessage(key) || key;
-    
-    // プレースホルダー置換 (例: {count}, {id}, {name})
-    for (const [placeholder, value] of Object.entries(replacements)) {
-      message = message.replace(new RegExp(`{${placeholder}}`, 'g'), value);
-    }
-    
-    return message;
+    return this.translationManager.getMessage(key, replacements);
   }
 
   /**
@@ -104,7 +50,7 @@ class UIManager {
    * @returns {string} 地域別BOOTH URL
    */
   createBoothUrl(itemId) {
-    return `https://booth.pm/${this.currentLanguage}/items/${itemId}`;
+    return this.translationManager.createBoothUrl(itemId);
   }
 
 
