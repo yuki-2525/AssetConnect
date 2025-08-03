@@ -37,8 +37,7 @@
     {
       "matches": [
         "https://*.booth.pm/items/*",
-        "https://booth.pm/*/items/*",
-        "https://booth.pm/items/*"
+        "https://booth.pm/*/items/*"
       ],
       "js": [
         "download-log/booth_shoppage.js"
@@ -83,7 +82,7 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["avatar-clipboard/styles/*", "storage-management/storage-overview.html", "storage-management/storage-overview.js", "storage-management/import.html", "storage-management/import.js"],
+      "resources": ["avatar-clipboard/styles/*", "storage-management/storage-overview.html", "storage-management/storage-overview.js", "storage-management/import.html", "storage-management/import.js", "_locales/*/messages.json"],
       "matches": ["*://*.booth.pm/*", "*://booth.pm/*"]
     }
   ]
