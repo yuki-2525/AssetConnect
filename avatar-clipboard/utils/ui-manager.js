@@ -134,7 +134,7 @@ class UIManager {
     if (itemDiv) {
       itemDiv.remove();
       
-      // Update notification message
+      // 通知メッセージを更新
       const foundItemsEl = document.getElementById('booth-found-items');
       const remainingItems = foundItemsEl.querySelectorAll('.booth-found-item');
       
@@ -197,7 +197,7 @@ class UIManager {
         }
       }
       
-      // Hide found items list when showing other notifications
+      // 他の通知を表示する際に見つかったアイテムリストを非表示
       const foundItemsEl = document.getElementById('booth-found-items');
       if (foundItemsEl) {
         foundItemsEl.style.display = 'none';
@@ -218,10 +218,10 @@ class UIManager {
         messageEl.textContent = `ページ内に${itemsToFetch.length}個のBOOTHアイテムが見つかりました!!`;
       }
       
-      // Clear previous items
+      // 前のアイテムをクリア
       foundItemsEl.innerHTML = '';
       
-      // Add each found item with remove button
+      // 削除ボタン付きで各見つかったアイテムを追加
       itemsToFetch.forEach((item, index) => {
         const itemDiv = document.createElement('div');
         itemDiv.className = 'booth-found-item';
@@ -238,7 +238,7 @@ class UIManager {
         foundItemsEl.appendChild(itemDiv);
       });
       
-      // Attach remove button listeners
+      // 削除ボタンリスナーを接続
       this.attachFoundItemsEventListeners();
     }
   }
@@ -269,7 +269,7 @@ class UIManager {
       this.handleNameEdit(itemEl.getAttribute('data-item-id'), e.target.value);
     });
 
-    // Exclude button (× button)
+    // 除外ボタン（×ボタン）
     const excludeBtn = itemEl.querySelector('.booth-exclude-btn');
     if (excludeBtn) {
       excludeBtn.addEventListener('click', (e) => {
@@ -279,7 +279,7 @@ class UIManager {
       });
     }
 
-    // Restore button
+    // 復元ボタン
     const restoreBtn = itemEl.querySelector('.booth-restore-btn');
     if (restoreBtn) {
       restoreBtn.addEventListener('click', (e) => {
@@ -293,7 +293,7 @@ class UIManager {
     // console.log('Fetching item information...');
     this.hideNotification();
     
-    // Trigger item fetching event
+    // アイテム取得イベントを発火
     const event = new CustomEvent('boothFetchItem', { 
       detail: { action: 'fetch' } 
     });
@@ -317,12 +317,12 @@ class UIManager {
       if (result.success) {
         let message = `${result.itemCount}個のアイテムをクリップボードにコピーしました`;
         
-        // Show warning if persistence failed
+        // 永続化に失敗した場合は警告を表示
         if (result.warning) {
           message += `\n注意: ${result.warning}`;
         }
         
-        // Update UI if items were moved or deleted
+        // アイテムが移動または削除された場合はUIを更新
         if (result.persistenceResult && result.persistenceResult.success) {
           const persistResult = result.persistenceResult;
           if (persistResult.successCount > 0) {
@@ -354,7 +354,7 @@ class UIManager {
     // 500ms後に実行するタイマーを設定
     const timeoutId = setTimeout(async () => {
       try {
-        // Update item name in storage
+        // ストレージ内のアイテム名を更新
         const storageManager = window.storageManager;
         if (storageManager) {
           const success = await storageManager.updateItem(itemId, { name: newName });
@@ -390,7 +390,7 @@ class UIManager {
         }
       }
       
-      // Refresh display to show correct buttons
+      // 正しいボタンを表示するために表示を更新
       this.refreshItemDisplay();
       
       // console.log(`Item ${itemId} moved to excluded section`);
@@ -416,7 +416,7 @@ class UIManager {
         }
       }
       
-      // Refresh display to show correct buttons
+      // 正しいボタンを表示するために表示を更新
       this.refreshItemDisplay();
       
       // console.log(`Item ${itemId} restored to ${originalCategory} section`);
@@ -427,7 +427,7 @@ class UIManager {
 
 
   showFailedItemsModal(failedItems) {
-    // Remove existing modal if any
+    // 既存のモーダルがある場合は削除
     this.hideFailedItemsModal();
     
     const modalOverlay = document.createElement('div');
@@ -460,10 +460,10 @@ class UIManager {
     
     this.managementWindow.appendChild(modalOverlay);
     
-    // Attach event listeners for failed items modal
+    // 失敗アイテムモーダル用のイベントリスナーを接続
     this.attachFailedItemsModalEventListeners(modalOverlay, failedItems);
     
-    // Focus on confirm button
+    // 確認ボタンにフォーカス
     setTimeout(() => {
       const confirmBtn = modalOverlay.querySelector('.booth-failed-items-confirm-btn');
       if (confirmBtn) confirmBtn.focus();
@@ -478,29 +478,29 @@ class UIManager {
   }
 
   attachFailedItemsModalEventListeners(modal, failedItems) {
-    // Close button
+    // 閉じるボタン
     const closeBtn = modal.querySelector('.booth-manual-add-modal-close');
     closeBtn.addEventListener('click', () => this.hideFailedItemsModal());
     
-    // Cancel button
+    // キャンセルボタン
     const cancelBtn = modal.querySelector('.booth-manual-add-cancel-btn');
     cancelBtn.addEventListener('click', () => this.hideFailedItemsModal());
     
-    // Confirm button
+    // 確認ボタン
     const confirmBtn = modal.querySelector('.booth-failed-items-confirm-btn');
     confirmBtn.addEventListener('click', () => {
       this.hideFailedItemsModal();
       this.handleFailedItemsConfirm(failedItems);
     });
     
-    // Click outside to close
+    // 外側クリックで閉じる
     modal.addEventListener('click', (e) => {
       if (e.target === modal) {
         this.hideFailedItemsModal();
       }
     });
     
-    // Escape key to close
+    // エスケープキーで閉じる
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         this.hideFailedItemsModal();
@@ -509,14 +509,14 @@ class UIManager {
   }
 
   handleFailedItemsConfirm(failedItems) {
-    // Store remaining failed items for quick access
+    // 残りの失敗アイテムをクイックアクセス用に保存
     window.remainingFailedItems = failedItems.slice(1);
     
-    // Show manual add modal with first failed item
+    // 最初の失敗アイテムで手動追加モーダルを表示
     setTimeout(() => {
       this.showManualAddModal();
       
-      // Populate the first failed item ID after modal is created
+      // モーダル作成後に最初の失敗アイテムIDを設定
       setTimeout(() => {
         const idInput = document.getElementById('modal-manual-item-id');
         const nameInput = document.getElementById('modal-manual-item-name');
@@ -524,16 +524,16 @@ class UIManager {
         if (idInput && failedItems.length > 0) {
           idInput.value = failedItems[0].id;
           
-          // Focus on name input since ID is already filled
+          // IDが既に入力されているため名前入力にフォーカス
           if (nameInput) {
             nameInput.focus();
           }
           
-          // Show helper notification
+          // ヘルパー通知を表示
           this.showNotification(`ID ${failedItems[0].id} を設定しました。アイテム名を入力してください。`);
           setTimeout(() => this.hideNotification(), 4000);
           
-          // Add helper for processing remaining items
+          // 残りアイテム処理用のヘルパーを追加
           if (failedItems.length > 1) {
             setTimeout(() => {
               this.showNotification(`残り${failedItems.length - 1}個のアイテムも続けて入力できます。`);
@@ -546,7 +546,7 @@ class UIManager {
   }
 
   showManualAddModal() {
-    // Remove existing modal if any
+    // 既存のモーダルがある場合は削除
     this.hideManualAddModal();
     
     const modalOverlay = document.createElement('div');
@@ -576,10 +576,10 @@ class UIManager {
     
     this.managementWindow.appendChild(modalOverlay);
     
-    // Attach event listeners for modal
+    // モーダル用のイベントリスナーを接続
     this.attachModalEventListeners(modalOverlay);
     
-    // Focus on ID input
+    // ID入力にフォーカス
     setTimeout(() => {
       const idInput = modalOverlay.querySelector('#modal-manual-item-id');
       if (idInput) idInput.focus();
@@ -594,26 +594,26 @@ class UIManager {
   }
 
   attachModalEventListeners(modal) {
-    // Close button
+    // 閉じるボタン
     const closeBtn = modal.querySelector('.booth-manual-add-modal-close');
     closeBtn.addEventListener('click', () => this.hideManualAddModal());
     
-    // Cancel button
+    // キャンセルボタン
     const cancelBtn = modal.querySelector('.booth-manual-add-cancel-btn');
     cancelBtn.addEventListener('click', () => this.hideManualAddModal());
     
-    // Add button
+    // 追加ボタン
     const addBtn = modal.querySelector('.booth-manual-add-btn');
     addBtn.addEventListener('click', () => this.handleModalManualAdd());
     
-    // Click outside to close
+    // 外側クリックで閉じる
     modal.addEventListener('click', (e) => {
       if (e.target === modal) {
         this.hideManualAddModal();
       }
     });
     
-    // Enter key support
+    // エンターキーサポート
     const idInput = modal.querySelector('#modal-manual-item-id');
     const nameInput = modal.querySelector('#modal-manual-item-name');
     
@@ -625,7 +625,7 @@ class UIManager {
       });
     });
     
-    // Escape key to close
+    // エスケープキーで閉じる
     document.addEventListener('keydown', (e) => {
       if (e.key === 'Escape') {
         this.hideManualAddModal();
@@ -648,7 +648,7 @@ class UIManager {
       const itemId = idInput.value.trim();
       const itemName = nameInput.value.trim();
 
-      // Validation
+      // バリデーション
       if (!itemId) {
         this.showNotification('アイテムIDを入力してください');
         setTimeout(() => this.hideNotification(), 3000);
@@ -663,7 +663,7 @@ class UIManager {
         return;
       }
 
-      // Validate ID format
+      // ID形式をバリデーション
       if (!/^\d+$/.test(itemId)) {
         this.showNotification('アイテムIDは数字のみで入力してください');
         setTimeout(() => this.hideNotification(), 3000);
@@ -677,7 +677,7 @@ class UIManager {
         return;
       }
 
-      // Check if item already exists
+      // アイテムが既に存在するかチェック
       const existingItem = await storageManager.getItem(itemId);
       if (existingItem) {
         this.showNotification(`アイテムID ${itemId} は既に登録されています`);
@@ -686,7 +686,7 @@ class UIManager {
         return;
       }
 
-      // Create item data
+      // アイテムデータを作成
       const itemData = {
         id: itemId,
         name: itemName,
@@ -694,19 +694,19 @@ class UIManager {
         currentPageId: this.currentItemId
       };
 
-      // Save to storage
+      // ストレージに保存
       const saved = await storageManager.saveItem(itemId, itemData);
       if (saved) {
         // console.log(`Manual item ${itemId} saved: ${itemName}`);
         
-        // Add to UI
+        // UIに追加
         this.addItemToSection('unsaved', itemData);
         
-        // Show success message
+        // 成功メッセージを表示
         this.showNotification(`アイテム「${itemName}」を追加しました`);
         setTimeout(() => this.hideNotification(), 3000);
         
-        // Check if there are remaining failed items to process
+        // 処理すべき残りの失敗アイテムがあるかチェック
         if (window.remainingFailedItems && window.remainingFailedItems.length > 0) {
           const nextItem = window.remainingFailedItems.shift();
           idInput.value = nextItem.id;
@@ -716,7 +716,7 @@ class UIManager {
           this.showNotification(`次のアイテム ID ${nextItem.id} を設定しました。残り${window.remainingFailedItems.length}個`);
           setTimeout(() => this.hideNotification(), 3000);
         } else {
-          // Clear inputs and close modal
+          // 入力をクリアしてモーダルを閉じる
           idInput.value = '';
           nameInput.value = '';
           this.hideManualAddModal();
@@ -743,12 +743,12 @@ class UIManager {
     const isCollapsed = itemsList.style.display === 'none';
     
     if (isCollapsed) {
-      // Expand section
+      // セクションを展開
       itemsList.style.display = 'block';
       toggleIcon.textContent = '▼';
       header.classList.remove('collapsed');
     } else {
-      // Collapse section
+      // セクションを折りたたみ
       itemsList.style.display = 'none';
       toggleIcon.textContent = '▶';
       header.classList.add('collapsed');
@@ -811,7 +811,7 @@ class UIManager {
     this.attachItemEventListeners(itemEl);
     section.appendChild(itemEl);
     
-    // Update section count
+    // セクションカウントを更新
     this.updateSectionCounts();
   }
 
@@ -820,7 +820,7 @@ class UIManager {
       const storageManager = window.storageManager;
       if (!storageManager || !this.currentItemId) return;
 
-      // Clear all sections
+      // 全セクションをクリア
       const sections = ['saved', 'unsaved', 'excluded'];
       sections.forEach(section => {
         const container = document.getElementById(`${section}-items`);
@@ -829,25 +829,25 @@ class UIManager {
         }
       });
 
-      // Get all items and items found on current page
+      // 全アイテムと現在のページで見つかったアイテムを取得
       const pageItems = await storageManager.getItemsForCurrentPage(this.currentItemId);
       const pageParser = window.pageParser || new PageParser();
       const { parseResult } = await pageParser.fetchItemsFromPage();
       const pageItemIds = new Set();
       
-      // Add current page item ID if exists
+      // 現在のページアイテムIDが存在する場合は追加
       if (this.currentItemId) {
         pageItemIds.add(this.currentItemId);
       }
       
-      // Add all items found on page
+      // ページで見つかった全アイテムを追加
       parseResult.externalItems.forEach(item => {
         pageItemIds.add(item.itemId);
       });
       
       window.debugLogger?.log('RefreshItemDisplay: Items found on current page:', Array.from(pageItemIds));
       
-      // Display only items that exist on the current page
+      // 現在のページに存在するアイテムのみ表示
       Object.values(pageItems).forEach(item => {
         if (pageItemIds.has(item.id)) {
           const category = item.category || 'unsaved';

@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AssetConnect - ストレージ一覧</title>
+    <title>AssetConnect - <span data-i18n="storageOverviewTitle">ストレージ一覧</span></title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -164,93 +164,93 @@
 <body>
     <div class="header">
         <h1>AssetConnect</h1>
-        <p>ストレージ一覧とデータ使用量</p>
+        <p data-i18n="storageOverviewSubtitle">ストレージ一覧とデータ使用量</p>
     </div>
 
     <div class="stats-container">
         <div class="stat-card">
             <div class="stat-number" id="total-booth-items">-</div>
-            <div class="stat-label">対応アバター総数</div>
+            <div class="stat-label" data-i18n="totalBoothItems">対応アバター総数</div>
         </div>
         <div class="stat-card">
             <div class="stat-number" id="saved-count">-</div>
-            <div class="stat-label">保存済み</div>
+            <div class="stat-label" data-i18n="savedItemsCount">保存済み</div>
         </div>
         <div class="stat-card">
             <div class="stat-number" id="unsaved-count">-</div>
-            <div class="stat-label">未保存</div>
+            <div class="stat-label" data-i18n="unsavedItemsCount">未保存</div>
         </div>
         <div class="stat-card">
             <div class="stat-number" id="excluded-count">-</div>
-            <div class="stat-label">除外済み</div>
+            <div class="stat-label" data-i18n="excludedItemsCount">除外済み</div>
         </div>
         <div class="stat-card">
             <div class="stat-number" id="download-history-count">-</div>
-            <div class="stat-label">ダウンロード履歴</div>
+            <div class="stat-label" data-i18n="downloadHistoryCount">ダウンロード履歴</div>
         </div>
         <div class="stat-card">
             <div class="stat-number" id="storage-size">-</div>
-            <div class="stat-label">使用データ量</div>
+            <div class="stat-label" data-i18n="storageUsage">使用データ量</div>
         </div>
     </div>
 
     <div class="items-container">
-        <div id="loading" class="loading">データを読み込み中...</div>
+        <div id="loading" class="loading" data-i18n="loadingData">データを読み込み中...</div>
         
         <div class="section-tabs">
-            <button class="tab-button active" data-tab="booth-items">対応アバター一括コピー</button>
-            <button class="tab-button" data-tab="download-history">ダウンロード履歴</button>
-            <button class="tab-button" data-tab="raw-storage">全ストレージキー</button>
+            <button class="tab-button active" data-tab="booth-items" data-i18n="tabBoothItems">対応アバター一括コピー</button>
+            <button class="tab-button" data-tab="download-history" data-i18n="tabDownloadHistory">ダウンロード履歴</button>
+            <button class="tab-button" data-tab="raw-storage" data-i18n="tabRawStorage">全ストレージキー</button>
         </div>
 
         <!-- 対応アバター一括コピータブ -->
         <div id="booth-items" class="tab-content active">
             <div id="saved-section" class="category-section" style="display: none;">
-                <h3 class="category-title category-saved">保存済みアバター</h3>
+                <h3 class="category-title category-saved" data-i18n="savedAvatars">保存済みアバター</h3>
                 <div id="saved-items"></div>
             </div>
             
             <div id="unsaved-section" class="category-section" style="display: none;">
-                <h3 class="category-title category-unsaved">未保存アバター</h3>
+                <h3 class="category-title category-unsaved" data-i18n="unsavedAvatars">未保存アバター</h3>
                 <div id="unsaved-items"></div>
             </div>
             
             <div id="excluded-section" class="category-section" style="display: none;">
-                <h3 class="category-title category-excluded">除外済みアバター</h3>
+                <h3 class="category-title category-excluded" data-i18n="excludedAvatars">除外済みアバター</h3>
                 <div id="excluded-items"></div>
             </div>
             
             <div id="no-booth-items" class="no-items" style="display: none;">
-                対応アバターデータはありません
+                <span data-i18n="noBoothItems">対応アバターデータはありません</span>
             </div>
         </div>
 
         <!-- ダウンロード履歴タブ -->
         <div id="download-history" class="tab-content">
             <div id="download-history-section" class="category-section" style="display: none;">
-                <h3 class="category-title category-download">ダウンロード履歴</h3>
+                <h3 class="category-title category-download" data-i18n="tabDownloadHistory">ダウンロード履歴</h3>
                 <div id="download-history-items"></div>
             </div>
             
             <div id="no-download-history" class="no-items" style="display: none;">
-                ダウンロード履歴はありません
+                <span data-i18n="noDownloadHistory">ダウンロード履歴はありません</span>
             </div>
         </div>
 
         <!-- 全ストレージキータブ -->
         <div id="raw-storage" class="tab-content">
             <div id="raw-storage-section" class="category-section" style="display: none;">
-                <h3 class="category-title" style="color: #6f42c1;">全ストレージキー</h3>
+                <h3 class="category-title" style="color: #6f42c1;" data-i18n="allStorageKeys">全ストレージキー</h3>
                 <div id="raw-storage-items"></div>
             </div>
             
             <div id="no-raw-storage" class="no-items" style="display: none;">
-                ストレージデータはありません
+                <span data-i18n="noStorageData">ストレージデータはありません</span>
             </div>
         </div>
         
         <button id="clear-storage" class="clear-storage" style="display: none;">
-            全てのストレージをクリア
+            <span data-i18n="clearAllStorage">全てのストレージをクリア</span>
         </button>
     </div>
 

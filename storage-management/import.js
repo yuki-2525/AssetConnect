@@ -1,9 +1,78 @@
 // AssetConnect Import page JavaScript
-document.addEventListener('DOMContentLoaded', () => {
+let currentTranslations = {};
+const SUPPORTED_LANGUAGES = ['ja', 'en', 'ko'];
+let importData = null;
+
+document.addEventListener('DOMContentLoaded', async () => {
+    await initializeTranslations();
     setupEventListeners();
 });
 
-let importData = null;
+async function initializeTranslations() {
+    try {
+        // Get the current language setting
+        const result = await chrome.storage.local.get(['selectedLanguage']);
+        const selectedLang = result.selectedLanguage || chrome.i18n.getUILanguage().substring(0, 2);
+        const lang = SUPPORTED_LANGUAGES.includes(selectedLang) ? selectedLang : 'en';
+        
+        await loadTranslations(lang);
+        updateUITexts();
+    } catch (error) {
+        console.error('Failed to initialize translations:', error);
+    }
+}
+
+async function loadTranslations(lang) {
+    try {
+        const response = await fetch(chrome.runtime.getURL(`_locales/${lang}/messages.json`));
+        if (!response.ok) throw new Error(`Failed to load translations for ${lang}`);
+        const translations = await response.json();
+        
+        // Convert to simple key-value pairs
+        currentTranslations = {};
+        for (const [key, value] of Object.entries(translations)) {
+            currentTranslations[key] = value.message;
+        }
+        return currentTranslations;
+    } catch (error) {
+        console.error('Translation loading error:', error);
+        if (lang !== 'en') {
+            return await loadTranslations('en');
+        }
+        return {};
+    }
+}
+
+function getMessage(key, replacements = {}) {
+    let message = currentTranslations[key] || chrome.i18n.getMessage(key) || key;
+    
+    // Replace placeholders like {count}, {key}, {error}
+    for (const [placeholder, value] of Object.entries(replacements)) {
+        message = message.replace(new RegExp(`{${placeholder}}`, 'g'), value);
+    }
+    
+    return message;
+}
+
+function updateUITexts() {
+    document.querySelectorAll('[data-i18n]').forEach(function (el) {
+        const key = el.getAttribute('data-i18n');
+        const message = getMessage(key);
+        if (message) {
+            if (el.tagName === 'TITLE') {
+                // For title tags, only update the span content if it exists
+                const span = el.querySelector('span[data-i18n]');
+                if (span) {
+                    span.textContent = message;
+                } else {
+                    el.textContent = `AssetConnect - ${message}`;
+                }
+            } else {
+                el.textContent = message;
+            }
+        }
+    });
+}
 
 function setupEventListeners() {
     const fileDropArea = document.getElementById('file-drop-area');
@@ -47,7 +116,7 @@ function handleFileSelect(file) {
     if (!file) return;
 
     if (file.type !== 'application/json' && !file.name.endsWith('.json')) {
-        showStatus('error', 'JSONファイルを選択してください。');
+        showStatus('error', getMessage('selectJsonFile'));
         return;
     }
 
@@ -57,7 +126,7 @@ function handleFileSelect(file) {
             const jsonData = JSON.parse(e.target.result);
             validateAndPreviewData(jsonData, file.name);
         } catch (error) {
-            showStatus('error', `JSONファイルの解析に失敗しました: ${error.message}`);
+            showStatus('error', getMessage('jsonParseError', { error: error.message }));
         }
     };
     reader.readAsText(file);
@@ -66,7 +135,7 @@ function handleFileSelect(file) {
 function validateAndPreviewData(data, filename) {
     // Validate JSON structure
     if (!data.items || !Array.isArray(data.items)) {
-        showStatus('error', 'JSONファイルの形式が正しくありません。items配列が見つかりません。');
+        showStatus('error', getMessage('invalidJsonFormat'));
         return;
     }
 
@@ -81,12 +150,12 @@ function validateAndPreviewData(data, filename) {
                 name: String(item.name)
             });
         } else {
-            invalidItems.push(`Item ${index + 1}: IDまたは名前が不正`);
+            invalidItems.push(`Item ${index + 1}: ${getMessage('invalidItemData')}`);
         }
     });
 
     if (validItems.length === 0) {
-        showStatus('error', '有効なアイテムが見つかりません。');
+        showStatus('error', getMessage('noValidItems'));
         return;
     }
 
@@ -98,11 +167,11 @@ function validateAndPreviewData(data, filename) {
     };
 
     showPreview(validItems, invalidItems);
-    showStatus('info', `${validItems.length}個のアイテムをインポート準備完了`);
+    showStatus('info', getMessage('importReady', { count: validItems.length }));
     
     const importButton = document.getElementById('import-button');
     importButton.disabled = false;
-    importButton.textContent = `${validItems.length}個のアイテムをインポート`;
+    importButton.textContent = getMessage('importItems', { count: validItems.length });
 }
 
 function showPreview(validItems, invalidItems) {
@@ -110,9 +179,9 @@ function showPreview(validItems, invalidItems) {
     const previewStats = document.getElementById('preview-stats');
     const previewItems = document.getElementById('preview-items');
 
-    let statsText = `有効なアイテム: ${validItems.length}個`;
+    let statsText = getMessage('validItems', { count: validItems.length });
     if (invalidItems.length > 0) {
-        statsText += ` | 無効なアイテム: ${invalidItems.length}個`;
+        statsText += ` | ${getMessage('invalidItems', { count: invalidItems.length })}`;
     }
     previewStats.textContent = statsText;
 
@@ -129,15 +198,15 @@ function showPreview(validItems, invalidItems) {
 
 async function handleImport() {
     if (!importData) {
-        showStatus('error', 'インポートするデータがありません。');
+        showStatus('error', getMessage('noImportData'));
         return;
     }
 
     const importButton = document.getElementById('import-button');
     importButton.disabled = true;
-    importButton.textContent = 'インポート中...';
+    importButton.textContent = getMessage('importing');
 
-    showStatus('info', 'データをインポート中...');
+    showStatus('info', getMessage('importingData'));
 
     try {
         // Get merge mode
@@ -182,11 +251,11 @@ async function handleImport() {
         await chrome.storage.local.set({ boothItems: existingItems });
 
         // Show results
-        let resultMessage = `インポート完了: `;
+        let resultMessage = getMessage('importComplete');
         const results = [];
-        if (importedCount > 0) results.push(`${importedCount}個を新規追加`);
-        if (updatedCount > 0) results.push(`${updatedCount}個を更新`);
-        if (skippedCount > 0) results.push(`${skippedCount}個をスキップ`);
+        if (importedCount > 0) results.push(getMessage('newItemsAdded', { count: importedCount }));
+        if (updatedCount > 0) results.push(getMessage('itemsUpdated', { count: updatedCount }));
+        if (skippedCount > 0) results.push(getMessage('itemsSkipped', { count: skippedCount }));
         
         resultMessage += results.join(', ');
 
@@ -195,11 +264,11 @@ async function handleImport() {
         // Reset UI after delay
         setTimeout(() => {
             importButton.disabled = false;
-            importButton.textContent = 'インポート完了';
+            importButton.textContent = getMessage('importCompleted');
             
             // Optionally close the tab after successful import
             setTimeout(() => {
-                const confirm = window.confirm('インポートが完了しました。このタブを閉じますか？');
+                const confirm = window.confirm(getMessage('importFinished'));
                 if (confirm) {
                     window.close();
                 }
@@ -208,10 +277,10 @@ async function handleImport() {
 
     } catch (error) {
         console.error('Import error:', error);
-        showStatus('error', `インポート中にエラーが発生しました: ${error.message}`);
+        showStatus('error', getMessage('importError', { error: error.message }));
         
         importButton.disabled = false;
-        importButton.textContent = `${importData.items.length}個のアイテムをインポート`;
+        importButton.textContent = getMessage('importItems', { count: importData.items.length });
     }
 }
 

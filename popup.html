@@ -161,6 +161,25 @@
       transition: all 0.2s ease;
     }
 
+    #fixed-bar select {
+      padding: 4px 8px;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      font-size: 13px;
+      background-color: white;
+      color: var(--text-color);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      margin-left: 4px;
+      margin-right: 8px;
+    }
+
+    #fixed-bar span {
+      font-size: 13px;
+      color: var(--text-color);
+      white-space: nowrap;
+    }
+
     #fixed-bar a:hover {
       background-color: var(--secondary-color);
     }
@@ -190,6 +209,12 @@
 
       #fixed-bar {
         background-color: #1a1a1a;
+      }
+
+      #fixed-bar select {
+        background-color: #333;
+        color: var(--text-color);
+        border-color: var(--border-color);
       }
 
       .entry:hover {
@@ -344,6 +369,12 @@
   <div id="fixed-bar">
     <div id="fixed-bar-left">
       <a href="popup.html" target="_blank" id="popup-tab-button" data-i18n="popupTab">タブで表示</a>
+      <span data-i18n="languageLabel">Language:</span>
+      <select id="languageSelect">
+        <option value="ja">日本語</option>
+        <option value="en">English</option>
+        <option value="ko">한국어</option>
+      </select>
     </div>
     <div id="fixed-bar-right">
       <button id="btn-update-history" class="update-history-btn" data-i18n="updateHistory">アップデート履歴</button>

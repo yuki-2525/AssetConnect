@@ -274,7 +274,7 @@ class ClipboardManager {
       let successCount = 0;
       let failedItems = [];
 
-      // 1. Move new items to saved category (remove currentPageId as they become global)
+      // 1. 新規アイテムを保存済みカテゴリに移動（グローバル化するためcurrentPageIdを削除）
       for (const item of newItems) {
         try {
           const updateData = {
@@ -296,7 +296,7 @@ class ClipboardManager {
         }
       }
 
-      // 2. Delete current page excluded items
+      // 2. 現在のページの除外アイテムを削除
       for (const item of excludedItems) {
         try {
           const success = await storageManager.deleteItem(item.id);
@@ -311,7 +311,7 @@ class ClipboardManager {
         }
       }
 
-      // 3. Delete all editing items from other pages (not current page)
+      // 3. 他のページの全編集中アイテムを削除（現在のページ以外）
       const allItems = await storageManager.getAllItems();
       for (const [itemId, item] of Object.entries(allItems)) {
         // 他のページに属する編集中アイテムを削除

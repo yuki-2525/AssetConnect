@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AssetConnect - アバターデータインポート</title>
+    <title>AssetConnect - <span data-i18n="importDataTitle">アバターデータインポート</span></title>
     <style>
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -156,41 +156,41 @@
 <body>
     <div class="header">
         <h1>AssetConnect</h1>
-        <p>アバターデータインポート</p>
+        <p data-i18n="importDataTitle">アバターデータインポート</p>
     </div>
 
     <div class="import-container">
         <div class="file-input-area" id="file-drop-area">
             <div class="file-icon">📁</div>
-            <div class="file-text">JSONファイルをここにドラッグ&ドロップ</div>
-            <div class="file-hint">または、クリックしてファイルを選択</div>
+            <div class="file-text" data-i18n="dragDropArea">JSONファイルをここにドラッグ&ドロップ</div>
+            <div class="file-hint" data-i18n="clickToSelect">または、クリックしてファイルを選択</div>
             <input type="file" id="file-input" class="file-input" accept=".json">
         </div>
 
         <div class="import-options">
             <div class="option-group">
-                <label class="option-label">重複するアイテムの処理方法:</label>
+                <label class="option-label" data-i18n="duplicateHandling">重複するアイテムの処理方法:</label>
                 <div class="radio-group">
                     <div class="radio-item">
                         <input type="radio" id="merge-skip" name="merge-mode" value="skip" checked>
-                        <label for="merge-skip">スキップ（既存を保持）</label>
+                        <label for="merge-skip" data-i18n="skipDuplicates">スキップ（既存を保持）</label>
                     </div>
                     <div class="radio-item">
                         <input type="radio" id="merge-replace" name="merge-mode" value="replace">
-                        <label for="merge-replace">上書き（新しいデータで更新）</label>
+                        <label for="merge-replace" data-i18n="replaceDuplicates">上書き（新しいデータで更新）</label>
                     </div>
                 </div>
             </div>
         </div>
 
         <div class="preview-area" id="preview-area">
-            <div class="preview-title">インポート予定のデータ</div>
+            <div class="preview-title" data-i18n="importPreviewTitle">インポート予定のデータ</div>
             <div class="preview-stats" id="preview-stats"></div>
             <div class="preview-items" id="preview-items"></div>
         </div>
 
         <button class="import-button" id="import-button" disabled>
-            ファイルを選択してください
+            <span data-i18n="selectFilePrompt">ファイルを選択してください</span>
         </button>
 
         <div class="status-area" id="status-area"></div>

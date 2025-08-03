@@ -1,34 +1,9 @@
 // Background service worker for AssetConnect extension
-chrome.runtime.onInstalled.addListener(() => {
+chrome.runtime.onInstalled.addListener(async () => {
   // console.log('AssetConnect extension installed');
   
-  // Create context menu for debug mode
-  chrome.contextMenus.create({
-    id: 'debug-mode-toggle',
-    title: 'デバッグモード切り替え',
-    contexts: ['action']
-  });
-  
-  // Create context menu for storage overview
-  chrome.contextMenus.create({
-    id: 'show-storage-overview',
-    title: 'ストレージ一覧・データ量を表示',
-    contexts: ['action']
-  });
-  
-  // Create context menu for data export
-  chrome.contextMenus.create({
-    id: 'export-saved-items',
-    title: '保存済みアバターデータをエクスポート',
-    contexts: ['action']
-  });
-  
-  // Create context menu for data import
-  chrome.contextMenus.create({
-    id: 'import-saved-items',
-    title: 'アバターデータをインポート',
-    contexts: ['action']
-  });
+  // Initialize context menus with proper i18n support
+  await initializeContextMenus();
   
   // Initialize debug mode state
   chrome.storage.local.get(['debugMode'], (result) => {
@@ -39,6 +14,89 @@ chrome.runtime.onInstalled.addListener(() => {
   // Cleanup editing items on installation/update
   cleanupAllEditingItems();
 });
+
+async function initializeContextMenus() {
+  // Get the current language setting
+  const result = await chrome.storage.local.get(['selectedLanguage']);
+  const selectedLang = result.selectedLanguage || chrome.i18n.getUILanguage().substring(0, 2);
+  const lang = ['ja', 'en', 'ko'].includes(selectedLang) ? selectedLang : 'en';
+  
+  // Load translations for the selected language
+  const translations = await loadTranslations(lang);
+  
+  // Create context menus with translated titles
+  chrome.contextMenus.create({
+    id: 'debug-mode-toggle',
+    title: translations.debugModeToggle || 'デバッグモード切り替え',
+    contexts: ['action']
+  });
+  
+  chrome.contextMenus.create({
+    id: 'show-storage-overview',
+    title: translations.showStorageOverview || 'ストレージ一覧・データ量を表示',
+    contexts: ['action']
+  });
+  
+  chrome.contextMenus.create({
+    id: 'export-saved-items',
+    title: translations.exportSavedItems || '保存済みアバターデータをエクスポート',
+    contexts: ['action']
+  });
+  
+  chrome.contextMenus.create({
+    id: 'import-saved-items',
+    title: translations.importSavedItems || 'アバターデータをインポート',
+    contexts: ['action']
+  });
+}
+
+async function loadTranslations(lang) {
+  try {
+    const response = await fetch(chrome.runtime.getURL(`_locales/${lang}/messages.json`));
+    if (!response.ok) throw new Error(`Failed to load translations for ${lang}`);
+    const translations = await response.json();
+    
+    // Convert to simple key-value pairs
+    const messages = {};
+    for (const [key, value] of Object.entries(translations)) {
+      messages[key] = value.message;
+    }
+    return messages;
+  } catch (error) {
+    console.error('Translation loading error:', error);
+    if (lang !== 'en') {
+      return await loadTranslations('en');
+    }
+    return {};
+  }
+}
+
+async function updateContextMenusLanguage(lang) {
+  const translations = await loadTranslations(lang);
+  
+  // Update all context menu titles
+  chrome.contextMenus.update('debug-mode-toggle', {
+    title: translations.debugModeToggle || 'デバッグモード切り替え'
+  });
+  
+  chrome.contextMenus.update('show-storage-overview', {
+    title: translations.showStorageOverview || 'ストレージ一覧・データ量を表示'
+  });
+  
+  chrome.contextMenus.update('export-saved-items', {
+    title: translations.exportSavedItems || '保存済みアバターデータをエクスポート'
+  });
+  
+  chrome.contextMenus.update('import-saved-items', {
+    title: translations.importSavedItems || 'アバターデータをインポート'
+  });
+  
+  // Update debug mode title with proper translation
+  chrome.storage.local.get(['debugMode'], (result) => {
+    const debugMode = result.debugMode || false;
+    updateContextMenuTitle(debugMode, translations);
+  });
+}
 
 // Cleanup editing items on browser startup
 chrome.runtime.onStartup.addListener(() => {
@@ -81,10 +139,20 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
   }
 });
 
-function updateContextMenuTitle(debugMode) {
-  chrome.contextMenus.update('debug-mode-toggle', {
-    title: debugMode ? 'デバッグモード: ON → OFF' : 'デバッグモード: OFF → ON'
-  });
+async function updateContextMenuTitle(debugMode, translations = null) {
+  if (!translations) {
+    // Get current language and load translations
+    const result = await chrome.storage.local.get(['selectedLanguage']);
+    const selectedLang = result.selectedLanguage || chrome.i18n.getUILanguage().substring(0, 2);
+    const lang = ['ja', 'en', 'ko'].includes(selectedLang) ? selectedLang : 'en';
+    translations = await loadTranslations(lang);
+  }
+  
+  const title = debugMode 
+    ? (translations.debugModeOn || 'デバッグモード: ON → OFF')
+    : (translations.debugModeOff || 'デバッグモード: OFF → ON');
+    
+  chrome.contextMenus.update('debug-mode-toggle', { title });
 }
 
 async function exportSavedItemsToFile() {
@@ -205,12 +273,17 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     
     // Return true to indicate async response
     return true;
+  } else if (request.action === 'languageChanged') {
+    // Update context menus when language changes
+    updateContextMenusLanguage(request.language);
+    sendResponse({ success: true });
+    return true;
   }
 });
 
 async function handleCrossOriginFetch(itemUrl, itemId) {
   try {
-    const jsonUrl = convertToJsonUrl(itemUrl);
+    const jsonUrl = await convertToJsonUrl(itemUrl);
     // Debug log - will be controlled by debug mode
     debugLog('Background fetching:', jsonUrl);
     
@@ -246,7 +319,7 @@ async function handleCrossOriginFetch(itemUrl, itemId) {
   }
 }
 
-function convertToJsonUrl(itemUrl) {
+async function convertToJsonUrl(itemUrl) {
   // Extract item ID from various BOOTH URL formats
   const itemId = extractItemId(itemUrl);
   if (!itemId) {
@@ -260,8 +333,16 @@ function convertToJsonUrl(itemUrl) {
     return itemUrl + '.json';
   }
   
-  // Always use the standardized booth.pm/ja/items/(id).json format
-  return `https://booth.pm/ja/items/${itemId}.json`;
+  // Get current language setting for API calls
+  try {
+    const result = await chrome.storage.local.get(['selectedLanguage']);
+    const selectedLang = result.selectedLanguage || chrome.i18n.getUILanguage().substring(0, 2);
+    const lang = ['ja', 'en', 'ko'].includes(selectedLang) ? selectedLang : 'ja';
+    return `https://booth.pm/${lang}/items/${itemId}.json`;
+  } catch (error) {
+    // Fallback to Japanese if unable to get language setting
+    return `https://booth.pm/ja/items/${itemId}.json`;
+  }
 }
 
 function extractItemId(itemUrl) {

@@ -8,6 +8,9 @@
     "downloadFolderLabel": {
         "message": "Download folder path:"
     },
+    "languageLabel": {
+        "message": "Language:"
+    },
     "saveButton": {
         "message": "Save"
     },
@@ -52,5 +55,248 @@
     },
     "updateHistory": {
         "message": "Update History"
+    },
+    "debugModeToggle": {
+        "message": "Debug Mode Toggle"
+    },
+    "debugModeOn": {
+        "message": "Debug Mode: ON → OFF"
+    },
+    "debugModeOff": {
+        "message": "Debug Mode: OFF → ON"
+    },
+    "showStorageOverview": {
+        "message": "Show Storage Overview"
+    },
+    "exportSavedItems": {
+        "message": "Export Saved Avatar Data"
+    },
+    "importSavedItems": {
+        "message": "Import Avatar Data"
+    },
+    "storageOverviewTitle": {
+        "message": "Storage Overview"
+    },
+    "storageOverviewSubtitle": {
+        "message": "Storage Overview and Data Usage"
+    },
+    "totalBoothItems": {
+        "message": "Total Supported Avatars"
+    },
+    "savedItemsCount": {
+        "message": "Saved"
+    },
+    "unsavedItemsCount": {
+        "message": "Unsaved"
+    },
+    "excludedItemsCount": {
+        "message": "Excluded"
+    },
+    "downloadHistoryCount": {
+        "message": "Download History"
+    },
+    "storageUsage": {
+        "message": "Storage Usage"
+    },
+    "loadingData": {
+        "message": "Loading data..."
+    },
+    "tabBoothItems": {
+        "message": "Supported Avatars Batch Copy"
+    },
+    "tabDownloadHistory": {
+        "message": "Download History"
+    },
+    "tabRawStorage": {
+        "message": "All Storage Keys"
+    },
+    "savedAvatars": {
+        "message": "Saved Avatars"
+    },
+    "unsavedAvatars": {
+        "message": "Unsaved Avatars"
+    },
+    "excludedAvatars": {
+        "message": "Excluded Avatars"
+    },
+    "allStorageKeys": {
+        "message": "All Storage Keys"
+    },
+    "noBoothItems": {
+        "message": "No supported avatar data"
+    },
+    "noDownloadHistory": {
+        "message": "No download history"
+    },
+    "noStorageData": {
+        "message": "No storage data"
+    },
+    "clearAllStorage": {
+        "message": "Clear All Storage"
+    },
+    "importDataTitle": {
+        "message": "Avatar Data Import"
+    },
+    "dragDropArea": {
+        "message": "Drag & drop JSON file here"
+    },
+    "clickToSelect": {
+        "message": "or click to select file"
+    },
+    "duplicateHandling": {
+        "message": "Duplicate item handling:"
+    },
+    "skipDuplicates": {
+        "message": "Skip (keep existing)"
+    },
+    "replaceDuplicates": {
+        "message": "Replace (update with new data)"
+    },
+    "importPreviewTitle": {
+        "message": "Data to be imported"
+    },
+    "selectFilePrompt": {
+        "message": "Please select a file"
+    },
+    "loadingError": {
+        "message": "Failed to load data"
+    },
+    "itemNameUnknown": {
+        "message": "Unknown item name"
+    },
+    "category": {
+        "message": "Category"
+    },
+    "originalCategory": {
+        "message": "Original Category"
+    },
+    "openInBooth": {
+        "message": "Open in BOOTH"
+    },
+    "titleUnknown": {
+        "message": "Unknown title"
+    },
+    "fileName": {
+        "message": "File"
+    },
+    "none": {
+        "message": "None"
+    },
+    "dateTime": {
+        "message": "Date/Time"
+    },
+    "free": {
+        "message": "Free"
+    },
+    "yes": {
+        "message": "Yes"
+    },
+    "no": {
+        "message": "No"
+    },
+    "unknown": {
+        "message": "Unknown"
+    },
+    "registered": {
+        "message": "Registered"
+    },
+    "confirmClearStorage": {
+        "message": "Are you sure you want to delete all storage data? This action cannot be undone."
+    },
+    "storageCleared": {
+        "message": "All storage has been cleared."
+    },
+    "storageClearError": {
+        "message": "Failed to clear storage."
+    },
+    "arrayType": {
+        "message": "Array"
+    },
+    "objectType": {
+        "message": "Object"
+    },
+    "keys": {
+        "message": "keys"
+    },
+    "items": {
+        "message": "items"
+    },
+    "dataType": {
+        "message": "Type"
+    },
+    "size": {
+        "message": "Size"
+    },
+    "parseError": {
+        "message": "Error"
+    },
+    "dataParseError": {
+        "message": "Failed to parse data"
+    },
+    "download": {
+        "message": "Download"
+    },
+    "storageKeyNotFound": {
+        "message": "Storage key '{key}' not found."
+    },
+    "downloadError": {
+        "message": "Download error occurred: {error}"
+    },
+    "selectJsonFile": {
+        "message": "Please select a JSON file."
+    },
+    "jsonParseError": {
+        "message": "Failed to parse JSON file: {error}"
+    },
+    "invalidJsonFormat": {
+        "message": "Invalid JSON format. Items array not found."
+    },
+    "invalidItemData": {
+        "message": "Invalid ID or name"
+    },
+    "noValidItems": {
+        "message": "No valid items found."
+    },
+    "importReady": {
+        "message": "{count} items ready for import"
+    },
+    "importItems": {
+        "message": "Import {count} items"
+    },
+    "validItems": {
+        "message": "Valid items: {count}"
+    },
+    "invalidItems": {
+        "message": "Invalid items: {count}"
+    },
+    "noImportData": {
+        "message": "No data to import."
+    },
+    "importing": {
+        "message": "Importing..."
+    },
+    "importingData": {
+        "message": "Importing data..."
+    },
+    "importComplete": {
+        "message": "Import complete: "
+    },
+    "newItemsAdded": {
+        "message": "{count} newly added"
+    },
+    "itemsUpdated": {
+        "message": "{count} updated"
+    },
+    "itemsSkipped": {
+        "message": "{count} skipped"
+    },
+    "importCompleted": {
+        "message": "Import Completed"
+    },
+    "importFinished": {
+        "message": "Import completed. Close this tab?"
+    },
+    "importError": {
+        "message": "Import error occurred: {error}"
     }
 }

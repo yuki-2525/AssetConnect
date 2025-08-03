@@ -1,8 +1,83 @@
 // AssetConnect Storage overview page JavaScript
+let currentTranslations = {};
+let currentLanguage = 'ja';
+const SUPPORTED_LANGUAGES = ['ja', 'en', 'ko'];
+
 document.addEventListener('DOMContentLoaded', async () => {
+    await initializeTranslations();
     await loadStorageData();
     setupEventListeners();
 });
+
+async function initializeTranslations() {
+    try {
+        // Get the current language setting
+        const result = await chrome.storage.local.get(['selectedLanguage']);
+        const selectedLang = result.selectedLanguage || chrome.i18n.getUILanguage().substring(0, 2);
+        currentLanguage = SUPPORTED_LANGUAGES.includes(selectedLang) ? selectedLang : 'en';
+        
+        await loadTranslations(currentLanguage);
+        updateUITexts();
+    } catch (error) {
+        console.error('Failed to initialize translations:', error);
+    }
+}
+
+async function loadTranslations(lang) {
+    try {
+        const response = await fetch(chrome.runtime.getURL(`_locales/${lang}/messages.json`));
+        if (!response.ok) throw new Error(`Failed to load translations for ${lang}`);
+        const translations = await response.json();
+        
+        // Convert to simple key-value pairs
+        currentTranslations = {};
+        for (const [key, value] of Object.entries(translations)) {
+            currentTranslations[key] = value.message;
+        }
+        return currentTranslations;
+    } catch (error) {
+        console.error('Translation loading error:', error);
+        if (lang !== 'en') {
+            return await loadTranslations('en');
+        }
+        return {};
+    }
+}
+
+function getMessage(key, replacements = {}) {
+    let message = currentTranslations[key] || chrome.i18n.getMessage(key) || key;
+    
+    // Replace placeholders like {count}, {key}, {error}
+    for (const [placeholder, value] of Object.entries(replacements)) {
+        message = message.replace(new RegExp(`{${placeholder}}`, 'g'), value);
+    }
+    
+    return message;
+}
+
+function updateUITexts() {
+    document.querySelectorAll('[data-i18n]').forEach(function (el) {
+        const key = el.getAttribute('data-i18n');
+        const message = getMessage(key);
+        if (message) {
+            if (el.tagName === 'TITLE') {
+                // For title tags, only update the span content if it exists
+                const span = el.querySelector('span[data-i18n]');
+                if (span) {
+                    span.textContent = message;
+                } else {
+                    el.textContent = `AssetConnect - ${message}`;
+                }
+            } else {
+                el.textContent = message;
+            }
+        }
+    });
+}
+
+function createBoothUrl(itemId) {
+    return `https://booth.pm/${currentLanguage}/items/${itemId}`;
+}
 
 async function loadStorageData() {
     try {
@@ -35,7 +110,7 @@ async function loadStorageData() {
         
     } catch (error) {
         console.error('Error loading storage data:', error);
-        document.getElementById('loading').textContent = 'データの読み込みに失敗しました';
+        document.getElementById('loading').textContent = getMessage('loadingError');
     }
 }
 
@@ -150,17 +225,17 @@ function createItemElement(item, category) {
     const itemDiv = document.createElement('div');
     itemDiv.className = `item ${category}`;
     
-    const itemUrl = `https://booth.pm/ja/items/${item.id}`;
+    const itemUrl = createBoothUrl(item.id);
     
     itemDiv.innerHTML = `
         <div class="item-info">
-            <div class="item-name">${escapeHtml(item.name || 'アイテム名不明')}</div>
+            <div class="item-name">${escapeHtml(item.name || getMessage('itemNameUnknown'))}</div>
             <div class="item-details">
-                ID: ${item.id} | カテゴリ: ${category}
-                ${item.previousCategory ? ` | 元カテゴリ: ${item.previousCategory}` : ''}
+                ID: ${item.id} | ${getMessage('category')}: ${category}
+                ${item.previousCategory ? ` | ${getMessage('originalCategory')}: ${item.previousCategory}` : ''}
             </div>
         </div>
-        <a href="${itemUrl}" target="_blank" class="item-link">BOOTHで開く</a>
+        <a href="${itemUrl}" target="_blank" class="item-link">${getMessage('openInBooth')}</a>
     `;
     
     return itemDiv;
@@ -170,19 +245,19 @@ function createDownloadHistoryElement(item) {
     const itemDiv = document.createElement('div');
     itemDiv.className = 'item download';
     
-    const itemUrl = item.url || `https://booth.pm/ja/items/${item.boothID}`;
+    const itemUrl = item.url || createBoothUrl(item.boothID);
     
     itemDiv.innerHTML = `
         <div class="item-info">
-            <div class="item-name">${escapeHtml(item.title || 'タイトル不明')}</div>
+            <div class="item-name">${escapeHtml(item.title || getMessage('titleUnknown'))}</div>
             <div class="item-details">
-                ID: ${item.boothID} | ファイル: ${escapeHtml(item.filename || 'なし')} | 
-                日時: ${item.timestamp} | 
-                無料: ${item.free ? 'はい' : 'いいえ'} | 
-                登録済み: ${item.registered === true ? 'はい' : (item.registered === false ? 'いいえ' : '不明')}
+                ID: ${item.boothID} | ${getMessage('fileName')}: ${escapeHtml(item.filename || getMessage('none'))} | 
+                ${getMessage('dateTime')}: ${item.timestamp} | 
+                ${getMessage('free')}: ${item.free ? getMessage('yes') : getMessage('no')} | 
+                ${getMessage('registered')}: ${item.registered === true ? getMessage('yes') : (item.registered === false ? getMessage('no') : getMessage('unknown'))}
             </div>
         </div>
-        <a href="${itemUrl}" target="_blank" class="item-link">BOOTHで開く</a>
+        <a href="${itemUrl}" target="_blank" class="item-link">${getMessage('openInBooth')}</a>
     `;
     
     return itemDiv;
@@ -226,14 +301,14 @@ function setupEventListeners() {
     
     // Clear storage button
     document.getElementById('clear-storage').addEventListener('click', async () => {
-        if (confirm('全てのストレージデータを削除しますか？この操作は元に戻せません。')) {
+        if (confirm(getMessage('confirmClearStorage'))) {
             try {
                 await chrome.storage.local.clear();
-                alert('ストレージを全てクリアしました。');
+                alert(getMessage('storageCleared'));
                 location.reload();
             } catch (error) {
                 console.error('Error clearing storage:', error);
-                alert('ストレージのクリアに失敗しました。');
+                alert(getMessage('storageClearError'));
             }
         }
     });
@@ -269,11 +344,11 @@ function createRawStorageElement(key, value) {
     try {
         if (typeof value === 'object' && value !== null) {
             if (Array.isArray(value)) {
-                dataType = `配列 (${value.length}個)`;
+                dataType = `${getMessage('arrayType')} (${value.length}${getMessage('items')})`;
                 valuePreview = value.length > 0 ? JSON.stringify(value.slice(0, 2), null, 1) : '[]';
             } else {
                 const keys = Object.keys(value);
-                dataType = `オブジェクト (${keys.length}キー)`;
+                dataType = `${getMessage('objectType')} (${keys.length}${getMessage('keys')})`;
                 const preview = {};
                 keys.slice(0, 3).forEach(k => preview[k] = value[k]);
                 valuePreview = JSON.stringify(preview, null, 1);
@@ -289,20 +364,20 @@ function createRawStorageElement(key, value) {
             }
         }
     } catch (error) {
-        dataType = 'エラー';
-        valuePreview = 'データの解析に失敗しました';
+        dataType = getMessage('parseError');
+        valuePreview = getMessage('dataParseError');
     }
     
     itemDiv.innerHTML = `
         <div class="item-info">
             <div class="item-name">${escapeHtml(key)}</div>
             <div class="item-details">
-                型: ${dataType} | サイズ: ${formatBytes(new Blob([JSON.stringify(value)]).size)}
+                ${getMessage('dataType')}: ${dataType} | ${getMessage('size')}: ${formatBytes(new Blob([JSON.stringify(value)]).size)}
                 <br>
                 <code style="background: #f1f1f1; padding: 2px 4px; border-radius: 3px; font-size: 0.8em; white-space: pre-wrap;">${escapeHtml(valuePreview)}</code>
             </div>
         </div>
-        <button class="download-btn" data-key="${escapeHtml(key)}" type="button">ダウンロード</button>
+        <button class="download-btn" data-key="${escapeHtml(key)}" type="button">${getMessage('download')}</button>
     `;
     
     // Add event listener for download button
@@ -319,7 +394,7 @@ async function downloadStorageKey(keyName) {
         const keyData = result[keyName];
         
         if (keyData === undefined) {
-            alert(`ストレージキー「${keyName}」が見つかりません。`);
+            alert(getMessage('storageKeyNotFound', { key: keyName }));
             return;
         }
         
@@ -358,7 +433,7 @@ async function downloadStorageKey(keyName) {
         
     } catch (error) {
         console.error('Download error:', error);
-        alert(`ダウンロード中にエラーが発生しました: ${error.message}`);
+        alert(getMessage('downloadError', { error: error.message }));
     }
 }
 
