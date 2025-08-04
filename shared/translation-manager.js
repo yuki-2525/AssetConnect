@@ -168,13 +168,11 @@ class TranslationManager {
       const message = this.getMessage(key);
       if (message) {
         if (el.tagName === 'TITLE') {
-          // titleタグの場合、span要素があれば更新、なければ全体を更新
-          const span = el.querySelector('span[data-i18n]');
-          if (span) {
-            span.textContent = message;
-          } else {
-            el.textContent = `AssetConnect - ${message}`;
-          }
+          // titleタグの場合は全体を更新（HTMLタグは使用不可）
+          el.textContent = `AssetConnect - ${message}`;
+        } else if (el.tagName === 'SPAN' && el.parentElement && el.parentElement.tagName === 'TITLE') {
+          // titleタグ内のspan要素の場合は、親のtitleタグ全体を更新
+          el.parentElement.textContent = `AssetConnect - ${message}`;
         } else {
           el.textContent = message;
         }
