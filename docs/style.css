@@ -19,8 +19,7 @@
     --section-bg: #f8f9fa;
 }
 
-[data-theme="dark"],
-@media (prefers-color-scheme: dark) {
+[data-theme="dark"]{
     /* Dark mode colors */
     --bg-color: #1a1a1a;
     --text-color: #e0e0e0;

@@ -210,7 +210,7 @@
 }
 
 /* Dark Mode Support */
-@media (prefers-color-scheme: dark) {
+[data-theme="dark"] {
     .requirement-box,
     .install-method,
     .setup-section,
