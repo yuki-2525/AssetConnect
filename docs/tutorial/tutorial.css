@@ -541,7 +541,7 @@
     .sort-option,
     .action-item,
     .settings-category {
-        background: #4a5568;
+        background: #1a1a1a;
     }
     
     .settings-category li,
@@ -560,7 +560,7 @@
     }
     
     .image-placeholder {
-        background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
+        background: linear-gradient(135deg, #1a1a1a 0%, #2d3748 100%);
         border-color: #718096;
         color: #cbd5e0;
     }
@@ -601,7 +601,7 @@
     
     /* Avatar Copy Feature Dark Mode */
     .copy-format-info {
-        background: #4a5568;
+        background: #1a1a1a;
         border-left-color: #9b59b6;
         color: #e2e8f0;
     }
@@ -612,7 +612,7 @@
     }
     
     .use-case {
-        background: #4a5568;
+        background: #1a1a1a;
         border-left-color: #3498db;
         color: #e2e8f0;
     }
