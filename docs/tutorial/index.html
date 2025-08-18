@@ -4,7 +4,7 @@ title: "使い方"
 extra_css: "/tutorial/tutorial.css"
 ---
             <section id="overview">
-                <h2>基本的な使い方</h2>
+                <h2>AssetConnect 使い方ガイド</h2>
                 <p>AssetConnectの主要機能と操作方法をマスターし、BOOTHダウンロードを効率的に管理しましょう。</p>
                 <!-- 画像推奨: 拡張機能のポップアップUI概要 -->
                 <div class="image-placeholder">
@@ -12,45 +12,64 @@ extra_css: "/tutorial/tutorial.css"
                 </div>
             </section>
 
-            <section id="interface">
-                <h2>インターフェース概要</h2>
-                <div class="interface-grid">
-                    <div class="interface-item">
-                        <h3>📧 ポップアップウィンドウ</h3>
-                        <p>ブラウザツールバーのAssetConnectアイコンをクリックすると表示されるメインUI。</p>
-                        <div class="image-placeholder">
-                            <p>💡 <strong>画像:</strong> ポップアップウィンドウの全体表示</p>
-                        </div>
-                    </div>
-
-                    <div class="interface-item">
-                        <h3>⚙️ 設定エリア</h3>
-                        <p>ダウンロードフォルダの設定、フィルタリングオプションの設定ができるエリア。</p>
-                        <div class="image-placeholder">
-                            <p>💡 <strong>画像:</strong> 設定エリアの表示状態</p>
-                        </div>
-                    </div>
-
-                    <div class="interface-item">
-                        <h3>📋 ダウンロード履歴</h3>
-                        <p>ダウンロードしたアイテムの一覧。タイトル、ファイル名、日時、BOOTHIDが表示されます。</p>
-                        <div class="image-placeholder">
-                            <p>💡 <strong>画像:</strong> ダウンロード履歴リストの表示例</p>
-                        </div>
-                    </div>
-
-                    <div class="interface-item">
-                        <h3>📤 エクスポートボタン</h3>
-                        <p>CSV形式やJSON形式でダウンロード履歴をエクスポートするボタン。</p>
-                        <div class="image-placeholder">
-                            <p>💡 <strong>画像:</strong> エクスポートボタンの表示</p>
-                        </div>
-                    </div>
+            <!-- Tab Navigation -->
+            <div class="tab-navigation">
+                <div class="tab-container">
+                    <button class="tab-button active" data-tab="basic">基本的な使い方</button>
+                    <button class="tab-button" data-tab="download">ダウンロード追跡</button>
+                    <button class="tab-button" data-tab="avatar-copy">対応アバター一括コピー</button>
+                    <button class="tab-button" data-tab="search">検索機能</button>
+                    <button class="tab-button" data-tab="settings">設定・Tips</button>
                 </div>
-            </section>
+            </div>
 
-            <section id="download-tracking">
-                <h2>ダウンロード自動追跡</h2>
+            <!-- Tab Contents -->
+            <div class="tab-content">
+                <!-- Basic Usage Tab -->
+                <div id="basic" class="tab-panel active">
+
+                <section id="interface">
+                    <h3>インターフェース概要</h3>
+                    <div class="interface-grid">
+                        <div class="interface-item">
+                            <h4>📧 ポップアップウィンドウ</h4>
+                            <p>ブラウザツールバーのAssetConnectアイコンをクリックすると表示されるメインUI。</p>
+                            <div class="image-placeholder">
+                                <p>💡 <strong>画像:</strong> ポップアップウィンドウの全体表示</p>
+                            </div>
+                        </div>
+
+                        <div class="interface-item">
+                            <h4>⚙️ 設定エリア</h4>
+                            <p>ダウンロードフォルダの設定、フィルタリングオプションの設定ができるエリア。</p>
+                            <div class="image-placeholder">
+                                <p>💡 <strong>画像:</strong> 設定エリアの表示状態</p>
+                            </div>
+                        </div>
+
+                        <div class="interface-item">
+                            <h4>📋 ダウンロード履歴</h4>
+                            <p>ダウンロードしたアイテムの一覧。タイトル、ファイル名、日時、BOOTHIDが表示されます。</p>
+                            <div class="image-placeholder">
+                                <p>💡 <strong>画像:</strong> ダウンロード履歴リストの表示例</p>
+                            </div>
+                        </div>
+
+                        <div class="interface-item">
+                            <h4>📤 エクスポートボタン</h4>
+                            <p>CSV形式やJSON形式でダウンロード履歴をエクスポートするボタン。</p>
+                            <div class="image-placeholder">
+                                <p>💡 <strong>画像:</strong> エクスポートボタンの表示</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                </div>
+
+                <!-- Download Tracking Tab -->
+                <div id="download" class="tab-panel">
+                <section id="download-tracking">
+                    <h3>ダウンロード自動追跡</h3>
                 <div class="tutorial-content">
                     <div class="step-container">
                         <div class="step">
@@ -90,10 +109,117 @@ extra_css: "/tutorial/tutorial.css"
                         </div>
                     </div>
                 </div>
-            </section>
+                </section>
+                </div>
 
-            <section id="advanced-search">
-                <h2>詳細検索</h2>
+                <!-- Avatar Copy Tab -->
+                <div id="avatar-copy" class="tab-panel">
+                <section id="supported-avatar-copy">
+                    <h3>対応アバター一括コピー機能</h3>
+                    <div class="tutorial-content">
+                        <p>特定のアバターに対応したアセットの情報を一括でクリップボードにコピーできる便利機能です。</p>
+                        
+                        <div class="step-container">
+                            <div class="step">
+                                <span class="step-number">1</span>
+                                <div class="step-content">
+                                    <h4>アバター名で検索</h4>
+                                    <p>「対応アバター検索」フィールドにアバター名を入力して検索します。</p>
+                                    <div class="image-placeholder">
+                                        <p>💡 <strong>画像:</strong> 対応アバター検索フィールドに「桔梗」と入力している状態</p>
+                                    </div>
+                                    <div class="tip">
+                                        <strong>💡 Tips:</strong> 「桔梗」「萌」「シャーロ」などのアバター名で検索できます
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="step">
+                                <span class="step-number">2</span>
+                                <div class="step-content">
+                                    <h4>検索結果を確認</h4>
+                                    <p>そのアバターに対応したアセットの一覧が表示されます。フィルタやソートを使って結果を絞り込むこともできます。</p>
+                                    <div class="image-placeholder">
+                                        <p>💡 <strong>画像:</strong> 桔梗対応アセットの検索結果リスト</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="step">
+                                <span class="step-number">3</span>
+                                <div class="step-content">
+                                    <h4>一括コピーボタンをクリック</h4>
+                                    <p>検索結果の上部に表示される「📋 対応アセット一括コピー」ボタンをクリックします。</p>
+                                    <div class="image-placeholder">
+                                        <p>💡 <strong>画像:</strong> 一括コピーボタンが強調表示された状態</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="step">
+                                <span class="step-number">4</span>
+                                <div class="step-content">
+                                    <h4>クリップボードに情報をコピー</h4>
+                                    <p>表示されているアセットの詳細情報（タイトル、作者、BOOTHID、対応アバター、カテゴリ、タグなど）が整理された形でクリップボードにコピーされます。</p>
+                                    <div class="image-placeholder">
+                                        <p>💡 <strong>画像:</strong> コピー完了メッセージの表示</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="step">
+                                <span class="step-number">5</span>
+                                <div class="step-content">
+                                    <h4>他の場所に貼り付け</h4>
+                                    <p>コピーした情報をDiscord、メモ帳、Excelなどの他のアプリケーションに貼り付けて活用できます。</p>
+                                    <div class="image-placeholder">
+                                        <p>💡 <strong>画像:</strong> Discordに貼り付けされた整理されたアセット情報</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="copy-format-info">
+                            <h4>📝 コピーされる情報の形式</h4>
+                            <div class="copy-example">
+                                <h5>桔梗対応アセット (10件)</h5>
+                                <ul>
+                                    <li><strong>[衣装]</strong> 桔梗用ワンピース | 作者: Example Creator | BOOTHID: 123456</li>
+                                    <li><strong>[テクスチャ]</strong> 桔梗用スキンテクスチャセット | 作者: Another Creator | BOOTHID: 789012</li>
+                                    <li><em>（以下続く...）</em></li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="use-cases">
+                            <h4>🎯 活用例</h4>
+                            <div class="use-case-grid">
+                                <div class="use-case">
+                                    <h5>💬 Discord共有</h5>
+                                    <p>アバター改変のアイデア共有やアセット紹介に</p>
+                                </div>
+                                <div class="use-case">
+                                    <h5>📝 購入計画</h5>
+                                    <p>購入したいアセットのリスト作成に</p>
+                                </div>
+                                <div class="use-case">
+                                    <h5>📊 在庫管理</h5>
+                                    <p>どのアバター用のアセットを持っているか整理に</p>
+                                </div>
+                                <div class="use-case">
+                                    <h5>🎨 改変計画</h5>
+                                    <p>改変に使用可能なアセットの確認に</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                </div>
+
+                <!-- Search Tab -->
+                <div id="search" class="tab-panel">
+                <section id="advanced-search">
+                    <h3>詳細検索</h3>
                 <div class="tutorial-content">
                     <div class="advanced-search-info">
                         <h3>詳細検索フィールド</h3>
@@ -214,10 +340,13 @@ extra_css: "/tutorial/tutorial.css"
                         </div>
                     </div>
                 </div>
-            </section>
+                </section>
+                </div>
 
-            <section id="settings">
-                <h2>設定機能</h2>
+                <!-- Settings & Tips Tab -->
+                <div id="settings" class="tab-panel">
+                <section id="settings-section">
+                    <h3>設定機能</h3>
                 <div class="tutorial-content">
                     <div class="settings-info">
                         <h3>右上の「設定」ボタンから各種設定</h3>
@@ -343,6 +472,53 @@ extra_css: "/tutorial/tutorial.css"
                 </div>
             </section>
 
+                <section id="workflow-section">
+                    <h3>典型的なワークフロー</h3>
+                    <div class="workflow-container">
+                        <div class="workflow-step">
+                            <span class="workflow-number">1</span>
+                            <div class="workflow-content">
+                                <h4>探したいアセットのタブを選択</h4>
+                                <p>アバター、アバター関連アセット、ワールドアセット、その他から適切なタブを選択。</p>
+                            </div>
+                        </div>
+
+                        <div class="workflow-step">
+                            <span class="workflow-number">2</span>
+                            <div class="workflow-content">
+                                <h4>検索キーワードを入力</h4>
+                                <p>基本検索または詳細検索でアイテムを絞り込み。</p>
+                            </div>
+                        </div>
+
+                        <div class="workflow-step">
+                            <span class="workflow-number">3</span>
+                            <div class="workflow-content">
+                                <h4>ソート機能で並び替え</h4>
+                                <p>新しい順、人気順、名前順などで見やすく整理。</p>
+                            </div>
+                        </div>
+
+                        <div class="workflow-step">
+                            <span class="workflow-number">4</span>
+                            <div class="workflow-content">
+                                <h4>アイテムの詳細確認</h4>
+                                <p>サムネイル、説明、対応アバター、タグ等の情報を確認。</p>
+                            </div>
+                        </div>
+
+                        <div class="workflow-step">
+                            <span class="workflow-number">5</span>
+                            <div class="workflow-content">
+                                <h4>アクション実行</h4>
+                                <p>Unitypackageインポート、BOOTHページ確認、フォルダ参照など必要なアクションを実行。</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+                </div>
+            </div>
+
             <section id="help">
                 <h2>さらに詳しく</h2>
                 <div class="help-content">
@@ -354,3 +530,25 @@ extra_css: "/tutorial/tutorial.css"
                     </div>
                 </div>
             </section>
+
+            <script>
+            // Tab functionality
+            document.addEventListener('DOMContentLoaded', function() {
+                const tabButtons = document.querySelectorAll('.tab-button');
+                const tabPanels = document.querySelectorAll('.tab-panel');
+
+                tabButtons.forEach(button => {
+                    button.addEventListener('click', () => {
+                        const targetTab = button.getAttribute('data-tab');
+
+                        // Remove active class from all buttons and panels
+                        tabButtons.forEach(btn => btn.classList.remove('active'));
+                        tabPanels.forEach(panel => panel.classList.remove('active'));
+
+                        // Add active class to clicked button and corresponding panel
+                        button.classList.add('active');
+                        document.getElementById(targetTab).classList.add('active');
+                    });
+                });
+            });
+            </script>
