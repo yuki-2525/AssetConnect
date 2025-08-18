@@ -503,8 +503,9 @@
 /* Dark Mode Support */
 @media (prefers-color-scheme: dark) {
     .tab-content,
-    .tab-panel {
-        background: #1a1a1a;
+    .tab-panel,
+    .tab-panel.active {
+        background: #1a1a1a !important;
     }
     
     .tutorial-content,
