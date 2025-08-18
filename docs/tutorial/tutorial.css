@@ -501,7 +501,7 @@
 }
 
 /* Dark Mode Support */
-@media (prefers-color-scheme: dark) {
+[data-theme="dark"] {
     .tab-content,
     .tab-panel,
     .tab-panel.active {
