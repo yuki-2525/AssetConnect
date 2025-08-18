@@ -1,6 +1,6 @@
 /* Tutorial page specific styles */
 
-.active {
+.tab-panel.active {
     background-color: #f8f9fa !important;
 }
 
