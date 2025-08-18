@@ -357,6 +357,81 @@
     font-size: 0.9rem;
 }
 
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+    .tutorial-content,
+    .interface-item,
+    .tip-item,
+    .workflow-step,
+    .help-content {
+        background: #2d3748;
+        color: #e2e8f0;
+    }
+    
+    .interface-item h3,
+    .step-content h4,
+    .workflow-content h4,
+    .tip-item h3,
+    .advanced-search-info h3,
+    .sort-info h3,
+    .action-info h3,
+    .settings-info h3,
+    .search-field h4,
+    .sort-option h4,
+    .action-item h4,
+    .settings-category h4 {
+        color: #e2e8f0;
+    }
+    
+    .interface-item p,
+    .step-content p,
+    .workflow-content p,
+    .help-content p,
+    .search-field p,
+    .sort-option p,
+    .action-item p {
+        color: #cbd5e0;
+    }
+    
+    .step,
+    .search-field,
+    .sort-option,
+    .action-item,
+    .settings-category {
+        background: #4a5568;
+    }
+    
+    .settings-category li,
+    .tip-item li {
+        color: #cbd5e0;
+        border-bottom-color: #4a5568;
+    }
+    
+    .settings-category strong {
+        color: #e2e8f0;
+    }
+    
+    .tip {
+        background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
+        color: #cbd5e0;
+    }
+    
+    .image-placeholder {
+        background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
+        border-color: #718096;
+        color: #cbd5e0;
+    }
+    
+    /* Improve list text visibility */
+    ul li {
+        color: #cbd5e0;
+    }
+    
+    ul li strong {
+        color: #e2e8f0;
+    }
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .interface-grid,

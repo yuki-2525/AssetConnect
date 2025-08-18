@@ -213,6 +213,70 @@
     margin-bottom: 2rem;
 }
 
+/* Dark Mode Support */
+@media (prefers-color-scheme: dark) {
+    .requirement-box,
+    .install-method,
+    .setup-section,
+    .troubleshoot-item,
+    #next-steps {
+        background: #2d3748;
+        color: #e2e8f0;
+    }
+    
+    .requirement-box h3,
+    .install-method h3,
+    .setup-section h3,
+    .step-content h4 {
+        color: #e2e8f0;
+    }
+    
+    .step {
+        background: #4a5568;
+        border-left-color: #667eea;
+    }
+    
+    .step-content p,
+    #next-steps p {
+        color: #cbd5e0;
+    }
+    
+    .troubleshoot-item li {
+        color: #cbd5e0;
+        border-bottom-color: #4a5568;
+    }
+    
+    .requirement-box li {
+        border-bottom-color: #4a5568;
+        color: #cbd5e0;
+    }
+    
+    .requirement-box strong {
+        color: #e2e8f0;
+    }
+    
+    .path-example {
+        background: #4a5568;
+        border-left-color: #3498db;
+        color: #e2e8f0;
+    }
+    
+    .image-placeholder {
+        background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
+        border-color: #718096;
+        color: #cbd5e0;
+    }
+    
+    /* Improve list text visibility */
+    ul li {
+        color: #cbd5e0;
+    }
+    
+    ul li strong {
+        color: #e2e8f0;
+    }
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .step {
