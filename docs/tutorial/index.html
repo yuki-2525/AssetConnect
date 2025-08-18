@@ -6,9 +6,8 @@ extra_css: "/tutorial/tutorial.css"
             <section id="overview">
                 <h2>AssetConnect 使い方ガイド</h2>
                 <p>AssetConnectの主要機能をマスターし、アセット管理ツールへの登録を簡単にしましょう！</p>
-                <!-- 画像推奨: 拡張機能のポップアップUI概要 -->
-                <div class="image-placeholder">
-                    <p>💡 <strong>画像:</strong> AssetConnectポップアップの全体概要（各UI要素にラベル付き）</p>
+                <div class="overview-screenshot">
+                    <img src="../images/AssetConnect_Popup_Interface.png" alt="AssetConnectポップアップの全体概要" style="max-width: 100%; border: 1px solid #ddd; border-radius: 4px; margin: 20px 0;">
                 </div>
             </section>
 
@@ -28,37 +27,58 @@ extra_css: "/tutorial/tutorial.css"
 
                 <section id="interface">
                     <h3>インターフェース概要</h3>
-                    <div class="interface-grid">
-                        <div class="interface-item">
-                            <h4>📧 ポップアップウィンドウ</h4>
-                            <p>ブラウザツールバーのAssetConnectアイコンをクリックすると表示されるメインUI。</p>
-                            <div class="image-placeholder">
-                                <p>💡 <strong>画像:</strong> ポップアップウィンドウの全体表示</p>
+                    <p>ブラウザツールバーのAssetConnectアイコンをクリックすると、ダウンロード履歴の管理やエクスポート、外部ツール連携機能が利用できるメインUIが表示されます。</p>
+                    <div class="interface-screenshot">
+                        <img src="../images/AssetConnect_Popup_Interface.png" alt="AssetConnectポップアップウィンドウの全体表示" style="max-width: 100%; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+
+                    <h4>主要な機能</h4>
+                    <div class="feature-list">
+                        <div class="feature-item">
+                            <h5>📁 ダウンロードフォルダのパス</h5>
+                            <p>上部の「ダウンロードフォルダのパス」欄にブラウザのダウンロード先フォルダのパスを入力します。<code>chrome://settings/downloads</code> の「保存先」で確認できるパスを入力し、「保存」ボタンで設定を保存してください。</p>
+                            <div class="settings-screenshot">
+                                <img src="../images/Chrome_Settings_Downloads.png" alt="Chrome設定のダウンロードページ - 保存先フォルダの確認" style="max-width: 100%; border: 1px solid #ddd; border-radius: 4px; margin: 10px 0;">
                             </div>
                         </div>
 
-                        <div class="interface-item">
-                            <h4>⚙️ 設定エリア</h4>
-                            <p>ダウンロードフォルダの設定、フィルタリングオプションの設定ができるエリア。</p>
-                            <div class="image-placeholder">
-                                <p>💡 <strong>画像:</strong> 設定エリアの表示状態</p>
-                            </div>
+                        <div class="feature-item">
+                            <h5>⚙️ フィルタリング・表示オプション</h5>
+                            <p>チェックボックスで表示をカスタマイズできます：</p>
+                            <ul>
+                                <li><strong>無料ダウンロードのみ:</strong> 無料アイテムのみ表示</li>
+                                <li><strong>同一IDのアイテムをまとめる:</strong> 同じBOOTH IDの商品ファイルをグループ化</li>
+                            </ul>
                         </div>
 
-                        <div class="interface-item">
-                            <h4>📋 ダウンロード履歴</h4>
-                            <p>ダウンロードしたアイテムの一覧。タイトル、ファイル名、日時、BOOTHIDが表示されます。</p>
-                            <div class="image-placeholder">
-                                <p>💡 <strong>画像:</strong> ダウンロード履歴リストの表示例</p>
-                            </div>
+                        <div class="feature-item">
+                            <h5>📤 データ管理ボタン</h5>
+                            <p>ダウンロード履歴の管理機能：</p>
+                            <ul>
+                                <li><strong>JSON出力(AE Tools形式):</strong> AvatarExplorer連携用の形式でエクスポート</li>
+                                <li><strong>CSV出力:</strong> 表計算ソフトで扱える形式でエクスポート</li>
+                                <li><strong>CSVインポート:</strong> 既存のCSVデータをインポート</li>
+                                <li><strong>履歴削除:</strong> 記録されたダウンロード履歴をリセット</li>
+                            </ul>
                         </div>
 
-                        <div class="interface-item">
-                            <h4>📤 エクスポートボタン</h4>
-                            <p>CSV形式やJSON形式でダウンロード履歴をエクスポートするボタン。</p>
-                            <div class="image-placeholder">
-                                <p>💡 <strong>画像:</strong> エクスポートボタンの表示</p>
-                            </div>
+                        <div class="feature-item">
+                            <h5>🔗 外部ツール連携</h5>
+                            <p>各アイテムの右側に表示される連携ボタン：</p>
+                            <ul>
+                                <li><strong>AvatarExplorer:</strong> vrcae://プロトコルでAvatarExplorerに連携</li>
+                                <li><strong>KonoAsset:</strong> konoasset://プロトコルでKonoAssetに連携</li>
+                            </ul>
+                            <p><em>ボタンの色: 青色（通常）/ オレンジ色（未登録状態）</em></p>
+                        </div>
+
+                        <div class="feature-item">
+                            <h5>🌐 その他の機能</h5>
+                            <ul>
+                                <li><strong>Language:</strong> 表示言語の変更（日本語/English/한국어）</li>
+                                <li><strong>タブで表示:</strong> ポップアップを新しいタブで開いて広い画面で操作</li>
+                                <li><strong>更新履歴・お問い合わせ:</strong> 拡張機能の情報やサポートへのアクセス</li>
+                            </ul>
                         </div>
                     </div>
                 </section>
