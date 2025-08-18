@@ -117,19 +117,19 @@ extra_css: "/tutorial/tutorial.css"
                 <section id="supported-avatar-copy">
                     <h3>対応アバター一括コピー機能</h3>
                     <div class="tutorial-content">
-                        <p>特定のアバターに対応したアセットの情報を一括でクリップボードにコピーできる便利機能です。</p>
+                        <p>BOOTHページでアイテムを自動検出し、管理パネルで整理してアイテム名をクリップボードに一括コピーできる機能です。</p>
                         
                         <div class="step-container">
                             <div class="step">
                                 <span class="step-number">1</span>
                                 <div class="step-content">
-                                    <h4>アバター名で検索</h4>
-                                    <p>「対応アバター検索」フィールドにアバター名を入力して検索します。</p>
+                                    <h4>BOOTHページでの自動起動</h4>
+                                    <p>BOOTHの商品ページやアイテムリンクが含まれるページにアクセスすると、対応アバター一括コピー機能が自動的に起動します。</p>
                                     <div class="image-placeholder">
-                                        <p>💡 <strong>画像:</strong> 対応アバター検索フィールドに「桔梗」と入力している状態</p>
+                                        <p>💡 <strong>画像:</strong> BOOTHページで管理パネルが表示された状態</p>
                                     </div>
                                     <div class="tip">
-                                        <strong>💡 Tips:</strong> 「桔梗」「萌」「シャーロ」などのアバター名で検索できます
+                                        <strong>💡 Tips:</strong> ページ内のBOOTHアイテムリンクが自動検出されます
                                     </div>
                                 </div>
                             </div>
@@ -137,10 +137,10 @@ extra_css: "/tutorial/tutorial.css"
                             <div class="step">
                                 <span class="step-number">2</span>
                                 <div class="step-content">
-                                    <h4>検索結果を確認</h4>
-                                    <p>そのアバターに対応したアセットの一覧が表示されます。フィルタやソートを使って結果を絞り込むこともできます。</p>
+                                    <h4>新規アイテムの検出と取得</h4>
+                                    <p>新しいアイテムが検出された場合、黄色い取得確認の通知が表示されます。取得ボタンをクリックして新規アイテムを管理パネルに追加できます。</p>
                                     <div class="image-placeholder">
-                                        <p>💡 <strong>画像:</strong> 桔梗対応アセットの検索結果リスト</p>
+                                        <p>💡 <strong>画像:</strong> 黄色い新規アイテム取得確認の表示</p>
                                     </div>
                                 </div>
                             </div>
@@ -148,10 +148,15 @@ extra_css: "/tutorial/tutorial.css"
                             <div class="step">
                                 <span class="step-number">3</span>
                                 <div class="step-content">
-                                    <h4>一括コピーボタンをクリック</h4>
-                                    <p>検索結果の上部に表示される「📋 対応アセット一括コピー」ボタンをクリックします。</p>
+                                    <h4>管理パネルでアイテムを整理</h4>
+                                    <p>管理パネルでは3つのカテゴリでアイテムを分類できます：</p>
+                                    <ul>
+                                        <li><strong>保存済み:</strong> コピー対象として保存するアイテム</li>
+                                        <li><strong>新規:</strong> 新たに検出されたアイテム</li>
+                                        <li><strong>除外:</strong> コピー対象から除外するアイテム</li>
+                                    </ul>
                                     <div class="image-placeholder">
-                                        <p>💡 <strong>画像:</strong> 一括コピーボタンが強調表示された状態</p>
+                                        <p>💡 <strong>画像:</strong> 3つのカテゴリ（保存済み・新規・除外）が表示された管理パネル</p>
                                     </div>
                                 </div>
                             </div>
@@ -159,10 +164,10 @@ extra_css: "/tutorial/tutorial.css"
                             <div class="step">
                                 <span class="step-number">4</span>
                                 <div class="step-content">
-                                    <h4>クリップボードに情報をコピー</h4>
-                                    <p>表示されているアセットの詳細情報（タイトル、作者、BOOTHID、対応アバター、カテゴリ、タグなど）が整理された形でクリップボードにコピーされます。</p>
+                                    <h4>手動でアイテムを追加</h4>
+                                    <p>「手動追加」ボタンから、BOOTHのアイテムIDと名前を入力して手動でアイテムを追加することも可能です。</p>
                                     <div class="image-placeholder">
-                                        <p>💡 <strong>画像:</strong> コピー完了メッセージの表示</p>
+                                        <p>💡 <strong>画像:</strong> 手動追加ダイアログでアイテムID・名前を入力</p>
                                     </div>
                                 </div>
                             </div>
@@ -170,10 +175,10 @@ extra_css: "/tutorial/tutorial.css"
                             <div class="step">
                                 <span class="step-number">5</span>
                                 <div class="step-content">
-                                    <h4>他の場所に貼り付け</h4>
-                                    <p>コピーした情報をDiscord、メモ帳、Excelなどの他のアプリケーションに貼り付けて活用できます。</p>
+                                    <h4>クリップボードにコピー</h4>
+                                    <p>「クリップボードにコピー」ボタンをクリックすると、保存済み・新規カテゴリのアイテム名がリスト形式でクリップボードにコピーされます。</p>
                                     <div class="image-placeholder">
-                                        <p>💡 <strong>画像:</strong> Discordに貼り付けされた整理されたアセット情報</p>
+                                        <p>💡 <strong>画像:</strong> 緑色の「クリップボードにコピー」ボタンをクリック</p>
                                     </div>
                                 </div>
                             </div>
@@ -182,10 +187,13 @@ extra_css: "/tutorial/tutorial.css"
                         <div class="copy-format-info">
                             <h4>📝 コピーされる情報の形式</h4>
                             <div class="copy-example">
-                                <h5>桔梗対応アセット (10件)</h5>
+                                <h5>アイテム名一覧（改行区切り）</h5>
                                 <ul>
-                                    <li><strong>[衣装]</strong> 桔梗用ワンピース | 作者: Example Creator | BOOTHID: 123456</li>
-                                    <li><strong>[テクスチャ]</strong> 桔梗用スキンテクスチャセット | 作者: Another Creator | BOOTHID: 789012</li>
+                                    <li>アルテミスセーラー -グレイス-</li>
+                                    <li>ThreeStarPierce</li>
+                                    <li>MeshColorTool</li>
+                                    <li>BoothSeeker Lite</li>
+                                    <li>JustNotification</li>
                                     <li><em>（以下続く...）</em></li>
                                 </ul>
                             </div>
@@ -195,20 +203,20 @@ extra_css: "/tutorial/tutorial.css"
                             <h4>🎯 活用例</h4>
                             <div class="use-case-grid">
                                 <div class="use-case">
-                                    <h5>💬 Discord共有</h5>
-                                    <p>アバター改変のアイデア共有やアセット紹介に</p>
+                                    <h5>📝 アイテムリスト作成</h5>
+                                    <p>ページで見つけたアイテムをテキストとして整理</p>
                                 </div>
                                 <div class="use-case">
-                                    <h5>📝 購入計画</h5>
-                                    <p>購入したいアセットのリスト作成に</p>
+                                    <h5>💬 共有・報告</h5>
+                                    <p>Discord等でアイテム名一覧を共有</p>
                                 </div>
                                 <div class="use-case">
                                     <h5>📊 在庫管理</h5>
-                                    <p>どのアバター用のアセットを持っているか整理に</p>
+                                    <p>発見したアイテムの記録・管理</p>
                                 </div>
                                 <div class="use-case">
-                                    <h5>🎨 改変計画</h5>
-                                    <p>改変に使用可能なアセットの確認に</p>
+                                    <h5>🔍 検索用リスト</h5>
+                                    <p>他のツールでの検索用アイテム名取得</p>
                                 </div>
                             </div>
                         </div>
