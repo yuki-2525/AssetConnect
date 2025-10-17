@@ -16,7 +16,11 @@ document.addEventListener('DOMContentLoaded', function () {
     bulkRegisterToggle: document.getElementById("bulkRegisterToggle"),
     updateHistoryBtn: document.getElementById("btn-update-history"),
     updateHistoryModal: document.getElementById("update-history-modal"),
-    updateHistoryClose: document.querySelector("#update-history-modal .close")
+    updateHistoryClose: document.querySelector("#update-history-modal .close"),
+    renewalNoticeModal: document.getElementById("renewal-notice-modal"),
+    renewalNoticeClose: document.querySelector("#renewal-notice-modal .close"),
+    dontShowAgain: document.getElementById("dontShowAgain"),
+    btnRenewalNotice: document.getElementById("btn-renewal-notice"),
   };
 
   // 共通のスタイル設定
@@ -150,6 +154,9 @@ document.addEventListener('DOMContentLoaded', function () {
         renderHistory();
       }
     });
+
+    // リニューアル通知の表示制御
+    checkRenewalNotice();
   }
 
   // 履歴の描画
@@ -406,11 +413,66 @@ document.addEventListener('DOMContentLoaded', function () {
       ELEMENTS.updateHistoryModal.style.display = "none";
     });
 
-    // モーダル外をクリックしたら閉じる
+    // リニューアル通知モーダルの制御
+    ELEMENTS.renewalNoticeClose.addEventListener("click", function () {
+      ELEMENTS.renewalNoticeModal.style.display = "none";
+      
+      // タイムスタンプを更新
+      chrome.storage.local.set({ lastShownTimestamp: Date.now() });
+      
+      // 「起動時に表示しない」がチェックされている場合
+      if (ELEMENTS.dontShowAgain.checked) {
+        chrome.storage.local.set({ 
+          renewalNoticePermanent: true,
+          renewalNoticeShown: true 
+        });
+      }
+    });
+
+    ELEMENTS.btnRenewalNotice.addEventListener("click", function() {
+      ELEMENTS.renewalNoticeModal.style.display = "block";
+    });
+
+    // モーダル外クリックで閉じる処理を修正
     window.addEventListener("click", function (event) {
       if (event.target === ELEMENTS.updateHistoryModal) {
         ELEMENTS.updateHistoryModal.style.display = "none";
       }
+      if (event.target === ELEMENTS.renewalNoticeModal) {
+        ELEMENTS.renewalNoticeModal.style.display = "none";
+        
+        // タイムスタンプを更新
+        chrome.storage.local.set({ lastShownTimestamp: Date.now() });
+        
+        // 「起動時に表示しない」がチェックされている場合
+        if (ELEMENTS.dontShowAgain.checked) {
+          chrome.storage.local.set({ 
+            renewalNoticePermanent: true,
+            renewalNoticeShown: true 
+          });
+        }
+      }
+    });
+  }
+
+  // リニューアル通知の表示チェック
+  function checkRenewalNotice() {
+    chrome.storage.local.get(["renewalNoticeShown", "renewalNoticePermanent", "lastShownTimestamp"], function (result) {
+      const now = Date.now();
+      const twentyFourHours = 24 * 60 * 60 * 1000; // 24時間をミリ秒で
+
+      // 永久に表示しない設定の場合
+      if (result.renewalNoticePermanent) {
+        return;
+      }
+
+      // 24時間以内に表示済みの場合
+      if (result.lastShownTimestamp && (now - result.lastShownTimestamp < twentyFourHours)) {
+        return;
+      }
+
+      // モーダルを表示
+      ELEMENTS.renewalNoticeModal.style.display = "block";
     });
   }
 

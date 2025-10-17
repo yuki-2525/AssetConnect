@@ -52,5 +52,26 @@
     },
     "updateHistory": {
         "message": "Update History"
+    },
+    "renewalNoticeTitle": {
+        "message": "리뉴얼 안내"
+    },
+    "renewalNoticeHeading": {
+        "message": "【리뉴얼 안내】"
+    },
+    "renewalNoticeDescription1": {
+        "message": "다운로드 기록이 더 이상 주요 기능이 아닌 현재 상황과 향후 BOOTH 외의 사이트 지원을 고려하여 리뉴얼을 진행합니다."
+    },
+    "renewalNoticeDescription2": {
+        "message": "새로운 이름 'Asset Connect'에는 에셋과 에셋 관리 도구를 더 잘 '연결'겠다는 의미를 담았습니다."
+    },
+    "renewalNoticeDescription3": {
+        "message": "또한, 풀셋 구매 시 KonoAsset의 해당 아바타 태그에 일괄 복사하는 기능도 구현할 예정입니다."
+    },
+    "renewalNoticeDescription4": {
+        "message": "업데이트 예정일은 11월 1일(토)입니다."
+    },
+    "dontShowAgain": {
+        "message": "시작할 때 표시하지 않음"
     }
 }

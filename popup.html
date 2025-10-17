@@ -303,6 +303,54 @@
       margin-bottom: 5px;
       color: #444;
     }
+
+    /* リニューアル通知モーダル */
+    .renewal-content {
+      text-align: center;
+    }
+
+    .renewal-content p {
+      white-space: pre-line;
+      line-height: 1.5;
+      margin-bottom: 1em;
+    }
+
+    .icon-comparison {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin: 10px 0;
+    }
+
+    .icon-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 0 10px;
+    }
+
+    .icon-container img {
+      border-radius: 8px;
+    }
+
+    .icon-container p {
+      margin: 8px 0 0;
+      font-size: 14px;
+    }
+
+    .icon-container p strong,
+    .renewal-content p strong {
+      font-weight: 600;
+      color: #333;
+    }
+
+    /* ダークモード対応 */
+    @media (prefers-color-scheme: dark) {
+      .icon-container p strong,
+      .renewal-content p strong {
+        color: #e0e0e0;
+      }
+    }
   </style>
 </head>
 
@@ -346,6 +394,7 @@
       <a href="popup.html" target="_blank" id="popup-tab-button" data-i18n="popupTab">タブで表示</a>
     </div>
     <div id="fixed-bar-right">
+      <button id="btn-renewal-notice" class="update-history-btn" data-i18n="renewalNotice">リニューアルのお知らせ</button>
       <button id="btn-update-history" class="update-history-btn" data-i18n="updateHistory">アップデート履歴</button>
       <a href="https://x.com/yuk1_vrc" target="_blank" id="Developer-x-button" data-i18n="DeveloperX">作者X</a>
       <a href="" target="_blank" id="feedback-button" data-i18n="feedback">お問い合わせ</a>
@@ -361,6 +410,42 @@
       </div>
       <div class="modal-body">
         <!-- アップデート履歴の内容はJavaScriptで動的に読み込まれます -->
+      </div>
+    </div>
+  </div>
+
+  <!-- リニューアルお知らせモーダル -->
+  <div id="renewal-notice-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 data-i18n="renewalNoticeTitle">リニューアルのお知らせ</h2>
+        <span class="close">&times;</span>
+      </div>
+      <div class="modal-body">
+        <div class="renewal-content">
+          <h3 data-i18n="renewalNoticeHeading">【リニューアルのお知らせ】</h3>
+          <div class="icon-comparison">
+            <div class="icon-container">
+              <img src="icon/icon128.png" alt="現在のアイコン" width="64" height="64">
+              <p><strong>BOOTH Download Log</strong></p>
+            </div>
+            <div class="icon-transition">➡️</div>
+            <div class="icon-container">
+              <img src="AssetConnect_icon.png" alt="新しいアイコン" width="64" height="64">
+              <p><strong>Asset Connect</strong></p>
+            </div>
+          </div>
+          <p data-i18n="renewalNoticeDescription1">ダウンロード履歴が本ツールのメイン機能ではなくなっている現状及び、\n将来的なBOOTH以外のサイトへの対応を見据え、リニューアルいたします。</p>
+          <p data-i18n="renewalNoticeDescription2">新しい名称「Asset Connect」には、\nアセットとアセット管理ツールとをより"繋げる"との思いを込めています。</p>
+          <p data-i18n="renewalNoticeDescription3">また、新たにフルセットを購入した際等に、\nKonoAssetの対応アバタータグに一括コピーする機能の実装を予定しています。</p>
+          <p data-i18n="renewalNoticeDescription4"><strong>アップデート予定日は11月1日(土)です。</strong></p>
+          <div class="modal-footer">
+            <label class="dont-show-again">
+              <input type="checkbox" id="dontShowAgain">
+              <span data-i18n="dontShowAgain">起動時に表示しない</span>
+            </label>
+          </div>
+        </div>
       </div>
     </div>
   </div>

@@ -28,8 +28,8 @@ document.addEventListener('click', function (e) {
     // クリックされたリンクが含まれる要素を取得
     const downloadContainer = downloadLink.closest('.desktop\\:flex');
     if (downloadContainer) {
-        // ファイル名は typography-14 クラスを持つ要素に入っている
-        const fileNameElement = downloadContainer.querySelector('.typography-14');
+        // ファイル名は text-14 クラスを持つ要素に入っている
+        const fileNameElement = downloadContainer.querySelector('.text-14');
         if (fileNameElement) {
             fileName = fileNameElement.textContent.trim();
         } else {

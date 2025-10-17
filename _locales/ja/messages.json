@@ -52,5 +52,26 @@
     },
     "updateHistory": {
         "message": "更新履歴"
+    },
+    "renewalNoticeTitle": {
+        "message": "リニューアルのお知らせ"
+    },
+    "renewalNoticeHeading": {
+        "message": "【リニューアルのお知らせ】"
+    },
+    "renewalNoticeDescription1": {
+        "message": "ダウンロード履歴が本ツールのメイン機能ではなくなっている現状及び、\n将来的なBOOTH以外のサイトへの対応を見据え、リニューアルいたします。"
+    },
+    "renewalNoticeDescription2": {
+        "message": "新しい名称「Asset Connect」には、\nアセットとアセット管理ツールとをより「繋げる」との思いを込めています。"
+    },
+    "renewalNoticeDescription3": {
+        "message": "また、新たにフルセットを購入した際等に、\nKonoAssetの対応アバタータグに一括コピーする機能の実装を予定しています。"
+    },
+    "renewalNoticeDescription4": {
+        "message": "アップデート予定日は11月1日(土)です。"
+    },
+    "dontShowAgain": {
+        "message": "起動時に表示しない"
     }
 }

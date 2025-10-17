@@ -52,5 +52,26 @@
     },
     "updateHistory": {
         "message": "Update History"
+    },
+    "renewalNoticeTitle": {
+        "message": "Renewal Notice"
+    },
+    "renewalNoticeHeading": {
+        "message": "【Renewal Notice】"
+    },
+    "renewalNoticeDescription1": {
+        "message": "We are renewing this extension with future support for platforms beyond BOOTH in mind, as download history management is no longer our primary feature."
+    },
+    "renewalNoticeDescription2": {
+        "message": "The new name 'Asset Connect' represents our vision to better connect assets with asset management tools."
+    },
+    "renewalNoticeDescription3": {
+        "message": "We are also planning to implement a feature that will automatically copy tags to KonoAsset when purchasing full avatar sets."
+    },
+    "renewalNoticeDescription4": {
+        "message": "The update is scheduled for Saturday, November 1st."
+    },
+    "dontShowAgain": {
+        "message": "Don't show on startup"
     }
 }
