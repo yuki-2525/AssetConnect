@@ -6,9 +6,6 @@ extra_css: "/tutorial/tutorial.css"
             <section id="overview">
                 <h2>AssetConnect 使い方ガイド</h2>
                 <p>AssetConnectの主要機能をマスターし、アセット管理ツールへの登録を簡単にしましょう！</p>
-                <div class="overview-screenshot">
-                    <img src="../images/AssetConnect_Popup_Interface.png" alt="AssetConnectポップアップの全体概要" style="max-width: 100%; border: 1px solid #ddd; border-radius: 4px; margin: 20px 0;">
-                </div>
             </section>
 
             <!-- Tab Navigation -->
@@ -243,6 +240,21 @@ extra_css: "/tutorial/tutorial.css"
             document.addEventListener('DOMContentLoaded', function() {
                 const tabButtons = document.querySelectorAll('.tab-button');
                 const tabPanels = document.querySelectorAll('.tab-panel');
+
+                // URLのハッシュを確認して対応するタブを開く
+                const hash = window.location.hash.substring(1); // #を除去
+                if (hash) {
+                    const targetButton = document.querySelector(`.tab-button[data-tab="${hash}"]`);
+                    if (targetButton) {
+                        // 全てのタブを非アクティブ化
+                        tabButtons.forEach(btn => btn.classList.remove('active'));
+                        tabPanels.forEach(panel => panel.classList.remove('active'));
+
+                        // 対象のタブをアクティブ化
+                        targetButton.classList.add('active');
+                        document.getElementById(hash).classList.add('active');
+                    }
+                }
 
                 tabButtons.forEach(button => {
                     button.addEventListener('click', () => {

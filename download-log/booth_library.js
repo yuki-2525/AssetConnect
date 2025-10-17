@@ -49,10 +49,10 @@ document.addEventListener('click', function (e) {
   let itemUrl = "https://forms.gle/otwhoXKzc5EQQDti8";
 
   // ダウンロードエントリの取得（ファイル名が含まれる部分）
-  const downloadEntry = downloadLink.closest('div.desktop\\:flex.desktop\\:justify-between.desktop\\:items-center');
+  const downloadEntry = downloadLink.closest('.mt-16.desktop\\:flex');
   if (downloadEntry) {
     // ファイル名の取得
-    const fileNameElement = downloadEntry.querySelector('div.min-w-0.break-words.whitespace-pre-line > div.typography-14');
+    const fileNameElement = downloadEntry.querySelector('div.min-w-0.break-words.whitespace-pre-line > div.text-14');
     if (fileNameElement) {
       fileName = fileNameElement.textContent.trim();
     } else {
@@ -63,12 +63,10 @@ document.addEventListener('click', function (e) {
   }
 
   // 外側コンテナの取得
-  const outerContainer = downloadLink.closest('div.mb-16');
+  const outerContainer = downloadLink.closest('.mb-16.bg-white.p-16');
   if (outerContainer) {
     // タイトルの取得：外側コンテナ内の指定要素から取得
-    const titleElement = outerContainer.querySelector(
-      'div[class*="text-text-default"][class*="font-bold"][class*="typography-16"][class*="mb-8"][class*="break-all"]'
-    );
+    const titleElement = outerContainer.querySelector('.font-bold.text-16.break-all');
     if (titleElement) {
       title = titleElement.textContent.trim();
     } else {
