@@ -31,6 +31,32 @@
   color: #333;
 }
 
+.booth-manager-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.booth-help-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  color: #666;
+  transition: all 0.2s ease;
+  border-radius: 50%;
+}
+
+.booth-help-btn:hover {
+  color: #333;
+  background-color: #e0e0e0;
+}
+
+.help-icon {
+  width: 20px;
+  height: 20px;
+}
+
 .booth-manager-close {
   background: none;
   border: none;
