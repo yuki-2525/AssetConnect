@@ -2,6 +2,9 @@
     "title": {
         "message": "AssetConnect"
     },
+    "support": {
+        "message": "Support Development"
+    },
     "description": {
         "message": "이 확장 기능은 BOOTH에서 다운로드한 아이템을 툴 에 쉽게 등록할 수 있도록 도와주는 확장 기능입니다."
     },

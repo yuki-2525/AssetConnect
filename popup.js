@@ -17,7 +17,11 @@ document.addEventListener('DOMContentLoaded', function () {
     bulkRegisterToggle: document.getElementById("bulkRegisterToggle"),
     updateHistoryBtn: document.getElementById("btn-update-history"),
     updateHistoryModal: document.getElementById("update-history-modal"),
-    updateHistoryClose: document.querySelector("#update-history-modal .close")
+    updateHistoryClose: document.querySelector("#update-history-modal .close"),
+    // 支援モーダル要素
+    supportBtn: document.getElementById("btn-support"),
+    supportModal: document.getElementById("support-modal"),
+    supportModalClose: document.querySelector("#support-modal .close")
   };
 
   // 翻訳システム
@@ -485,7 +489,21 @@ document.addEventListener('DOMContentLoaded', function () {
       if (event.target === ELEMENTS.updateHistoryModal) {
         ELEMENTS.updateHistoryModal.style.display = "none";
       }
+      if (event.target === ELEMENTS.supportModal) {
+        ELEMENTS.supportModal.style.display = "none";
+      }
     });
+
+    // 支援モーダルの制御
+    if (ELEMENTS.supportBtn && ELEMENTS.supportModal && ELEMENTS.supportModalClose) {
+      ELEMENTS.supportBtn.addEventListener("click", function () {
+        ELEMENTS.supportModal.style.display = "block";
+      });
+
+      ELEMENTS.supportModalClose.addEventListener("click", function () {
+        ELEMENTS.supportModal.style.display = "none";
+      });
+    }
   }
 
   // 初期化

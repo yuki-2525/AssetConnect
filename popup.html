@@ -328,6 +328,66 @@
       margin-bottom: 5px;
       color: #444;
     }
+
+    /* 支援モーダル用スタイル */
+    .support-message {
+      font-size: 1.1em;
+      text-align: center;
+      margin: 20px 0;
+      color: var(--text-color);
+    }
+
+    .support-link {
+      text-align: center;
+      font-size: 1em;
+      margin: 20px 0;
+    }
+
+    .support-link a {
+      color: #5c9ce6;
+      text-decoration: none;
+      font-weight: bold;
+    }
+
+    .support-link a:hover {
+      text-decoration: underline;
+    }
+
+    .supporters-list {
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .supporters-list h3 {
+      color: var(--text-color);
+      font-size: 1.1em;
+      margin-bottom: 15px;
+    }
+
+    /* ダークモード対応 */
+    @media (prefers-color-scheme: dark) {
+      .modal-content {
+        background-color: #1a1a1a;
+      }
+      
+      .modal-header {
+        background-color: #1a1a1a;
+        border-bottom: 1px solid var(--border-color);
+      }
+
+      .close {
+        color: #888;
+      }
+
+      .close:hover {
+        color: #fff;
+      }
+
+      .support-link a {
+        color: #5c9ce6;
+      }
+    }
   </style>
 </head>
 
@@ -377,6 +437,7 @@
       </select>
     </div>
     <div id="fixed-bar-right">
+      <button id="btn-support" class="update-history-btn" data-i18n="support">開発を支援する</button>
       <button id="btn-update-history" class="update-history-btn" data-i18n="updateHistory">アップデート履歴</button>
       <a href="https://x.com/yuk1_vrc" target="_blank" id="Developer-x-button" data-i18n="DeveloperX">作者X</a>
       <a href="" target="_blank" id="feedback-button" data-i18n="feedback">お問い合わせ</a>
@@ -392,6 +453,24 @@
       </div>
       <div class="modal-body">
         <!-- アップデート履歴の内容はJavaScriptで動的に読み込まれます -->
+      </div>
+    </div>
+  </div>
+
+  <!-- 支援モーダル -->
+  <div id="support-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <div></div>
+        <span class="close">&times;</span>
+      </div>
+      <div class="modal-body">
+        <p class="support-message">みなさんの支援が開発のモチベーションとなります！</p>
+        <p class="support-link">支援は<a href="https://sakurayuki-dev.fanbox.cc/" target="_blank">こちら</a>から</p>
+        <div class="supporters-list">
+          <h3>支援者の皆様</h3>
+          <!-- 支援者リストは後で追加 -->
+        </div>
       </div>
     </div>
   </div>

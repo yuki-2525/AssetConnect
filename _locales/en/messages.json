@@ -2,6 +2,9 @@
     "title": {
         "message": "AssetConnect"
     },
+    "support": {
+        "message": "Support Development"
+    },
     "description": {
         "message": "This browser extension simplifies the process of registering downloaded assets from BOOTH into asset management tools."
     },
