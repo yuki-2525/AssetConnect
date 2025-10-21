@@ -1,0 +1,127 @@
+nav {
+  background-color: var(--nav-bg);
+  padding: $spacing-unit 0;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+
+  @include respond-to(mobile) {
+    padding: 0.5rem 0;
+  }
+
+  ul {
+    list-style: none;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 2rem;
+
+    @include respond-to(mobile) {
+      flex-direction: column;
+      gap: 0.3rem;
+    }
+  }
+
+  a {
+    color: white;
+    text-decoration: none;
+    padding: 0.5rem $spacing-unit;
+    border-radius: 5px;
+    transition: background-color $transition-base;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    @include respond-to(mobile) {
+      padding: 0.3rem 0.8rem;
+      font-size: 0.9rem;
+    }
+
+    &:hover,
+    &.active {
+      background-color: var(--nav-hover);
+    }
+
+    i {
+      font-size: 1rem;
+    }
+  }
+}
+
+// Theme Switch
+.theme-switch {
+  display: inline-block;
+  margin: 0 8px;
+
+  @include respond-to(mobile) {
+    margin: 0.2rem 0;
+  }
+
+  input[type="checkbox"] {
+    -webkit-appearance: none;
+    appearance: none;
+    background-color: #0c0c0d1a;
+    border: 1px solid #0c0c0d4d;
+    border-radius: 14px;
+    height: 28px;
+    width: 56px;
+    color: #737373;
+    cursor: pointer;
+
+    @include respond-to(mobile) {
+      height: 24px;
+      width: 48px;
+    }
+
+    &:hover {
+      background-color: #0c0c0d33;
+      border-color: #0c0c0d7f;
+    }
+
+    &:active {
+      background-color: #0c0c0d4d;
+    }
+
+    &:focus {
+      box-shadow: 0 0 0 1px #0a84ff inset, 0 0 0 1px #0a84ff, 0 0 0 4px #0a84ff4d;
+    }
+
+    &:checked {
+      background-color: #0c0c0d33;
+      border-color: #0c0c0d7f;
+    }
+
+    &::before {
+      background-color: #ffffff;
+      border-radius: 10px;
+      content: "☀️";
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 20px;
+      margin-left: 3px;
+      margin-top: 3px;
+      transition: margin-left .2s cubic-bezier(.07, .95, 0, 1);
+      width: 20px;
+      font-size: 14px;
+
+      @include respond-to(mobile) {
+        height: 16px;
+        width: 16px;
+        font-size: 12px;
+        margin-left: 3px;
+        margin-top: 3px;
+      }
+    }
+
+    &:checked::before {
+      background-color: #2d3748;
+      margin-left: 31px;
+      content: "🌙";
+
+      @include respond-to(mobile) {
+        margin-left: 27px;
+      }
+    }
+  }
+}
