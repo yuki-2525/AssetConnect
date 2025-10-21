@@ -1,7 +1,150 @@
 /* Tutorial page specific styles */
 
-.active {
-    background-color: #34495e !important;
+.tab-panel.active {
+    background-color: #f8f9fa;
+}
+
+/* Tab Navigation Styles */
+.tab-navigation {
+    margin: 2rem 0;
+    border-bottom: 2px solid #e3f2fd;
+}
+
+.tab-container {
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.tab-button {
+    background: #f8f9ff;
+    border: 2px solid #e3f2fd;
+    color: #2c3e50;
+    padding: 0.75rem 1.5rem;
+    border-radius: 10px 10px 0 0;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    position: relative;
+    margin-bottom: -2px;
+}
+
+.tab-button:hover {
+    background: #e3f2fd;
+    transform: translateY(-2px);
+}
+
+.tab-button.active {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.tab-button.active::after {
+    content: '';
+    position: absolute;
+    bottom: -2px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: #667eea;
+}
+
+/* Tab Content Styles */
+.tab-content {
+    margin-top: 0;
+}
+
+.tab-panel {
+    display: none;
+    animation: fadeIn 0.3s ease-in-out;
+}
+
+.tab-panel.active {
+    display: block;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Avatar Copy Feature Specific Styles */
+.copy-format-info {
+    background: #f8f9ff;
+    padding: 2rem;
+    border-radius: 10px;
+    border-left: 4px solid #9b59b6;
+    margin: 2rem 0;
+}
+
+.copy-example {
+    background: #2c3e50;
+    color: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin: 1rem 0;
+    font-family: 'Courier New', monospace;
+}
+
+.copy-example h5 {
+    color: #3498db;
+    margin-bottom: 1rem;
+    font-weight: bold;
+}
+
+.copy-example ul {
+    list-style: none;
+    padding: 0;
+}
+
+.copy-example li {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #34495e;
+}
+
+.copy-example li:last-child {
+    border-bottom: none;
+}
+
+.use-cases {
+    margin: 2rem 0;
+}
+
+.use-case-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin: 1.5rem 0;
+}
+
+.use-case {
+    background: #e8f4fd;
+    padding: 1.5rem;
+    border-radius: 8px;
+    border-left: 4px solid #3498db;
+    text-align: center;
+}
+
+.use-case h5 {
+    color: #2c3e50;
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+}
+
+.use-case p {
+    color: #666;
+    font-size: 0.9rem;
+    line-height: 1.4;
 }
 
 .tutorial-content {
@@ -357,6 +500,138 @@
     font-size: 0.9rem;
 }
 
+/* Dark Mode Support */
+[data-theme="dark"] {
+    .tab-content,
+    .tab-panel,
+    .tab-panel.active {
+        background: #1a1a1a !important;
+    }
+    
+    .tutorial-content,
+    .interface-item,
+    .tip-item,
+    .workflow-step,
+    .help-content {
+        background: #2d3748;
+        color: #e2e8f0;
+    }
+    
+    .interface-item h3,
+    .step-content h4,
+    .workflow-content h4,
+    .tip-item h3,
+    .advanced-search-info h3,
+    .sort-info h3,
+    .action-info h3,
+    .settings-info h3,
+    .search-field h4,
+    .sort-option h4,
+    .action-item h4,
+    .settings-category h4 {
+        color: #e2e8f0;
+    }
+    
+    .interface-item p,
+    .step-content p,
+    .workflow-content p,
+    .help-content p,
+    .search-field p,
+    .sort-option p,
+    .action-item p {
+        color: #cbd5e0;
+    }
+    
+    .step,
+    .search-field,
+    .sort-option,
+    .action-item,
+    .settings-category {
+        background: #1a1a1a;
+    }
+    
+    .settings-category li,
+    .tip-item li {
+        color: #cbd5e0;
+        border-bottom-color: #4a5568;
+    }
+    
+    .settings-category strong {
+        color: #e2e8f0;
+    }
+    
+    .tip {
+        background: linear-gradient(135deg, #4a5568 0%, #2d3748 100%);
+        color: #cbd5e0;
+    }
+    
+    .image-placeholder {
+        background: linear-gradient(135deg, #1a1a1a 0%, #2d3748 100%);
+        border-color: #718096;
+        color: #cbd5e0;
+    }
+    
+    /* Improve list text visibility */
+    ul li {
+        color: #cbd5e0;
+    }
+    
+    ul li strong {
+        color: #e2e8f0;
+    }
+    
+    /* Tab Navigation Dark Mode */
+    .tab-navigation {
+        border-bottom-color: #4a5568;
+    }
+    
+    .tab-button {
+        background: #4a5568;
+        border-color: #718096;
+        color: #e2e8f0;
+    }
+    
+    .tab-button:hover {
+        background: #2d3748;
+    }
+    
+    .tab-button.active {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
+    }
+    
+    .tab-button.active::after {
+        background: #667eea;
+    }
+    
+    /* Avatar Copy Feature Dark Mode */
+    .copy-format-info {
+        background: #1a1a1a;
+        border-left-color: #9b59b6;
+        color: #e2e8f0;
+    }
+    
+    .copy-example {
+        background: #1a1a1a;
+        border: 1px solid #4a5568;
+    }
+    
+    .use-case {
+        background: #1a1a1a;
+        border-left-color: #3498db;
+        color: #e2e8f0;
+    }
+    
+    .use-case h5 {
+        color: #e2e8f0;
+    }
+    
+    .use-case p {
+        color: #cbd5e0;
+    }
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
     .interface-grid,
@@ -364,7 +639,8 @@
     .sort-options,
     .actions-grid,
     .settings-categories,
-    .tips-grid {
+    .tips-grid,
+    .use-case-grid {
         grid-template-columns: 1fr;
     }
     
@@ -382,5 +658,33 @@
     .help-links {
         flex-direction: column;
         align-items: center;
+    }
+    
+    /* Tab Navigation Mobile */
+    .tab-container {
+        flex-direction: column;
+        align-items: center;
+    }
+    
+    .tab-button {
+        width: 100%;
+        max-width: 300px;
+        margin-bottom: 0.5rem;
+        border-radius: 8px;
+        text-align: center;
+    }
+    
+    .tab-button.active::after {
+        display: none;
+    }
+    
+    /* Avatar Copy Feature Mobile */
+    .copy-format-info,
+    .copy-example {
+        padding: 1rem;
+    }
+    
+    .use-case-grid {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
     }
 }

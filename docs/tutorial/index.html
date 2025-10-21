@@ -4,53 +4,87 @@ title: "使い方"
 extra_css: "/tutorial/tutorial.css"
 ---
             <section id="overview">
-                <h2>基本的な使い方</h2>
-                <p>AssetConnectの主要機能と操作方法をマスターし、BOOTHダウンロードを効率的に管理しましょう。</p>
-                <!-- 画像推奨: 拡張機能のポップアップUI概要 -->
-                <div class="image-placeholder">
-                    <p>💡 <strong>画像:</strong> AssetConnectポップアップの全体概要（各UI要素にラベル付き）</p>
-                </div>
+                <h2>AssetConnect 使い方ガイド</h2>
+                <p>AssetConnectの主要機能をマスターし、アセット管理ツールへの登録を簡単にしましょう！</p>
             </section>
 
-            <section id="interface">
-                <h2>インターフェース概要</h2>
-                <div class="interface-grid">
-                    <div class="interface-item">
-                        <h3>📧 ポップアップウィンドウ</h3>
-                        <p>ブラウザツールバーのAssetConnectアイコンをクリックすると表示されるメインUI。</p>
-                        <div class="image-placeholder">
-                            <p>💡 <strong>画像:</strong> ポップアップウィンドウの全体表示</p>
-                        </div>
-                    </div>
-
-                    <div class="interface-item">
-                        <h3>⚙️ 設定エリア</h3>
-                        <p>ダウンロードフォルダの設定、フィルタリングオプションの設定ができるエリア。</p>
-                        <div class="image-placeholder">
-                            <p>💡 <strong>画像:</strong> 設定エリアの表示状態</p>
-                        </div>
-                    </div>
-
-                    <div class="interface-item">
-                        <h3>📋 ダウンロード履歴</h3>
-                        <p>ダウンロードしたアイテムの一覧。タイトル、ファイル名、日時、BOOTHIDが表示されます。</p>
-                        <div class="image-placeholder">
-                            <p>💡 <strong>画像:</strong> ダウンロード履歴リストの表示例</p>
-                        </div>
-                    </div>
-
-                    <div class="interface-item">
-                        <h3>📤 エクスポートボタン</h3>
-                        <p>CSV形式やJSON形式でダウンロード履歴をエクスポートするボタン。</p>
-                        <div class="image-placeholder">
-                            <p>💡 <strong>画像:</strong> エクスポートボタンの表示</p>
-                        </div>
-                    </div>
+            <!-- Tab Navigation -->
+            <div class="tab-navigation">
+                <div class="tab-container">
+                    <button class="tab-button active" data-tab="basic">基本的な使い方</button>
+                    <button class="tab-button" data-tab="download">ダウンロード追跡</button>
+                    <button class="tab-button" data-tab="avatar-copy">対応アバター一括コピー</button>
                 </div>
-            </section>
+            </div>
 
-            <section id="download-tracking">
-                <h2>ダウンロード自動追跡</h2>
+            <!-- Tab Contents -->
+            <div class="tab-content">
+                <!-- Basic Usage Tab -->
+                <div id="basic" class="tab-panel active">
+
+                <section id="interface">
+                    <h3>インターフェース概要</h3>
+                    <p>ブラウザツールバーのAssetConnectアイコンをクリックすると、ダウンロード履歴の管理やエクスポート、外部ツール連携機能が利用できるメインUIが表示されます。</p>
+                    <div class="interface-screenshot">
+                        <img src="../images/AssetConnect_Popup_Interface.png" alt="AssetConnectポップアップウィンドウの全体表示" style="max-width: 100%; border: 1px solid #ddd; border-radius: 4px;">
+                    </div>
+
+                    <h4>主要な機能</h4>
+                    <div class="feature-list">
+                        <div class="feature-item">
+                            <h5>📁 ダウンロードフォルダのパス</h5>
+                            <p>上部の「ダウンロードフォルダのパス」欄にブラウザのダウンロード先フォルダのパスを入力します。<code>chrome://settings/downloads</code> の「保存先」で確認できるパスを入力し、「保存」ボタンで設定を保存してください。</p>
+                            <div class="settings-screenshot">
+                                <img src="../images/Chrome_Settings_Downloads.png" alt="Chrome設定のダウンロードページ - 保存先フォルダの確認" style="max-width: 100%; border: 1px solid #ddd; border-radius: 4px; margin: 10px 0;">
+                            </div>
+                        </div>
+
+                        <div class="feature-item">
+                            <h5>⚙️ フィルタリング・表示オプション</h5>
+                            <p>チェックボックスで表示をカスタマイズできます：</p>
+                            <ul>
+                                <li><strong>無料ダウンロードのみ:</strong> 無料アイテムのみ表示</li>
+                                <li><strong>同一IDのアイテムをまとめる:</strong> 同じBOOTH IDの商品ファイルをグループ化</li>
+                            </ul>
+                        </div>
+
+                        <div class="feature-item">
+                            <h5>📤 データ管理ボタン</h5>
+                            <p>ダウンロード履歴の管理機能：</p>
+                            <ul>
+                                <li><strong>JSON出力(AE Tools形式):</strong> AvatarExplorer連携用の形式でエクスポート</li>
+                                <li><strong>CSV出力:</strong> 表計算ソフトで扱える形式でエクスポート</li>
+                                <li><strong>CSVインポート:</strong> 既存のCSVデータをインポート</li>
+                                <li><strong>履歴削除:</strong> 記録されたダウンロード履歴をリセット</li>
+                            </ul>
+                        </div>
+
+                        <div class="feature-item">
+                            <h5>🔗 外部ツール連携</h5>
+                            <p>各アイテムの右側に表示される連携ボタン：</p>
+                            <ul>
+                                <li><strong>AvatarExplorer:</strong> vrcae://プロトコルでAvatarExplorerに連携</li>
+                                <li><strong>KonoAsset:</strong> konoasset://プロトコルでKonoAssetに連携</li>
+                            </ul>
+                            <p><em>ボタンの色: 青色（通常）/ オレンジ色（未登録状態）</em></p>
+                        </div>
+
+                        <div class="feature-item">
+                            <h5>🌐 その他の機能</h5>
+                            <ul>
+                                <li><strong>Language:</strong> 表示言語の変更（日本語/English/한국어）</li>
+                                <li><strong>タブで表示:</strong> ポップアップを新しいタブで開いて広い画面で操作</li>
+                                <li><strong>更新履歴・お問い合わせ:</strong> 拡張機能の情報やサポートへのアクセス</li>
+                            </ul>
+                        </div>
+                    </div>
+                </section>
+                </div>
+
+                <!-- Download Tracking Tab -->
+                <div id="download" class="tab-panel">
+                <section id="download-tracking">
+                    <h3>ダウンロード履歴保存</h3>
                 <div class="tutorial-content">
                     <div class="step-container">
                         <div class="step">
@@ -90,258 +124,104 @@ extra_css: "/tutorial/tutorial.css"
                         </div>
                     </div>
                 </div>
-            </section>
-
-            <section id="advanced-search">
-                <h2>詳細検索</h2>
-                <div class="tutorial-content">
-                    <div class="advanced-search-info">
-                        <h3>詳細検索フィールド</h3>
-                        <p>「詳細検索」ボタンをクリックすると、より細かい条件で検索できます。</p>
-                        <!-- 画像推奨: 詳細検索フィールドが展開された状態 -->
-                        <div class="image-placeholder">
-                            <p>💡 <strong>画像:</strong> 詳細検索フィールド展開状態（全項目表示）</p>
-                        </div>
-                    </div>
-
-                    <div class="search-fields">
-                        <div class="search-field">
-                            <h4>📝 タイトル検索</h4>
-                            <p>アイテム名での絞り込み検索。部分一致で検索できます。</p>
-                        </div>
-
-                        <div class="search-field">
-                            <h4>👤 作者名検索</h4>
-                            <p>作者・クリエイター名での検索。複数の作者名をスペース区切りで検索可能。</p>
-                        </div>
-
-                        <div class="search-field">
-                            <h4>📂 カテゴリ検索</h4>
-                            <p>衣装、テクスチャ、ギミックなどのカテゴリでの絞り込み。</p>
-                        </div>
-
-                        <div class="search-field">
-                            <h4>🎭 対応アバター検索</h4>
-                            <p>特定のアバターに対応したアイテムの検索。</p>
-                        </div>
-
-                        <div class="search-field">
-                            <h4>🏷️ タグ検索</h4>
-                            <p>アイテムに付けられたタグでの検索。</p>
-                        </div>
-
-                        <div class="search-field">
-                            <h4>📝 メモ検索</h4>
-                            <p>アイテムに関するメモ・説明文での検索。</p>
-                        </div>
-                    </div>
+                </section>
                 </div>
-            </section>
 
-            <section id="sorting">
-                <h2>ソート機能</h2>
-                <div class="tutorial-content">
-                    <div class="sort-info">
-                        <h3>「▼ 表示順」ボタンでソート</h3>
-                        <p>検索結果を様々な条件でソートできます。</p>
-                        <!-- 画像推奨: ソートメニューが開いた状態 -->
-                        <div class="image-placeholder">
-                            <p>💡 <strong>画像:</strong> ソートメニュー展開状態（全ソートオプション表示）</p>
-                        </div>
-                    </div>
+                <!-- Avatar Copy Tab -->
+                <div id="avatar-copy" class="tab-panel">
+                <section id="supported-avatar-copy">
+                    <h3>対応アバター一括コピー機能</h3>
+                    <div class="tutorial-content">
+                        <p>BOOTHページでアイテムを自動検出し、管理パネルで整理してアイテム名をクリップボードに一括コピーできる機能です。</p>
+                        
+                        <div class="step-container">
+                            <div class="step">
+                                <span class="step-number">1</span>
+                                <div class="step-content">
+                                    <h4>BOOTHページでの自動起動</h4>
+                                    <p>BOOTHの商品ページやアイテムリンクが含まれるページにアクセスすると、対応アバター一括コピー機能が自動的に起動します。</p>
+                                    <div class="image-placeholder">
+                                        <p>💡 <strong>画像:</strong> BOOTHページで管理パネルが表示された状態</p>
+                                    </div>
+                                    <div class="tip">
+                                        <strong>💡 Tips:</strong> ページ内のBOOTHアイテムリンクが自動検出されます
+                                    </div>
+                                </div>
+                            </div>
 
-                    <div class="sort-options">
-                        <div class="sort-option">
-                            <h4>📅 追加順</h4>
-                            <p><strong>新しい順 / 古い順</strong><br>データベースに追加された日時順でソート</p>
-                        </div>
+                            <div class="step">
+                                <span class="step-number">2</span>
+                                <div class="step-content">
+                                    <h4>新規アイテムの検出と取得</h4>
+                                    <p>新しいアイテムが検出された場合、黄色い取得確認の通知が表示されます。取得ボタンをクリックして新規アイテムを管理パネルに追加できます。</p>
+                                    <div class="image-placeholder">
+                                        <p>💡 <strong>画像:</strong> 黄色い新規アイテム取得確認の表示</p>
+                                    </div>
+                                </div>
+                            </div>
 
-                        <div class="sort-option">
-                            <h4>🔤 アセット名</h4>
-                            <p><strong>A-Z順 / Z-A順</strong><br>アイテム名のアルファベット順でソート</p>
-                        </div>
+                            <div class="step">
+                                <span class="step-number">3</span>
+                                <div class="step-content">
+                                    <h4>管理パネルでアイテムを整理</h4>
+                                    <p>管理パネルでは3つのカテゴリでアイテムを分類できます：</p>
+                                    <ul>
+                                        <li><strong>保存済み:</strong> コピー対象として既に保存されているアイテム</li>
+                                        <li><strong>新規:</strong> 新たに検出されたアイテム</li>
+                                        <li><strong>除外:</strong> コピー対象から除外するアイテム</li>
+                                    </ul>
+                                    <div class="image-placeholder">
+                                        <p>💡 <strong>画像:</strong> 3つのカテゴリ（保存済み・新規・除外）が表示された管理パネル</p>
+                                    </div>
+                                </div>
+                            </div>
 
-                        <div class="sort-option">
-                            <h4>🏪 ショップ名</h4>
-                            <p><strong>A-Z順 / Z-A順</strong><br>作者・ショップ名のアルファベット順でソート</p>
-                        </div>
+                            <div class="step">
+                                <span class="step-number">4</span>
+                                <div class="step-content">
+                                    <h4>アイテム名の編集</h4>
+                                    <p>新規取得したアイテムはデフォルトでBOOTHの商品名が表示されますが、アイテム名をクリックすることで任意の名前に変更できます。</p>
+                                    <div class="image-placeholder">
+                                        <p>💡 <strong>画像:</strong> アイテム名をクリックして編集する様子</p>
+                                    </div>
+                                    <div class="tip">
+                                        <strong>💡 Tips:</strong> 分かりやすい名前に変更することで、コピー後のリストも見やすくなります
+                                    </div>
+                                </div>
+                            </div>
 
-                        <div class="sort-option">
-                            <h4>🛒 BOOTHID順</h4>
-                            <p><strong>新しい順 / 古い順</strong><br>BOOTH商品IDの数値順でソート</p>
-                        </div>
-                    </div>
-                </div>
-            </section>
+                            <div class="step">
+                                <span class="step-number">5</span>
+                                <div class="step-content">
+                                    <h4>手動でアイテムを追加</h4>
+                                    <p>「手動追加」ボタンから、BOOTHのアイテムIDと名前を入力して手動でアイテムを追加することも可能です。</p>
+                                    <div class="image-placeholder">
+                                        <p>💡 <strong>画像:</strong> 手動追加ダイアログでアイテムID・名前を入力</p>
+                                    </div>
+                                </div>
+                            </div>
 
-            <section id="item-actions">
-                <h2>アイテム操作</h2>
-                <div class="tutorial-content">
-                    <div class="action-info">
-                        <h3>各アイテムで利用可能なアクション</h3>
-                        <!-- 画像推奨: アイテム詳細表示（全ボタンが見える状態） -->
-                        <div class="image-placeholder">
-                            <p>💡 <strong>画像:</strong> アイテム詳細表示（サムネイル、情報、ボタン類）</p>
-                        </div>
-                    </div>
-
-                    <div class="actions-grid">
-                        <div class="action-item">
-                            <h4>📁 エクスプローラーで開く</h4>
-                            <p>アイテムのフォルダをWindowsエクスプローラーで開きます。ファイルの確認や直接操作が可能。</p>
-                            <!-- 画像推奨: エクスプローラーボタンのクローズアップ -->
-                            <div class="image-placeholder">
-                                <p>💡 <strong>画像:</strong> エクスプローラーボタンと開かれたフォルダ</p>
+                            <div class="step">
+                                <span class="step-number">6</span>
+                                <div class="step-content">
+                                    <h4>クリップボードにコピー</h4>
+                                    <p>「クリップボードにコピー」ボタンをクリックすると、保存済み・新規カテゴリのアイテム名がリスト形式でクリップボードにコピーされます。</p>
+                                    <div class="image-placeholder">
+                                        <p>💡 <strong>画像:</strong> 緑色の「クリップボードにコピー」ボタンをクリック</p>
+                                    </div>
+                                    <div class="tip">
+                                        <strong>💡 Tips:</strong> クリップボードにコピーした後は、KonoAssetの登録時に「対応アバター」欄にペーストすることで一括入力が可能です。衣装のフルパック購入時などに特に便利です
+                                    </div>
+                                </div>
                             </div>
                         </div>
 
-                        <div class="action-item">
-                            <h4>📦 Unitypackageをインポート</h4>
-                            <p>ワンクリックでUnitypackageファイルを現在のプロジェクトにインポート。自動的にフォルダサムネイルも設定されます。</p>
-                            <!-- 画像推奨: インポートボタンとインポート結果 -->
-                            <div class="image-placeholder">
-                                <p>💡 <strong>画像:</strong> インポートボタンとインポート完了後のプロジェクトフォルダ</p>
-                            </div>
-                        </div>
 
-                        <div class="action-item">
-                            <h4>🛒 BOOTH商品ページを開く</h4>
-                            <p>該当する商品のBOOTHページを直接ブラウザで開きます。購入やアップデート確認が簡単。</p>
-                            <!-- 画像推奨: BOOTH商品ページボタン -->
-                            <div class="image-placeholder">
-                                <p>💡 <strong>画像:</strong> BOOTH商品ページボタンと開かれたブラウザ</p>
-                            </div>
-                        </div>
                     </div>
+                </section>
                 </div>
-            </section>
 
-            <section id="settings">
-                <h2>設定機能</h2>
-                <div class="tutorial-content">
-                    <div class="settings-info">
-                        <h3>右上の「設定」ボタンから各種設定</h3>
-                        <!-- 画像推奨: 設定ウィンドウ全体 -->
-                        <div class="image-placeholder">
-                            <p>💡 <strong>画像:</strong> 設定ウィンドウ全体（全設定項目が見える状態）</p>
-                        </div>
-                    </div>
-
-                    <div class="settings-categories">
-                        <div class="settings-category">
-                            <h4>📂 データベース設定</h4>
-                            <ul>
-                                <li><strong>AE Database Path:</strong> Avatar Explorerデータベースのパス</li>
-                                <li><strong>KA Database Path:</strong> KonoAssetデータベースのパス</li>
-                                <li><strong>データベース更新:</strong> 最新データの読み込み</li>
-                            </ul>
-                        </div>
-
-                        <div class="settings-category">
-                            <h4>🖼️ サムネイル設定</h4>
-                            <ul>
-                                <li><strong>フォルダサムネイル表示:</strong> プロジェクトフォルダにサムネイル表示するかの設定</li>
-                                <li><strong>サムネイル付与:</strong> インポート時の自動サムネイル設定</li>
-                                <li><strong>除外フォルダ:</strong> サムネイル対象外フォルダの設定</li>
-                            </ul>
-                        </div>
-
-                        <div class="settings-category">
-                            <h4>📑 カテゴリ設定</h4>
-                            <ul>
-                                <li><strong>アセットタイプ設定:</strong> 各カテゴリをどのタブに表示するか</li>
-                                <li><strong>カテゴリマッピング:</strong> Avatar Explorerカテゴリの分類設定</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <section id="tips">
-                <h2>便利な使い方・Tips</h2>
-                <div class="tips-grid">
-                    <div class="tip-item">
-                        <h3>🚀 効率的な検索</h3>
-                        <ul>
-                            <li>複数キーワードをスペース区切りで入力（例：「ドレス 赤 フリル」）</li>
-                            <li>作者名での検索でそのクリエイターの全作品を見つける</li>
-                            <li>タグ検索で関連アイテムをまとめて発見</li>
-                        </ul>
-                    </div>
-
-                    <div class="tip-item">
-                        <h3>📁 フォルダ管理</h3>
-                        <ul>
-                            <li>インポート時の自動サムネイル設定でフォルダ管理が楽になる</li>
-                            <li>除外フォルダを設定してTempフォルダなどを対象外に</li>
-                            <li>プロジェクトブラウザでもサムネイル表示される</li>
-                        </ul>
-                    </div>
-
-                    <div class="tip-item">
-                        <h3>⚡ パフォーマンス最適化</h3>
-                        <ul>
-                            <li>ページネーションで大量データも快適に閲覧</li>
-                            <li>画像キャッシュにより二回目以降の表示が高速</li>
-                            <li>タブ切り替えで検索がリセットされてスムーズ</li>
-                        </ul>
-                    </div>
-
-                    <div class="tip-item">
-                        <h3>🔗 外部連携</h3>
-                        <ul>
-                            <li>BOOTHページから直接アップデート情報確認</li>
-                            <li>エクスプローラー連携でファイル操作が簡単</li>
-                            <li>Unity Packageの直接インポートで作業効率アップ</li>
-                        </ul>
-                    </div>
-                </div>
-            </section>
-
-            <section id="workflow">
-                <h2>典型的なワークフロー</h2>
-                <div class="workflow-container">
-                    <div class="workflow-step">
-                        <span class="workflow-number">1</span>
-                        <div class="workflow-content">
-                            <h4>探したいアセットのタブを選択</h4>
-                            <p>アバター、アバター関連アセット、ワールドアセット、その他から適切なタブを選択。</p>
-                        </div>
-                    </div>
-
-                    <div class="workflow-step">
-                        <span class="workflow-number">2</span>
-                        <div class="workflow-content">
-                            <h4>検索キーワードを入力</h4>
-                            <p>基本検索または詳細検索でアイテムを絞り込み。</p>
-                        </div>
-                    </div>
-
-                    <div class="workflow-step">
-                        <span class="workflow-number">3</span>
-                        <div class="workflow-content">
-                            <h4>ソート機能で並び替え</h4>
-                            <p>新しい順、人気順、名前順などで見やすく整理。</p>
-                        </div>
-                    </div>
-
-                    <div class="workflow-step">
-                        <span class="workflow-number">4</span>
-                        <div class="workflow-content">
-                            <h4>アイテムの詳細確認</h4>
-                            <p>サムネイル、説明、対応アバター、タグ等の情報を確認。</p>
-                        </div>
-                    </div>
-
-                    <div class="workflow-step">
-                        <span class="workflow-number">5</span>
-                        <div class="workflow-content">
-                            <h4>アクション実行</h4>
-                            <p>Unitypackageインポート、BOOTHページ確認、フォルダ参照など必要なアクションを実行。</p>
-                        </div>
-                    </div>
-                </div>
-            </section>
+            </div>
 
             <section id="help">
                 <h2>さらに詳しく</h2>
@@ -354,3 +234,40 @@ extra_css: "/tutorial/tutorial.css"
                     </div>
                 </div>
             </section>
+
+            <script>
+            // Tab functionality
+            document.addEventListener('DOMContentLoaded', function() {
+                const tabButtons = document.querySelectorAll('.tab-button');
+                const tabPanels = document.querySelectorAll('.tab-panel');
+
+                // URLのハッシュを確認して対応するタブを開く
+                const hash = window.location.hash.substring(1); // #を除去
+                if (hash) {
+                    const targetButton = document.querySelector(`.tab-button[data-tab="${hash}"]`);
+                    if (targetButton) {
+                        // 全てのタブを非アクティブ化
+                        tabButtons.forEach(btn => btn.classList.remove('active'));
+                        tabPanels.forEach(panel => panel.classList.remove('active'));
+
+                        // 対象のタブをアクティブ化
+                        targetButton.classList.add('active');
+                        document.getElementById(hash).classList.add('active');
+                    }
+                }
+
+                tabButtons.forEach(button => {
+                    button.addEventListener('click', () => {
+                        const targetTab = button.getAttribute('data-tab');
+
+                        // Remove active class from all buttons and panels
+                        tabButtons.forEach(btn => btn.classList.remove('active'));
+                        tabPanels.forEach(panel => panel.classList.remove('active'));
+
+                        // Add active class to clicked button and corresponding panel
+                        button.classList.add('active');
+                        document.getElementById(targetTab).classList.add('active');
+                    });
+                });
+            });
+            </script>

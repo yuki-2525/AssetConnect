@@ -6,6 +6,7 @@ document.addEventListener('DOMContentLoaded', function () {
     toggleBulkRegister: document.getElementById("toggleBulkRegister"),
     folderInput: document.getElementById("downloadFolder"),
     saveFolderBtn: document.getElementById("saveFolder"),
+    languageSelect: document.getElementById("languageSelect"),
     historyList: document.getElementById("history-list"),
     csvInput: document.getElementById("csvInput"),
     exportAe: document.getElementById("export-ae"),
@@ -16,8 +17,17 @@ document.addEventListener('DOMContentLoaded', function () {
     bulkRegisterToggle: document.getElementById("bulkRegisterToggle"),
     updateHistoryBtn: document.getElementById("btn-update-history"),
     updateHistoryModal: document.getElementById("update-history-modal"),
-    updateHistoryClose: document.querySelector("#update-history-modal .close")
+    updateHistoryClose: document.querySelector("#update-history-modal .close"),
+    // 支援モーダル要素
+    supportBtn: document.getElementById("btn-support"),
+    supportModal: document.getElementById("support-modal"),
+    supportModalClose: document.querySelector("#support-modal .close")
   };
+
+  // 翻訳システム
+  let currentTranslations = {};
+  let currentLanguage = 'ja';
+  const SUPPORTED_LANGUAGES = ['ja', 'en', 'ko'];
 
   // 共通のスタイル設定
   const STYLES = {
@@ -63,6 +73,57 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   };
 
+  // 翻訳関数
+  async function loadTranslations(lang) {
+    try {
+      const response = await fetch(chrome.runtime.getURL(`_locales/${lang}/messages.json`));
+      if (!response.ok) throw new Error(`Failed to load translations for ${lang}`);
+      const translations = await response.json();
+      currentTranslations = translations;
+      return translations;
+    } catch (error) {
+      console.error('Translation loading error:', error);
+      if (lang !== 'en') {
+        return await loadTranslations('en');
+      }
+      return {};
+    }
+  }
+
+  function getMessage(key) {
+    return currentTranslations[key]?.message || chrome.i18n.getMessage(key) || key;
+  }
+
+  function updateUITexts() {
+    document.querySelectorAll('[data-i18n]').forEach(function (el) {
+      const key = el.getAttribute('data-i18n');
+      const message = getMessage(key);
+      if (message) {
+        el.textContent = message;
+      }
+    });
+  }
+
+  async function changeLanguage(lang) {
+    if (!SUPPORTED_LANGUAGES.includes(lang)) return;
+    
+    currentLanguage = lang;
+    await loadTranslations(lang);
+    updateUITexts();
+    
+    chrome.storage.local.set({ selectedLanguage: lang });
+    
+    // Notify background script to update context menus
+    chrome.runtime.sendMessage({
+      action: 'languageChanged',
+      language: lang
+    }).catch(error => {
+      console.error('Failed to notify background script of language change:', error);
+    });
+    
+    renderHistory();
+  }
+
   // ヘルパー関数
   const Helpers = {
     formatTimestamp(ts) {
@@ -79,7 +140,7 @@ document.addEventListener('DOMContentLoaded', function () {
     },
 
     showFolderNotSetAlert() {
-      alert(chrome.i18n.getMessage("saveFolderNotSet"));
+      alert(getMessage("saveFolderNotSet"));
     },
 
     createButton(text, onClick, isUnregistered = false) {
@@ -127,7 +188,17 @@ document.addEventListener('DOMContentLoaded', function () {
   };
 
   // 履歴の初期化
-  function initializeHistory() {
+  async function initializeHistory() {
+    // 保存済みの言語設定を読み込む
+    chrome.storage.local.get("selectedLanguage", async function (result) {
+      const savedLang = result.selectedLanguage || chrome.i18n.getUILanguage().substring(0, 2);
+      currentLanguage = SUPPORTED_LANGUAGES.includes(savedLang) ? savedLang : 'en';
+      
+      await loadTranslations(currentLanguage);
+      ELEMENTS.languageSelect.value = currentLanguage;
+      updateUITexts();
+    });
+
     // 保存済みのフォルダパスを読み込む
     chrome.storage.local.get("downloadFolderPath", function (result) {
       if (result.downloadFolderPath) {
@@ -165,7 +236,7 @@ document.addEventListener('DOMContentLoaded', function () {
       container.innerHTML = "";
 
       if (history.length === 0) {
-        container.innerHTML = `<p>${chrome.i18n.getMessage("noHistory")}</p>`;
+        container.innerHTML = `<p>${getMessage("noHistory")}</p>`;
         return;
       }
 
@@ -269,12 +340,16 @@ document.addEventListener('DOMContentLoaded', function () {
   function createTitleLine(data) {
     const div = document.createElement("div");
     const link = document.createElement("a");
-    link.href = data.url && data.url.trim() ? data.url : `https://booth.pm/ja/items/${data.boothID}`;
+    link.href = data.url && data.url.trim() ? data.url : createBoothUrl(data.boothID);
     link.target = "_blank";
     link.textContent = data.title;
     Object.assign(link.style, STYLES.titleLink);
     div.appendChild(link);
     return div;
+  }
+
+  function createBoothUrl(itemId) {
+    return `https://booth.pm/${currentLanguage}/items/${itemId}`;
   }
 
   function createBulkInfoLine(group) {
@@ -353,6 +428,9 @@ document.addEventListener('DOMContentLoaded', function () {
       }
     });
     ELEMENTS.toggleBulkRegister.addEventListener("change", renderHistory);
+    ELEMENTS.languageSelect.addEventListener("change", function () {
+      changeLanguage(this.value);
+    });
     ELEMENTS.saveFolderBtn.addEventListener("click", function () {
       const folderPath = ELEMENTS.folderInput.value.trim();
       if (folderPath) {
@@ -398,7 +476,7 @@ document.addEventListener('DOMContentLoaded', function () {
         })
         .catch(error => {
           console.error('アップデート履歴の読み込みに失敗しました:', error);
-          alert('アップデート履歴の読み込みに失敗しました。');
+          alert(getMessage("updateHistoryLoadError") || 'アップデート履歴の読み込みに失敗しました。');
         });
     });
 
@@ -411,20 +489,27 @@ document.addEventListener('DOMContentLoaded', function () {
       if (event.target === ELEMENTS.updateHistoryModal) {
         ELEMENTS.updateHistoryModal.style.display = "none";
       }
+      if (event.target === ELEMENTS.supportModal) {
+        ELEMENTS.supportModal.style.display = "none";
+      }
     });
+
+    // 支援モーダルの制御
+    if (ELEMENTS.supportBtn && ELEMENTS.supportModal && ELEMENTS.supportModalClose) {
+      ELEMENTS.supportBtn.addEventListener("click", function () {
+        ELEMENTS.supportModal.style.display = "block";
+      });
+
+      ELEMENTS.supportModalClose.addEventListener("click", function () {
+        ELEMENTS.supportModal.style.display = "none";
+      });
+    }
   }
 
   // 初期化
   initializeHistory();
   setupEventListeners();
 
-  //HTML 内の data-i18n 属性をもつ要素のテキストを置換する
-  document.querySelectorAll('[data-i18n]').forEach(function (el) {
-    var msg = chrome.i18n.getMessage(el.getAttribute('data-i18n'));
-    if (msg) {
-      el.textContent = msg;
-    }
-  });
 
   // JSON 出力 (AE Tools形式)
   ELEMENTS.exportAe.addEventListener("click", () => {
@@ -482,17 +567,8 @@ document.addEventListener('DOMContentLoaded', function () {
       const lines = [header];
 
       history.forEach(entry => {
-        // URLが空の場合はbooth.pm/(lang)/items/で埋める
-        const uiLang = chrome.i18n.getUILanguage();
-        let lang;
-        if (uiLang.startsWith("ja")) {
-          lang = "ja";
-        } else if (uiLang.startsWith("ko")) {
-          lang = "ko";
-        } else {
-          lang = "en";
-        }
-        const url = entry.url && entry.url.trim() ? entry.url : `https://booth.pm/${lang}/items/${entry.boothID}`;
+        // URLが空の場合は現在の言語設定でbooth.pm/(lang)/items/で埋める
+        const url = entry.url && entry.url.trim() ? entry.url : createBoothUrl(entry.boothID);
         const line = [
           url,
           entry.timestamp,
@@ -660,7 +736,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // 履歴全削除ボタン
   ELEMENTS.btnClear.addEventListener("click", function () {
-    if (confirm(chrome.i18n.getMessage("confirmClearHistory"))) {
+    if (confirm(getMessage("confirmClearHistory"))) {
       chrome.storage.local.remove("downloadHistory", function () {
         renderHistory();
       });

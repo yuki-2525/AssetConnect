@@ -19,7 +19,7 @@
     --section-bg: #f8f9fa;
 }
 
-[data-theme="dark"] {
+[data-theme="dark"]{
     /* Dark mode colors */
     --bg-color: #1a1a1a;
     --text-color: #e0e0e0;
@@ -139,13 +139,14 @@ section {
 .hero-content h2 {
     font-size: 2rem;
     margin-bottom: 1rem;
-    color: #2c3e50;
+    color: var(--text-color);
 }
 
 .hero-content p {
     font-size: 1.1rem;
     margin-bottom: 2rem;
-    color: #666;
+    color: var(--text-color);
+    opacity: 0.8;
     max-width: 800px;
     margin-left: auto;
     margin-right: auto;
@@ -165,7 +166,8 @@ section {
 
 .image-caption {
     font-size: 0.9rem;
-    color: #666;
+    color: var(--text-color);
+    opacity: 0.7;
     margin-top: 0.5rem;
     font-style: italic;
 }
@@ -248,9 +250,10 @@ section {
 
 .license-info {
     font-size: 0.8rem;
-    color: #999;
+    color: var(--text-color);
+    opacity: 0.6;
     margin-top: 1rem;
-    border-top: 1px solid #eee;
+    border-top: 1px solid var(--border-color);
     padding-top: 1rem;
 }
 
@@ -285,12 +288,13 @@ section {
 }
 
 .step-content h3 {
-    color: #2c3e50;
+    color: var(--text-color);
     margin-bottom: 0.5rem;
 }
 
 .step-content p {
-    color: #666;
+    color: var(--text-color);
+    opacity: 0.8;
 }
 
 /* Buttons */
@@ -338,7 +342,7 @@ section {
 /* Section Headers */
 section h2 {
     font-size: 2rem;
-    color: #2c3e50;
+    color: var(--text-color);
     margin-bottom: 1rem;
     text-align: center;
 }
@@ -365,7 +369,7 @@ section h2 {
 }
 
 #changelog-content h1 {
-    color: #2c3e50;
+    color: var(--text-color);
     border-bottom: 2px solid #667eea;
     padding-bottom: 0.5rem;
     margin-bottom: 2rem;
@@ -397,13 +401,13 @@ section h2 {
 }
 
 #changelog-content h3 {
-    color: #34495e;
+    color: var(--text-color);
     margin: 2rem 0 1rem 0;
     font-weight: 600;
     font-size: 1.2rem;
     border-left: 4px solid #667eea;
     padding: 0.8rem 1rem;
-    background: #f8f9fa;
+    background: var(--card-bg);
     border-radius: 0 8px 8px 0;
 }
 
@@ -416,10 +420,11 @@ section h2 {
     margin: 0.8rem 0;
     line-height: 1.7;
     padding: 0.6rem 1rem 0.6rem 2.5rem;
-    background: white;
+    background: var(--card-bg);
+    color: var(--text-color);
     border-radius: 6px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-    border-left: 3px solid #e3f2fd;
+    box-shadow: 0 2px 8px var(--shadow);
+    border-left: 3px solid var(--border-color);
     list-style: none;
     position: relative;
 }
