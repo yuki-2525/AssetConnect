@@ -161,6 +161,25 @@
       transition: all 0.2s ease;
     }
 
+    #fixed-bar select {
+      padding: 4px 8px;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      font-size: 13px;
+      background-color: white;
+      color: var(--text-color);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      margin-left: 4px;
+      margin-right: 8px;
+    }
+
+    #fixed-bar span {
+      font-size: 13px;
+      color: var(--text-color);
+      white-space: nowrap;
+    }
+
     #fixed-bar a:hover {
       background-color: var(--secondary-color);
     }
@@ -168,6 +187,7 @@
     #fixed-bar-left,
     #fixed-bar-right {
       display: flex;
+      align-items: center;
       gap: 12px;
     }
 
@@ -190,6 +210,12 @@
 
       #fixed-bar {
         background-color: #1a1a1a;
+      }
+
+      #fixed-bar select {
+        background-color: #333;
+        color: var(--text-color);
+        border-color: var(--border-color);
       }
 
       .entry:hover {
@@ -304,51 +330,63 @@
       color: #444;
     }
 
-    /* リニューアル通知モーダル */
-    .renewal-content {
+    /* 支援モーダル用スタイル */
+    .support-message {
+      font-size: 1.1em;
       text-align: center;
+      margin: 20px 0;
+      color: var(--text-color);
     }
 
-    .renewal-content p {
-      white-space: pre-line;
-      line-height: 1.5;
-      margin-bottom: 1em;
+    .support-link {
+      text-align: center;
+      font-size: 1em;
+      margin: 20px 0;
     }
 
-    .icon-comparison {
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      margin: 10px 0;
+    .support-link a {
+      color: #5c9ce6;
+      text-decoration: none;
+      font-weight: bold;
     }
 
-    .icon-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      margin: 0 10px;
+    .support-link a:hover {
+      text-decoration: underline;
     }
 
-    .icon-container img {
-      border-radius: 8px;
+    .supporters-list {
+      margin-top: 30px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border-color);
     }
 
-    .icon-container p {
-      margin: 8px 0 0;
-      font-size: 14px;
-    }
-
-    .icon-container p strong,
-    .renewal-content p strong {
-      font-weight: 600;
-      color: #333;
+    .supporters-list h3 {
+      color: var(--text-color);
+      font-size: 1.1em;
+      margin-bottom: 15px;
     }
 
     /* ダークモード対応 */
     @media (prefers-color-scheme: dark) {
-      .icon-container p strong,
-      .renewal-content p strong {
-        color: #e0e0e0;
+      .modal-content {
+        background-color: #1a1a1a;
+      }
+      
+      .modal-header {
+        background-color: #1a1a1a;
+        border-bottom: 1px solid var(--border-color);
+      }
+
+      .close {
+        color: #888;
+      }
+
+      .close:hover {
+        color: #fff;
+      }
+
+      .support-link a {
+        color: #5c9ce6;
       }
     }
   </style>
@@ -392,12 +430,18 @@
   <div id="fixed-bar">
     <div id="fixed-bar-left">
       <a href="popup.html" target="_blank" id="popup-tab-button" data-i18n="popupTab">タブで表示</a>
+      <span data-i18n="languageLabel">Language:</span>
+      <select id="languageSelect">
+        <option value="ja">日本語</option>
+        <option value="en">English</option>
+        <option value="ko">한국어</option>
+      </select>
     </div>
     <div id="fixed-bar-right">
-      <button id="btn-renewal-notice" class="update-history-btn" data-i18n="renewalNotice">リニューアルのお知らせ</button>
+      <button id="btn-support" class="update-history-btn" data-i18n="support">開発を支援する</button>
       <button id="btn-update-history" class="update-history-btn" data-i18n="updateHistory">アップデート履歴</button>
       <a href="https://x.com/yuk1_vrc" target="_blank" id="Developer-x-button" data-i18n="DeveloperX">作者X</a>
-      <a href="" target="_blank" id="feedback-button" data-i18n="feedback">お問い合わせ</a>
+      <a href="https://discord.gg/6gvucjC4FE" target="_blank" id="feedback-button" data-i18n="feedback">お問い合わせ</a>
     </div>
   </div>
 
@@ -414,41 +458,21 @@
     </div>
   </div>
 
-  <!-- リニューアルお知らせモーダル -->
-  <div id="renewal-notice-modal" class="modal">
+  <!-- 支援モーダル -->
+  <div id="support-modal" class="modal">
     <div class="modal-content">
       <div class="modal-header">
-        <h2 data-i18n="renewalNoticeTitle">リニューアルのお知らせ</h2>
+        <div></div>
         <span class="close">&times;</span>
       </div>
       <div class="modal-body">
-        <div class="renewal-content">
-          <h3 data-i18n="renewalNoticeHeading">【リニューアルのお知らせ】</h3>
-          <div class="icon-comparison">
-            <div class="icon-container">
-              <img src="icon/icon128.png" alt="現在のアイコン" width="64" height="64">
-              <p><strong>BOOTH Download Log</strong></p>
-            </div>
-            <div class="icon-transition">➡️</div>
-            <div class="icon-container">
-              <img src="AssetConnect_icon.png" alt="新しいアイコン" width="64" height="64">
-              <p><strong>Asset Connect</strong></p>
-            </div>
-          </div>
-          <p data-i18n="renewalNoticeDescription1">ダウンロード履歴が本ツールのメイン機能ではなくなっている現状及び、\n将来的なBOOTH以外のサイトへの対応を見据え、リニューアルいたします。</p>
-          <p data-i18n="renewalNoticeDescription2">新しい名称「Asset Connect」には、\nアセットとアセット管理ツールとをより"繋げる"との思いを込めています。</p>
-          <p data-i18n="renewalNoticeDescription3">また、新たにフルセットを購入した際等に、\nKonoAssetの対応アバタータグに一括コピーする機能の実装を予定しています。</p>
-          <p data-i18n="renewalNoticeDescription4"><strong>アップデート予定日は11月1日(土)です。</strong></p>
-          <div class="modal-footer">
-            <label class="dont-show-again">
-              <input type="checkbox" id="dontShowAgain">
-              <span data-i18n="dontShowAgain">起動時に表示しない</span>
-            </label>
-          </div>
+        <p class="support-message">みなさんの支援が開発のモチベーションとなります！</p>
+        <p class="support-link">支援は<a href="https://sakurayuki-dev.fanbox.cc/" target="_blank">こちら</a>から</p>
+        <div class="supporters-list">
+          <h3>支援者の皆様</h3>
+          <!-- 支援者リストは後で追加 -->
         </div>
       </div>
     </div>
   </div>
 </body>
-
-</html>

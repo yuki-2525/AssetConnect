@@ -1,77 +1,422 @@
 {
-    "title": {
-        "message": "BOOTH Download Log"
-    },
-    "description": {
-        "message": "This browser extension simplifies the process of registering downloaded assets from BOOTH into asset management tools."
-    },
-    "downloadFolderLabel": {
-        "message": "Download folder path:"
-    },
-    "saveButton": {
-        "message": "Save"
-    },
-    "toggleFreeLabel": {
-        "message": "Only free downloads"
-    },
-    "toggleGroupLabel": {
-        "message": "Group items by ID"
-    },
-    "toggleBulkRegisterLabel": {
-        "message": "Add all items with the same ID"
-    },
-    "exportAe": {
-        "message": "Export JSON (AE Tools format)"
-    },
-    "exportCsv": {
-        "message": "Export CSV"
-    },
-    "importCsv": {
-        "message": "Import CSV"
-    },
-    "clearHistory": {
-        "message": "Clear History"
-    },
-    "noHistory": {
-        "message": "No history"
-    },
-    "popupTab": {
-        "message": "Open in Tab"
-    },
-    "DeveloperX": {
-        "message": "Developer X"
-    },
-    "feedback": {
-        "message": "Feedback"
-    },
-    "saveFolderNotSet": {
-        "message": "The download folder is not set. Please configure it in the input field above."
-    },
-    "confirmClearHistory": {
-        "message": "Are you sure you want to delete all history?"
-    },
-    "updateHistory": {
-        "message": "Update History"
-    },
-    "renewalNoticeTitle": {
-        "message": "Renewal Notice"
-    },
-    "renewalNoticeHeading": {
-        "message": "【Renewal Notice】"
-    },
-    "renewalNoticeDescription1": {
-        "message": "We are renewing this extension with future support for platforms beyond BOOTH in mind, as download history management is no longer our primary feature."
-    },
-    "renewalNoticeDescription2": {
-        "message": "The new name 'Asset Connect' represents our vision to better connect assets with asset management tools."
-    },
-    "renewalNoticeDescription3": {
-        "message": "We are also planning to implement a feature that will automatically copy tags to KonoAsset when purchasing full avatar sets."
-    },
-    "renewalNoticeDescription4": {
-        "message": "The update is scheduled for Saturday, November 1st."
-    },
-    "dontShowAgain": {
-        "message": "Don't show on startup"
-    }
+   "DeveloperX": {
+      "message": "Developer X"
+   },
+   "add": {
+      "message": "Add"
+   },
+   "allStorageKeys": {
+      "message": "All Storage Keys"
+   },
+   "arrayType": {
+      "message": "Array"
+   },
+   "avatarClipboardTitle": {
+      "message": "Supported Avatars Batch Copy"
+   },
+   "boothItemsFoundInPage": {
+      "message": "{count} BOOTH items found on this page!!"
+   },
+   "cancel": {
+      "message": "Cancel"
+   },
+   "category": {
+      "message": "Category"
+   },
+   "clearAllStorage": {
+      "message": "Clear All Storage"
+   },
+   "clearHistory": {
+      "message": "Clear History"
+   },
+   "clickToSelect": {
+      "message": "or click to select file"
+   },
+   "confirmClearHistory": {
+      "message": "Are you sure you want to delete all history?"
+   },
+   "confirmClearStorage": {
+      "message": "Are you sure you want to delete all storage data? This action cannot be undone."
+   },
+   "confirmManualInput": {
+      "message": "Manual Input"
+   },
+   "copyToClipboard": {
+      "message": "Copy to Clipboard"
+   },
+   "dataParseError": {
+      "message": "Failed to parse data"
+   },
+   "dataType": {
+      "message": "Type"
+   },
+   "dateTime": {
+      "message": "Date/Time"
+   },
+   "debugModeOff": {
+      "message": "Debug Mode: OFF → ON"
+   },
+   "debugModeOn": {
+      "message": "Debug Mode: ON → OFF"
+   },
+   "debugModeToggle": {
+      "message": "Toggle Debug Mode"
+   },
+   "description": {
+      "message": "This browser extension simplifies the process of registering downloaded assets from BOOTH into asset management tools."
+   },
+   "download": {
+      "message": "Download"
+   },
+   "downloadError": {
+      "message": "Download error occurred: {error}"
+   },
+   "downloadFolderLabel": {
+      "message": "Download folder path:"
+   },
+   "downloadHistoryCount": {
+      "message": "Download History"
+   },
+   "dragDropArea": {
+      "message": "Drag & drop JSON file here"
+   },
+   "duplicateHandling": {
+      "message": "Duplicate item handling:"
+   },
+   "enterItemId": {
+      "message": "Please enter an item ID"
+   },
+   "enterItemName": {
+      "message": "Please enter an item name"
+   },
+   "exclude": {
+      "message": "×"
+   },
+   "excludedAvatars": {
+      "message": "Excluded Avatars"
+   },
+   "excludedItemsCount": {
+      "message": "Excluded"
+   },
+   "excludedSection": {
+      "message": "Excluded"
+   },
+   "exportAe": {
+      "message": "Export JSON (AE Tools format)"
+   },
+   "exportCsv": {
+      "message": "Export CSV"
+   },
+   "exportError": {
+      "message": "Error occurred during export"
+   },
+   "exportSavedItems": {
+      "message": "Export Saved Avatar Data"
+   },
+   "failedItemsTitle": {
+      "message": "Failed Items"
+   },
+   "feedback": {
+      "message": "Feedback"
+   },
+   "fetchFailed": {
+      "message": "Failed to fetch items"
+   },
+   "fetchItemInfo": {
+      "message": "Fetch Item Info"
+   },
+   "fileName": {
+      "message": "File"
+   },
+   "free": {
+      "message": "Free"
+   },
+   "importComplete": {
+      "message": "Import complete: "
+   },
+   "importCompleted": {
+      "message": "Import Completed"
+   },
+   "importCsv": {
+      "message": "Import CSV"
+   },
+   "importDataTitle": {
+      "message": "Avatar Data Import"
+   },
+   "importError": {
+      "message": "Import error occurred: {error}"
+   },
+   "importFinished": {
+      "message": "Import completed. Close this tab?"
+   },
+   "importItems": {
+      "message": "Import {count} items"
+   },
+   "importPreviewTitle": {
+      "message": "Data to be imported"
+   },
+   "importReady": {
+      "message": "{count} items ready for import"
+   },
+   "importSavedItems": {
+      "message": "Import Avatar Data"
+   },
+   "importing": {
+      "message": "Importing..."
+   },
+   "importingData": {
+      "message": "Importing data..."
+   },
+   "invalidItemData": {
+      "message": "Invalid ID or name"
+   },
+   "invalidItems": {
+      "message": "Invalid items: {count}"
+   },
+   "invalidJsonFormat": {
+      "message": "Invalid JSON format. Items array not found."
+   },
+   "itemAddError": {
+      "message": "Error occurred while adding item"
+   },
+   "itemAdded": {
+      "message": "Added item \"{name}\""
+   },
+   "itemFetchFailedMessage": {
+      "message": "Failed to fetch information for the following items:"
+   },
+   "itemId": {
+      "message": "Item ID"
+   },
+   "itemIdAlreadyExists": {
+      "message": "Item ID {id} is already registered"
+   },
+   "itemIdNumbersOnly": {
+      "message": "Item ID must contain numbers only"
+   },
+   "itemIdSet": {
+      "message": "ID {id} set. Please enter item name."
+   },
+   "itemName": {
+      "message": "Item Name"
+   },
+   "itemNameUnknown": {
+      "message": "Unknown item name"
+   },
+   "itemSaveFailed": {
+      "message": "Failed to save item"
+   },
+   "items": {
+      "message": "items"
+   },
+   "itemsCopiedToClipboard": {
+      "message": "{count} items copied to clipboard"
+   },
+   "itemsFetchFailed": {
+      "message": "Failed to fetch {count} items."
+   },
+   "itemsFetched": {
+      "message": "{count} items fetched successfully"
+   },
+   "itemsSkipped": {
+      "message": "{count} skipped"
+   },
+   "itemsUpdated": {
+      "message": "{count} updated"
+   },
+   "jsonParseError": {
+      "message": "Failed to parse JSON file: {error}"
+   },
+   "keys": {
+      "message": "keys"
+   },
+   "languageLabel": {
+      "message": "Language:"
+   },
+   "loadingData": {
+      "message": "Loading data..."
+   },
+   "loadingError": {
+      "message": "Failed to load data"
+   },
+   "manualAdd": {
+      "message": "Manual Add"
+   },
+   "manualInputPrompt": {
+      "message": "Do you want to manually enter item names?"
+   },
+   "newItemsAdded": {
+      "message": "{count} newly added"
+   },
+   "nextItemSet": {
+      "message": "Next item ID {id} set. {count} remaining"
+   },
+   "no": {
+      "message": "No"
+   },
+   "noBoothItems": {
+      "message": "No supported avatar data"
+   },
+   "noDownloadHistory": {
+      "message": "No download history"
+   },
+   "noHistory": {
+      "message": "No history"
+   },
+   "noImportData": {
+      "message": "No data to import."
+   },
+   "noItemsProcessed": {
+      "message": "No items were processed"
+   },
+   "noItemsToProcess": {
+      "message": "No items to process"
+   },
+   "noStorageData": {
+      "message": "No storage data"
+   },
+   "noValidItems": {
+      "message": "No valid items found."
+   },
+   "none": {
+      "message": "None"
+   },
+   "objectType": {
+      "message": "Object"
+   },
+   "openInBooth": {
+      "message": "Open in BOOTH"
+   },
+   "originalCategory": {
+      "message": "Original Category"
+   },
+   "parseError": {
+      "message": "Error"
+   },
+   "popupTab": {
+      "message": "Open in Tab"
+   },
+   "processing": {
+      "message": "Processing: {item}"
+   },
+   "processingItems": {
+      "message": "Processing {count} items..."
+   },
+   "registered": {
+      "message": "Registered"
+   },
+   "remainingItemsHelper": {
+      "message": "You can continue to input the remaining {count} items."
+   },
+   "replaceDuplicates": {
+      "message": "Replace (update with new data)"
+   },
+   "restore": {
+      "message": "Restore"
+   },
+   "saveButton": {
+      "message": "Save"
+   },
+   "saveFolderNotSet": {
+      "message": "The download folder is not set. Please configure it in the input field above."
+   },
+   "savedAvatars": {
+      "message": "Saved Avatars"
+   },
+   "savedItemsCount": {
+      "message": "Saved"
+   },
+   "savedSection": {
+      "message": "Saved"
+   },
+   "selectFilePrompt": {
+      "message": "Please select a file"
+   },
+   "selectJsonFile": {
+      "message": "Please select a JSON file."
+   },
+   "showStorageOverview": {
+      "message": "Show Storage Overview"
+   },
+   "size": {
+      "message": "Size"
+   },
+   "skipDuplicates": {
+      "message": "Skip (keep existing)"
+   },
+   "storageClearError": {
+      "message": "Failed to clear storage."
+   },
+   "storageCleared": {
+      "message": "All storage has been cleared."
+   },
+   "storageKeyNotFound": {
+      "message": "Storage key '{key}' not found."
+   },
+   "storageManagerUnavailable": {
+      "message": "Storage manager is unavailable"
+   },
+   "storageOverviewSubtitle": {
+      "message": "Storage Overview and Data Usage"
+   },
+   "storageOverviewTitle": {
+      "message": "Storage Overview"
+   },
+   "storageUsage": {
+      "message": "Storage Usage"
+   },
+   "support": {
+      "message": "Support Development"
+   },
+   "tabBoothItems": {
+      "message": "Supported Avatars Batch Copy"
+   },
+   "tabDownloadHistory": {
+      "message": "Download History"
+   },
+   "tabRawStorage": {
+      "message": "All Storage Keys"
+   },
+   "title": {
+      "message": "AssetConnect"
+   },
+   "titleUnknown": {
+      "message": "Unknown title"
+   },
+   "toggleBulkRegisterLabel": {
+      "message": "Add all items with the same ID"
+   },
+   "toggleFreeLabel": {
+      "message": "Only free downloads"
+   },
+   "toggleGroupLabel": {
+      "message": "Group items by ID"
+   },
+   "totalBoothItems": {
+      "message": "Total Supported Avatars"
+   },
+   "unknown": {
+      "message": "Unknown"
+   },
+   "unregisteredItemsFound": {
+      "message": "Unregistered items found!!"
+   },
+   "unsavedAvatars": {
+      "message": "Unsaved Avatars"
+   },
+   "unsavedItemsCount": {
+      "message": "Unsaved"
+   },
+   "unsavedSection": {
+      "message": "New"
+   },
+   "updateHistory": {
+      "message": "Update History"
+   },
+   "validItems": {
+      "message": "Valid items: {count}"
+   },
+   "yes": {
+      "message": "Yes"
+   }
 }

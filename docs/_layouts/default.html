@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% if page.title %}{{ page.title }} - {% endif %}{{ site.title }}</title>
+    <link rel="icon" type="image/png" href="{{ '/images/AssetConnect_Logo.png' | relative_url }}">
+    <link rel="apple-touch-icon" href="{{ '/images/AssetConnect_Logo.png' | relative_url }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css">
+    <link rel="stylesheet" href="{{ '/assets/css/main.css' | relative_url }}">
+    {% if page.extra_css %}
+        <link rel="stylesheet" href="{{ page.extra_css | relative_url }}">
+    {% endif %}
+    {% if page.javascript %}
+        <script src="{{ page.javascript }}"></script>
+    {% endif %}
+</head>
+<body>
+    <header>
+        <div class="container">
+            <div class="header-content">
+                <img src="{{ '/images/AssetConnect_Logo.png' | relative_url }}" alt="AssetConnect Logo" class="site-logo">
+                <div class="header-text">
+                    <h1>{{ site.title }}</h1>
+                    <p class="subtitle">{{ site.description }}</p>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    {% include navigation.html %}
+
+    <main>
+        <div class="container">
+            {{ content }}
+        </div>
+    </main>
+
+    <footer>
+        <div class="container">
+            <p>&copy; 2025 sakurayuki. Licensed under MIT License.</p>
+        </div>
+    </footer>
+
+    <script>
+        // Theme toggle functionality
+        const themeToggle = document.getElementById('theme-toggle');
+        const body = document.body;
+
+        // Check for saved theme preference or default to light mode
+        const currentTheme = localStorage.getItem('theme') || 'light';
+        body.setAttribute('data-theme', currentTheme);
+        themeToggle.checked = currentTheme === 'dark';
+
+        themeToggle.addEventListener('change', () => {
+            const newTheme = themeToggle.checked ? 'dark' : 'light';
+            body.setAttribute('data-theme', newTheme);
+            localStorage.setItem('theme', newTheme);
+        });
+    </script>
+</body>
+</html>

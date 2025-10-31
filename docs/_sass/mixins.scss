@@ -1,0 +1,95 @@
+// Theme Mixin
+@mixin theme($theme) {
+  @if $theme == light {
+    --bg-color: #{theme-color(light, bg)};
+    --text-color: #{theme-color(light, text)};
+    --header-bg: #{theme-color(light, header-bg)};
+    --nav-bg: #{theme-color(light, nav-bg)};
+    --nav-hover: #{theme-color(light, nav-hover)};
+    --card-bg: #{theme-color(light, card-bg)};
+    --border-color: #{theme-color(light, border)};
+    --shadow: #{theme-color(light, shadow)};
+    --shadow-hover: #{theme-color(light, shadow-hover)};
+    --section-bg: #{theme-color(light, section-bg)};
+  } @else if $theme == dark {
+    --bg-color: #{theme-color(dark, bg)};
+    --text-color: #{theme-color(dark, text)};
+    --header-bg: #{theme-color(dark, header-bg)};
+    --nav-bg: #{theme-color(dark, nav-bg)};
+    --nav-hover: #{theme-color(dark, nav-hover)};
+    --card-bg: #{theme-color(dark, card-bg)};
+    --border-color: #{theme-color(dark, border)};
+    --shadow: #{theme-color(dark, shadow)};
+    --shadow-hover: #{theme-color(dark, shadow-hover)};
+    --section-bg: #{theme-color(dark, section-bg)};
+  }
+}
+
+// Card Mixin
+@mixin card($padding: 2rem) {
+  background: var(--card-bg);
+  padding: $padding;
+  border-radius: 10px;
+  box-shadow: 0 5px 15px var(--shadow);
+  transition: transform $transition-base, box-shadow $transition-base;
+  
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 10px 25px var(--shadow-hover);
+  }
+}
+
+// Button Mixin
+@mixin button($type: primary) {
+  display: inline-block;
+  padding: $spacing-unit ($spacing-unit * 2);
+  border-radius: 50px;
+  text-decoration: none;
+  font-weight: 600;
+  transition: all $transition-base;
+  margin: 0.5rem;
+  
+  @if $type == primary {
+    background: $primary-gradient;
+    color: white;
+    
+    &:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 20px rgba(102, 126, 234, 0.3);
+    }
+  } @else if $type == secondary {
+    background: transparent;
+    color: $accent-color;
+    border: 2px solid $accent-color;
+    
+    &:hover {
+      background: $accent-color;
+      color: white;
+      transform: translateY(-2px);
+    }
+  }
+}
+
+// Container Mixin
+@mixin container {
+  max-width: $container-max-width;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+// Responsive Mixin
+@mixin respond-to($breakpoint) {
+  @if map-has-key($breakpoints, $breakpoint) {
+    @media (max-width: map-get($breakpoints, $breakpoint)) {
+      @content;
+    }
+  }
+}
+
+// Grid Mixin
+@mixin grid($columns: auto-fit, $min-width: 300px) {
+  display: grid;
+  grid-template-columns: repeat($columns, minmax($min-width, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
+}

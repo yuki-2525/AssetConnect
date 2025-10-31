@@ -1,59 +1,44 @@
 {
-  "manifest_version": 3,
-  "name": "BOOTH Download Log",
-  "version": "1.3.7",
-  "default_locale": "ja",
-  "description": "__MSG_description__",
-  "permissions": [
-    "downloads",
-    "storage",
-    "unlimitedStorage"
-  ],
-  "host_permissions": [
-    "*://*.booth.pm/*"
-  ],
-  "action": {
-    "default_popup": "popup.html"
-  },
-  "icons": {
-    "16": "icon/icon16.png",
-    "48": "icon/icon48.png",
-    "128": "icon/icon128.png"
-  },
-  "content_scripts": [
-    {
-      "matches": [
-        "https://accounts.booth.pm/library*"
-      ],
-      "js": [
-        "booth_library.js"
-      ]
-    },
-    {
-      "matches": [
-        "https://*.booth.pm/items/*",
-        "https://booth.pm/*/items/*",
-        "https://booth.pm/items/*"
-      ],
-      "js": [
-        "booth_shoppage.js"
-      ]
-    },
-    {
-      "matches": [
-        "https://accounts.booth.pm/orders/*"
-      ],
-      "js": [
-        "booth_order.js"
-      ]
-    },
-    {
-      "matches": [
-        "https://booth.pm/gifts/*"
-      ],
-      "js": [
-        "booth_gift.js"
-      ]
-    }
-  ]
+   "action": {
+      "default_popup": "popup.html"
+   },
+   "background": {
+      "service_worker": "background/background.js"
+   },
+   "content_scripts": [ {
+      "js": [ "download-log/booth_library.js" ],
+      "matches": [ "https://accounts.booth.pm/library*" ]
+   }, {
+      "js": [ "download-log/booth_shoppage.js" ],
+      "matches": [ "https://*.booth.pm/items/*", "https://booth.pm/*/items/*" ]
+   }, {
+      "css": [ "avatar-clipboard/styles/item_management.css" ],
+      "js": [ "shared/debug-logger.js", "shared/error-handler.js", "shared/translation-manager.js", "avatar-clipboard/utils/storage-manager.js", "avatar-clipboard/utils/ui-manager.js", "avatar-clipboard/utils/booth-json-client.js", "avatar-clipboard/utils/page-parser.js", "avatar-clipboard/utils/clipboard-manager.js", "avatar-clipboard/booth_item_management.js" ],
+      "matches": [ "https://*.booth.pm/items/*", "https://booth.pm/*/items/*" ],
+      "run_at": "document_idle"
+   }, {
+      "js": [ "download-log/booth_order.js" ],
+      "matches": [ "https://accounts.booth.pm/orders/*" ]
+   }, {
+      "js": [ "download-log/booth_gift.js" ],
+      "matches": [ "https://booth.pm/gifts/*" ]
+   } ],
+   "default_locale": "ja",
+   "description": "__MSG_description__",
+   "host_permissions": [ "*://*.booth.pm/*" ],
+   "icons": {
+      "128": "icon/icon128.png",
+      "16": "icon/icon16.png",
+      "48": "icon/icon48.png"
+   },
+   "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAvya0cKgQqtbZH00Boy3341BPhzDtrnZetlFtv7RcRZnxLyJPbUaE+P53E4YbbLQHZgXqM1Hz82isUPdP5RMJ2k22TKVDbXKttKbMgN7M1akrr8vBxNWTRdy79qAnNAGfjDtTACaechLp+nEH0nfhO9fQn/zfwOM4jAgJb2ZXj+h0IwErzcTPMY1ZF0rtLxiUVAYl2TP5WVqv6FpX/i8d3M2L1jSxcybIm9l34wfF3bv8BZhXUeHm2OlBdDKYQcZNON9Sf7R6gMTpcWN/DxD0C1AdjeCYOX5UAkDPeFlUPcGbWipEjivrtIsn/5+cmakr5nCvGEr2f1krUQ0FeakU3wIDAQAB",
+   "manifest_version": 3,
+   "name": "AssetConnect",
+   "permissions": [ "downloads", "storage", "unlimitedStorage", "contextMenus" ],
+   "update_url": "https://clients2.google.com/service/update2/crx",
+   "version": "1.4.0",
+   "web_accessible_resources": [ {
+      "matches": [ "*://*.booth.pm/*", "*://booth.pm/*" ],
+      "resources": [ "avatar-clipboard/styles/*", "storage-management/storage-overview.html", "storage-management/storage-overview.js", "storage-management/import.html", "storage-management/import.js", "_locales/*/messages.json" ]
+   } ]
 }

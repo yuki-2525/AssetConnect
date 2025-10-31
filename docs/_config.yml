@@ -1,0 +1,25 @@
+title: "AssetConnect"
+description: "BOOTHダウンロード追跡ブラウザ拡張機能"
+url: "https://yuki-2525.github.io"
+baseurl: ""
+
+markdown: kramdown
+highlighter: rouge
+sass:
+  style: compressed
+  sass_dir: _sass
+
+plugins:
+  - jekyll-feed
+  - jekyll-sitemap
+
+defaults:
+  - scope:
+      path: ""
+      type: "pages"
+    values:
+      layout: "default"
+
+exclude:
+  - README.md
+  - .gitignore

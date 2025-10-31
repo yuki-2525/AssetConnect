@@ -1,5 +1,27 @@
 // booth_gift.js
 
+// Debug logging function
+let debugMode = false;
+
+// Initialize debug mode from storage
+chrome.storage.local.get(['debugMode'], (result) => {
+    debugMode = result.debugMode || false;
+});
+
+// Listen for debug mode changes
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+    if (request.action === 'debugModeChanged') {
+        debugMode = request.debugMode;
+        debugLog('Debug mode changed to:', debugMode);
+    }
+});
+
+function debugLog(...args) {
+    if (debugMode) {
+        console.log('[GIFT DEBUG]', ...args);
+    }
+}
+
 // ヘルパー関数：日付を "YYYY-MM-DD HH:mm:ss" 形式にフォーマット
 function formatDate(date) {
     const pad = n => n.toString().padStart(2, '0');
@@ -15,6 +37,8 @@ document.addEventListener('click', function (e) {
     // ダウンロードリンク（"https://booth.pm/downloadables/" で始まるもの）を検知
     const downloadLink = e.target.closest('a[href^="https://booth.pm/downloadables/"]');
     if (!downloadLink) return;
+
+    debugLog('Gift: Download link detected:', downloadLink.href);
 
     // ページ遷移を防ぐ
     e.preventDefault();
@@ -33,10 +57,10 @@ document.addEventListener('click', function (e) {
         if (fileNameElement) {
             fileName = fileNameElement.textContent.trim();
         } else {
-            console.warn("Gift: File name element not found - using fallback data");
+            debugLog("Gift: File name element not found - using fallback data");
         }
     } else {
-        console.warn("Gift: download container not found - using fallback data");
+        debugLog("Gift: download container not found - using fallback data");
     }
 
     // 商品タイトルとURLを取得
@@ -48,10 +72,10 @@ document.addEventListener('click', function (e) {
         if (idMatch && idMatch[1]) {
             boothID = idMatch[1];
         } else {
-            console.warn("Gift: BOOTHID not found in titleLink.href - using fallback data");
+            debugLog("Gift: BOOTHID not found in titleLink.href - using fallback data");
         }
     } else {
-        console.warn("Gift: title link not found - using fallback data");
+        debugLog("Gift: title link not found - using fallback data");
     }
 
     const timestamp = formatDate(new Date());
@@ -66,12 +90,21 @@ document.addEventListener('click', function (e) {
         registered: false
     };
 
+    debugLog('Gift: Created download entry:', newEntry);
+
     // 既存の "downloadHistory" から、同じ BOOTHID と filename のエントリを除外してから追加
     chrome.storage.local.get("downloadHistory", function (result) {
         let history = result.downloadHistory || [];
+        const originalLength = history.length;
         history = history.filter(entry => !(entry.boothID === newEntry.boothID && entry.filename === newEntry.filename));
+        const filteredCount = originalLength - history.length;
+        if (filteredCount > 0) {
+            debugLog(`Gift: Removed ${filteredCount} duplicate entries`);
+        }
         history.push(newEntry);
+        debugLog(`Gift: Saving to downloadHistory, total entries: ${history.length}`);
         chrome.storage.local.set({ downloadHistory: history }, function () {
+            debugLog('Gift: Download history saved, redirecting to:', downloadLink.href);
             window.location.href = downloadLink.href;
         });
     });
