@@ -1,422 +1,422 @@
 {
-   "DeveloperX": {
-      "message": "作者X"
-   },
-   "add": {
-      "message": "追加"
-   },
-   "allStorageKeys": {
-      "message": "全ストレージキー"
-   },
-   "arrayType": {
-      "message": "配列"
-   },
-   "avatarClipboardTitle": {
-      "message": "対応アバター一括コピー"
-   },
-   "boothItemsFoundInPage": {
-      "message": "ページ内に{count}個のBOOTHアイテムが見つかりました!!"
-   },
-   "cancel": {
-      "message": "キャンセル"
-   },
-   "category": {
-      "message": "カテゴリ"
-   },
-   "clearAllStorage": {
-      "message": "全てのストレージをクリア"
-   },
-   "clearHistory": {
-      "message": "履歴削除"
-   },
-   "clickToSelect": {
-      "message": "または、クリックしてファイルを選択"
-   },
-   "confirmClearHistory": {
-      "message": "履歴を全削除しますか？"
-   },
-   "confirmClearStorage": {
-      "message": "全てのストレージデータを削除しますか？この操作は元に戻せません。"
-   },
-   "confirmManualInput": {
-      "message": "手動入力する"
-   },
-   "copyToClipboard": {
-      "message": "クリップボードにコピー"
-   },
-   "dataParseError": {
-      "message": "データの解析に失敗しました"
-   },
-   "dataType": {
-      "message": "型"
-   },
-   "dateTime": {
-      "message": "日時"
-   },
-   "debugModeOff": {
-      "message": "デバッグモード: OFF → ON"
-   },
-   "debugModeOn": {
-      "message": "デバッグモード: ON → OFF"
-   },
-   "debugModeToggle": {
-      "message": "デバッグモード切り替え"
-   },
-   "description": {
-      "message": "この拡張機能はBOOTHでダウンロードしたアイテムのアセット管理ツールへの登録を楽にする拡張機能です。"
-   },
-   "download": {
-      "message": "ダウンロード"
-   },
-   "downloadError": {
-      "message": "ダウンロード中にエラーが発生しました: {error}"
-   },
-   "downloadFolderLabel": {
-      "message": "ダウンロードフォルダのパス:"
-   },
-   "downloadHistoryCount": {
-      "message": "ダウンロード履歴"
-   },
-   "dragDropArea": {
-      "message": "JSONファイルをここにドラッグ&ドロップ"
-   },
-   "duplicateHandling": {
-      "message": "重複するアイテムの処理方法:"
-   },
-   "enterItemId": {
-      "message": "アイテムIDを入力してください"
-   },
-   "enterItemName": {
-      "message": "アイテム名を入力してください"
-   },
-   "exclude": {
-      "message": "×"
-   },
-   "excludedAvatars": {
-      "message": "除外済みアバター"
-   },
-   "excludedItemsCount": {
-      "message": "除外済み"
-   },
-   "excludedSection": {
-      "message": "除外"
-   },
-   "exportAe": {
-      "message": "JSON 出力(AE Tools形式)"
-   },
-   "exportCsv": {
-      "message": "CSV 出力"
-   },
-   "exportError": {
-      "message": "エクスポート中にエラーが発生しました"
-   },
-   "exportSavedItems": {
-      "message": "保存済みアバターデータをエクスポート"
-   },
-   "failedItemsTitle": {
-      "message": "取得失敗アイテム"
-   },
-   "feedback": {
-      "message": "お問い合わせ"
-   },
-   "fetchFailed": {
-      "message": "アイテムの取得に失敗しました"
-   },
-   "fetchItemInfo": {
-      "message": "アイテム情報を取得"
-   },
-   "fileName": {
-      "message": "ファイル"
-   },
-   "free": {
-      "message": "無料"
-   },
-   "importComplete": {
-      "message": "インポート完了: "
-   },
-   "importCompleted": {
-      "message": "インポート完了"
-   },
-   "importCsv": {
-      "message": "CSVインポート"
-   },
-   "importDataTitle": {
-      "message": "アバターデータインポート"
-   },
-   "importError": {
-      "message": "インポート中にエラーが発生しました: {error}"
-   },
-   "importFinished": {
-      "message": "インポートが完了しました。このタブを閉じますか？"
-   },
-   "importItems": {
-      "message": "{count}個のアイテムをインポート"
-   },
-   "importPreviewTitle": {
-      "message": "インポート予定のデータ"
-   },
-   "importReady": {
-      "message": "{count}個のアイテムをインポート準備完了"
-   },
-   "importSavedItems": {
-      "message": "アバターデータをインポート"
-   },
-   "importing": {
-      "message": "インポート中..."
-   },
-   "importingData": {
-      "message": "データをインポート中..."
-   },
-   "invalidItemData": {
-      "message": "IDまたは名前が不正"
-   },
-   "invalidItems": {
-      "message": "無効なアイテム: {count}個"
-   },
-   "invalidJsonFormat": {
-      "message": "JSONファイルの形式が正しくありません。items配列が見つかりません。"
-   },
-   "itemAddError": {
-      "message": "アイテム追加中にエラーが発生しました"
-   },
-   "itemAdded": {
-      "message": "アイテム「{name}」を追加しました"
-   },
-   "itemFetchFailedMessage": {
-      "message": "以下のアイテムで情報取得に失敗しました："
-   },
-   "itemId": {
-      "message": "アイテムID"
-   },
-   "itemIdAlreadyExists": {
-      "message": "アイテムID {id} は既に登録されています"
-   },
-   "itemIdNumbersOnly": {
-      "message": "アイテムIDは数字のみで入力してください"
-   },
-   "itemIdSet": {
-      "message": "ID {id} を設定しました。アイテム名を入力してください。"
-   },
-   "itemName": {
-      "message": "アイテム名"
-   },
-   "itemNameUnknown": {
-      "message": "アイテム名不明"
-   },
-   "itemSaveFailed": {
-      "message": "アイテムの保存に失敗しました"
-   },
-   "items": {
-      "message": "個"
-   },
-   "itemsCopiedToClipboard": {
-      "message": "{count}個のアイテムをクリップボードにコピーしました"
-   },
-   "itemsFetchFailed": {
-      "message": "{count}個のアイテムで取得に失敗しました。"
-   },
-   "itemsFetched": {
-      "message": "{count}個のアイテムを取得しました"
-   },
-   "itemsSkipped": {
-      "message": "{count}個をスキップ"
-   },
-   "itemsUpdated": {
-      "message": "{count}個を更新"
-   },
-   "jsonParseError": {
-      "message": "JSONファイルの解析に失敗しました: {error}"
-   },
-   "keys": {
-      "message": "キー"
-   },
-   "languageLabel": {
-      "message": "Language:"
-   },
-   "loadingData": {
-      "message": "データを読み込み中..."
-   },
-   "loadingError": {
-      "message": "データの読み込みに失敗しました"
-   },
-   "manualAdd": {
-      "message": "手動追加"
-   },
-   "manualInputPrompt": {
-      "message": "手動でアイテム名を入力しますか？"
-   },
-   "newItemsAdded": {
-      "message": "{count}個を新規追加"
-   },
-   "nextItemSet": {
-      "message": "次のアイテム ID {id} を設定しました。残り{count}個"
-   },
-   "no": {
-      "message": "いいえ"
-   },
-   "noBoothItems": {
-      "message": "対応アバターデータはありません"
-   },
-   "noDownloadHistory": {
-      "message": "ダウンロード履歴はありません"
-   },
-   "noHistory": {
-      "message": "履歴なし"
-   },
-   "noImportData": {
-      "message": "インポートするデータがありません。"
-   },
-   "noItemsProcessed": {
-      "message": "処理するアイテムがありませんでした"
-   },
-   "noItemsToProcess": {
-      "message": "処理するアイテムがありません"
-   },
-   "noStorageData": {
-      "message": "ストレージデータはありません"
-   },
-   "noValidItems": {
-      "message": "有効なアイテムが見つかりません。"
-   },
-   "none": {
-      "message": "なし"
-   },
-   "objectType": {
-      "message": "オブジェクト"
-   },
-   "openInBooth": {
-      "message": "BOOTHで開く"
-   },
-   "originalCategory": {
-      "message": "元カテゴリ"
-   },
-   "parseError": {
-      "message": "エラー"
-   },
-   "popupTab": {
-      "message": "タブで表示"
-   },
-   "processing": {
-      "message": "処理中: {item}"
-   },
-   "processingItems": {
-      "message": "{count}個のアイテムを処理中..."
-   },
-   "registered": {
-      "message": "登録済み"
-   },
-   "remainingItemsHelper": {
-      "message": "残り{count}個のアイテムも続けて入力できます。"
-   },
-   "replaceDuplicates": {
-      "message": "上書き（新しいデータで更新）"
-   },
-   "restore": {
-      "message": "戻す"
-   },
-   "saveButton": {
-      "message": "保存"
-   },
-   "saveFolderNotSet": {
-      "message": "ダウンロード先フォルダが設定されていません。上部のフォルダ入力欄から設定してください。"
-   },
-   "savedAvatars": {
-      "message": "保存済みアバター"
-   },
-   "savedItemsCount": {
-      "message": "保存済み"
-   },
-   "savedSection": {
-      "message": "保存済み"
-   },
-   "selectFilePrompt": {
-      "message": "ファイルを選択してください"
-   },
-   "selectJsonFile": {
-      "message": "JSONファイルを選択してください。"
-   },
-   "showStorageOverview": {
-      "message": "ストレージ一覧・データ量を表示"
-   },
-   "size": {
-      "message": "サイズ"
-   },
-   "skipDuplicates": {
-      "message": "スキップ（既存を保持）"
-   },
-   "storageClearError": {
-      "message": "ストレージのクリアに失敗しました。"
-   },
-   "storageCleared": {
-      "message": "ストレージを全てクリアしました。"
-   },
-   "storageKeyNotFound": {
-      "message": "ストレージキー「{key}」が見つかりません。"
-   },
-   "storageManagerUnavailable": {
-      "message": "ストレージマネージャーが利用できません"
-   },
-   "storageOverviewSubtitle": {
-      "message": "ストレージ一覧とデータ使用量"
-   },
-   "storageOverviewTitle": {
-      "message": "ストレージ一覧"
-   },
-   "storageUsage": {
-      "message": "使用データ量"
-   },
-   "support": {
-      "message": "開発を支援する"
-   },
-   "tabBoothItems": {
-      "message": "対応アバター一括コピー"
-   },
-   "tabDownloadHistory": {
-      "message": "ダウンロード履歴"
-   },
-   "tabRawStorage": {
-      "message": "全ストレージキー"
-   },
-   "title": {
-      "message": "AssetConnect"
-   },
-   "titleUnknown": {
-      "message": "タイトル不明"
-   },
-   "toggleBulkRegisterLabel": {
-      "message": "同一IDのアイテムを一括登録する"
-   },
-   "toggleFreeLabel": {
-      "message": "無料ダウンロードのみ"
-   },
-   "toggleGroupLabel": {
-      "message": "同一IDのアイテムをまとめる"
-   },
-   "totalBoothItems": {
-      "message": "対応アバター総数"
-   },
-   "unknown": {
-      "message": "不明"
-   },
-   "unregisteredItemsFound": {
-      "message": "未登録のアイテムが見つかりました!!"
-   },
-   "unsavedAvatars": {
-      "message": "未保存アバター"
-   },
-   "unsavedItemsCount": {
-      "message": "未保存"
-   },
-   "unsavedSection": {
-      "message": "新規"
-   },
-   "updateHistory": {
-      "message": "更新履歴"
-   },
-   "validItems": {
-      "message": "有効なアイテム: {count}個"
-   },
-   "yes": {
-      "message": "はい"
-   }
+    "title": {
+        "message": "AssetConnect"
+    },
+    "support": {
+        "message": "開発を支援する"
+    },
+    "description": {
+        "message": "この拡張機能はBOOTHでダウンロードしたアイテムのアセット管理ツールへの登録を楽にする拡張機能です。"
+    },
+    "downloadFolderLabel": {
+        "message": "ダウンロードフォルダのパス:"
+    },
+    "languageLabel": {
+        "message": "Language:"
+    },
+    "saveButton": {
+        "message": "保存"
+    },
+    "toggleFreeLabel": {
+        "message": "無料ダウンロードのみ"
+    },
+    "toggleGroupLabel": {
+        "message": "同一IDのアイテムをまとめる"
+    },
+    "toggleBulkRegisterLabel": {
+        "message": "同一IDのアイテムを一括登録する"
+    },
+    "exportAe": {
+        "message": "JSON 出力(AE Tools形式)"
+    },
+    "exportCsv": {
+        "message": "CSV 出力"
+    },
+    "importCsv": {
+        "message": "CSVインポート"
+    },
+    "clearHistory": {
+        "message": "履歴削除"
+    },
+    "noHistory": {
+        "message": "履歴なし"
+    },
+    "popupTab": {
+        "message": "タブで表示"
+    },
+    "DeveloperX": {
+        "message": "作者X"
+    },
+    "feedback": {
+        "message": "お問い合わせ"
+    },
+    "saveFolderNotSet": {
+        "message": "ダウンロード先フォルダが設定されていません。上部のフォルダ入力欄から設定してください。"
+    },
+    "confirmClearHistory": {
+        "message": "履歴を全削除しますか？"
+    },
+    "updateHistory": {
+        "message": "更新履歴"
+    },
+    "debugModeToggle": {
+        "message": "デバッグモード切り替え"
+    },
+    "debugModeOn": {
+        "message": "デバッグモード: ON → OFF"
+    },
+    "debugModeOff": {
+        "message": "デバッグモード: OFF → ON"
+    },
+    "showStorageOverview": {
+        "message": "ストレージ一覧・データ量を表示"
+    },
+    "exportSavedItems": {
+        "message": "保存済みアバターデータをエクスポート"
+    },
+    "importSavedItems": {
+        "message": "アバターデータをインポート"
+    },
+    "storageOverviewTitle": {
+        "message": "ストレージ一覧"
+    },
+    "storageOverviewSubtitle": {
+        "message": "ストレージ一覧とデータ使用量"
+    },
+    "totalBoothItems": {
+        "message": "対応アバター総数"
+    },
+    "savedItemsCount": {
+        "message": "保存済み"
+    },
+    "unsavedItemsCount": {
+        "message": "未保存"
+    },
+    "excludedItemsCount": {
+        "message": "除外済み"
+    },
+    "downloadHistoryCount": {
+        "message": "ダウンロード履歴"
+    },
+    "storageUsage": {
+        "message": "使用データ量"
+    },
+    "loadingData": {
+        "message": "データを読み込み中..."
+    },
+    "tabBoothItems": {
+        "message": "対応アバター一括コピー"
+    },
+    "tabDownloadHistory": {
+        "message": "ダウンロード履歴"
+    },
+    "tabRawStorage": {
+        "message": "全ストレージキー"
+    },
+    "savedAvatars": {
+        "message": "保存済みアバター"
+    },
+    "unsavedAvatars": {
+        "message": "未保存アバター"
+    },
+    "excludedAvatars": {
+        "message": "除外済みアバター"
+    },
+    "allStorageKeys": {
+        "message": "全ストレージキー"
+    },
+    "noBoothItems": {
+        "message": "対応アバターデータはありません"
+    },
+    "noDownloadHistory": {
+        "message": "ダウンロード履歴はありません"
+    },
+    "noStorageData": {
+        "message": "ストレージデータはありません"
+    },
+    "clearAllStorage": {
+        "message": "全てのストレージをクリア"
+    },
+    "importDataTitle": {
+        "message": "アバターデータインポート"
+    },
+    "dragDropArea": {
+        "message": "JSONファイルをここにドラッグ&ドロップ"
+    },
+    "clickToSelect": {
+        "message": "または、クリックしてファイルを選択"
+    },
+    "duplicateHandling": {
+        "message": "重複するアイテムの処理方法:"
+    },
+    "skipDuplicates": {
+        "message": "スキップ（既存を保持）"
+    },
+    "replaceDuplicates": {
+        "message": "上書き（新しいデータで更新）"
+    },
+    "importPreviewTitle": {
+        "message": "インポート予定のデータ"
+    },
+    "selectFilePrompt": {
+        "message": "ファイルを選択してください"
+    },
+    "loadingError": {
+        "message": "データの読み込みに失敗しました"
+    },
+    "itemNameUnknown": {
+        "message": "アイテム名不明"
+    },
+    "category": {
+        "message": "カテゴリ"
+    },
+    "originalCategory": {
+        "message": "元カテゴリ"
+    },
+    "openInBooth": {
+        "message": "BOOTHで開く"
+    },
+    "titleUnknown": {
+        "message": "タイトル不明"
+    },
+    "fileName": {
+        "message": "ファイル"
+    },
+    "none": {
+        "message": "なし"
+    },
+    "dateTime": {
+        "message": "日時"
+    },
+    "free": {
+        "message": "無料"
+    },
+    "yes": {
+        "message": "はい"
+    },
+    "no": {
+        "message": "いいえ"
+    },
+    "unknown": {
+        "message": "不明"
+    },
+    "registered": {
+        "message": "登録済み"
+    },
+    "confirmClearStorage": {
+        "message": "全てのストレージデータを削除しますか？この操作は元に戻せません。"
+    },
+    "storageCleared": {
+        "message": "ストレージを全てクリアしました。"
+    },
+    "storageClearError": {
+        "message": "ストレージのクリアに失敗しました。"
+    },
+    "arrayType": {
+        "message": "配列"
+    },
+    "objectType": {
+        "message": "オブジェクト"
+    },
+    "keys": {
+        "message": "キー"
+    },
+    "items": {
+        "message": "個"
+    },
+    "dataType": {
+        "message": "型"
+    },
+    "size": {
+        "message": "サイズ"
+    },
+    "parseError": {
+        "message": "エラー"
+    },
+    "dataParseError": {
+        "message": "データの解析に失敗しました"
+    },
+    "download": {
+        "message": "ダウンロード"
+    },
+    "storageKeyNotFound": {
+        "message": "ストレージキー「{key}」が見つかりません。"
+    },
+    "downloadError": {
+        "message": "ダウンロード中にエラーが発生しました: {error}"
+    },
+    "selectJsonFile": {
+        "message": "JSONファイルを選択してください。"
+    },
+    "jsonParseError": {
+        "message": "JSONファイルの解析に失敗しました: {error}"
+    },
+    "invalidJsonFormat": {
+        "message": "JSONファイルの形式が正しくありません。items配列が見つかりません。"
+    },
+    "invalidItemData": {
+        "message": "IDまたは名前が不正"
+    },
+    "noValidItems": {
+        "message": "有効なアイテムが見つかりません。"
+    },
+    "importReady": {
+        "message": "{count}個のアイテムをインポート準備完了"
+    },
+    "importItems": {
+        "message": "{count}個のアイテムをインポート"
+    },
+    "validItems": {
+        "message": "有効なアイテム: {count}個"
+    },
+    "invalidItems": {
+        "message": "無効なアイテム: {count}個"
+    },
+    "noImportData": {
+        "message": "インポートするデータがありません。"
+    },
+    "importing": {
+        "message": "インポート中..."
+    },
+    "importingData": {
+        "message": "データをインポート中..."
+    },
+    "importComplete": {
+        "message": "インポート完了: "
+    },
+    "newItemsAdded": {
+        "message": "{count}個を新規追加"
+    },
+    "itemsUpdated": {
+        "message": "{count}個を更新"
+    },
+    "itemsSkipped": {
+        "message": "{count}個をスキップ"
+    },
+    "importCompleted": {
+        "message": "インポート完了"
+    },
+    "importFinished": {
+        "message": "インポートが完了しました。このタブを閉じますか？"
+    },
+    "importError": {
+        "message": "インポート中にエラーが発生しました: {error}"
+    },
+    "avatarClipboardTitle": {
+        "message": "対応アバター一括コピー"
+    },
+    "unregisteredItemsFound": {
+        "message": "未登録のアイテムが見つかりました!!"
+    },
+    "boothItemsFoundInPage": {
+        "message": "ページ内に{count}個のBOOTHアイテムが見つかりました!!"
+    },
+    "fetchItemInfo": {
+        "message": "アイテム情報を取得"
+    },
+    "copyToClipboard": {
+        "message": "クリップボードにコピー"
+    },
+    "manualAdd": {
+        "message": "手動追加"
+    },
+    "exclude": {
+        "message": "×"
+    },
+    "restore": {
+        "message": "戻す"
+    },
+    "savedSection": {
+        "message": "保存済み"
+    },
+    "unsavedSection": {
+        "message": "新規"
+    },
+    "excludedSection": {
+        "message": "除外"
+    },
+    "itemId": {
+        "message": "アイテムID"
+    },
+    "itemName": {
+        "message": "アイテム名"
+    },
+    "add": {
+        "message": "追加"
+    },
+    "cancel": {
+        "message": "キャンセル"
+    },
+    "storageManagerUnavailable": {
+        "message": "ストレージマネージャーが利用できません"
+    },
+    "enterItemId": {
+        "message": "アイテムIDを入力してください"
+    },
+    "enterItemName": {
+        "message": "アイテム名を入力してください"
+    },
+    "itemIdNumbersOnly": {
+        "message": "アイテムIDは数字のみで入力してください"
+    },
+    "itemIdAlreadyExists": {
+        "message": "アイテムID {id} は既に登録されています"
+    },
+    "itemSaveFailed": {
+        "message": "アイテムの保存に失敗しました"
+    },
+    "itemAddError": {
+        "message": "アイテム追加中にエラーが発生しました"
+    },
+    "itemsCopiedToClipboard": {
+        "message": "{count}個のアイテムをクリップボードにコピーしました"
+    },
+    "exportError": {
+        "message": "エクスポート中にエラーが発生しました"
+    },
+    "failedItemsTitle": {
+        "message": "取得失敗アイテム"
+    },
+    "itemFetchFailedMessage": {
+        "message": "以下のアイテムで情報取得に失敗しました："
+    },
+    "manualInputPrompt": {
+        "message": "手動でアイテム名を入力しますか？"
+    },
+    "confirmManualInput": {
+        "message": "手動入力する"
+    },
+    "noItemsToProcess": {
+        "message": "処理するアイテムがありません"
+    },
+    "processingItems": {
+        "message": "{count}個のアイテムを処理中..."
+    },
+    "itemsFetched": {
+        "message": "{count}個のアイテムを取得しました"
+    },
+    "itemsFetchFailed": {
+        "message": "{count}個のアイテムで取得に失敗しました。"
+    },
+    "fetchFailed": {
+        "message": "アイテムの取得に失敗しました"
+    },
+    "noItemsProcessed": {
+        "message": "処理するアイテムがありませんでした"
+    },
+    "processing": {
+        "message": "処理中: {item}"
+    },
+    "itemAdded": {
+        "message": "アイテム「{name}」を追加しました"
+    },
+    "nextItemSet": {
+        "message": "次のアイテム ID {id} を設定しました。残り{count}個"
+    },
+    "itemIdSet": {
+        "message": "ID {id} を設定しました。アイテム名を入力してください。"
+    },
+    "remainingItemsHelper": {
+        "message": "残り{count}個のアイテムも続けて入力できます。"
+    }
 }
