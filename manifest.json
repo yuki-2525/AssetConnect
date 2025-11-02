@@ -1,14 +1,13 @@
 {
   "manifest_version": 3,
-  "name": "AssetConnect",
-  "version": "1.4.0",
+  "name": "__MSG_title__",
+  "version": "1.4.1",
   "default_locale": "ja",
   "description": "__MSG_description__",
   "permissions": [
     "downloads",
     "storage",
     "unlimitedStorage",
-    "activeTab",
     "contextMenus"
   ],
   "host_permissions": [
