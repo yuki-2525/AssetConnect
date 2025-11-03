@@ -427,8 +427,10 @@ class UIManager {
         </div>
       </div>
     `;
+  // start minimized (タイトルのみ表示)
+  windowContainer.classList.add('minimized');
 
-    this.attachEventListeners(windowContainer);
+  this.attachEventListeners(windowContainer);
     document.body.appendChild(windowContainer);
     this.managementWindow = windowContainer;
     
@@ -457,6 +459,16 @@ class UIManager {
     sectionHeaders.forEach(header => {
       header.addEventListener('click', () => this.handleSectionToggle(header));
     });
+
+    // タイトル部クリックで最小化/展開を切り替える（コントロール部クリックは無視）
+    const headerEl = container.querySelector('.booth-manager-header');
+    if (headerEl) {
+      headerEl.addEventListener('click', (e) => {
+        // ヘッダ内のコントロール（help, close ボタン等）のクリックはトグル動作を阻害しない
+        if (e.target.closest('.booth-manager-controls')) return;
+        this.toggleMinimized();
+      });
+    }
   }
 
   attachFoundItemsEventListeners() {
@@ -515,12 +527,33 @@ class UIManager {
     if (!this.managementWindow) {
       this.createManagementWindow();
     }
+    // 表示時はデフォルトで最小化状態（タイトルのみ）にする
     this.managementWindow.style.display = 'block';
+    this.managementWindow.classList.add('minimized');
   }
 
   hideWindow() {
     if (this.managementWindow) {
       this.managementWindow.style.display = 'none';
+    }
+  }
+
+  /**
+   * Toggle minimized/expanded state for the management window
+   */
+  toggleMinimized() {
+    if (!this.managementWindow) return;
+    const isNowMinimized = this.managementWindow.classList.toggle('minimized');
+
+    const content = this.managementWindow.querySelector('.booth-manager-content');
+    if (content) {
+      if (isNowMinimized) {
+        content.style.display = 'none';
+      } else {
+        content.style.display = 'block';
+        // フォーカスやスクロールの微調整を行う
+        content.scrollTop = 0;
+      }
     }
   }
 
