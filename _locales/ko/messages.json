@@ -303,7 +303,7 @@
         "message": "Import error occurred: {error}"
     },
     "avatarClipboardTitle": {
-        "message": "Supported Avatars Batch Copy"
+        "message": "AssetConnect Supported Avatars Batch Copy"
     },
     "unregisteredItemsFound": {
         "message": "Unregistered items found!!"

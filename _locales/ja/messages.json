@@ -303,7 +303,7 @@
         "message": "インポート中にエラーが発生しました: {error}"
     },
     "avatarClipboardTitle": {
-        "message": "対応アバター一括コピー"
+        "message": "AssetConnect 対応アバター一括コピー"
     },
     "unregisteredItemsFound": {
         "message": "未登録のアイテムが見つかりました!!"

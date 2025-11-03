@@ -4,6 +4,9 @@
   bottom: 20px;
   right: 20px;
   width: 400px;
+  min-width: 400px;
+  max-width: 400px;
+  box-sizing: border-box;
   max-height: 600px;
   background: #ffffff;
   border: 1px solid #ddd;
@@ -13,6 +16,19 @@
   font-size: 14px;
   z-index: 10000;
   overflow: hidden;
+}
+
+/* Minimized state: show only header */
+.booth-clipboard-manager.minimized {
+  width: 400px;
+  min-width: 400px;
+  max-width: 400px;
+  max-height: none;
+  height: auto;
+}
+
+.booth-clipboard-manager.minimized .booth-manager-content {
+  display: none !important;
 }
 
 .booth-manager-header {
