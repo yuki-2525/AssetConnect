@@ -532,6 +532,15 @@ class UIManager {
     this.managementWindow.classList.add('minimized');
   }
 
+  expandWindow() {
+    if (!this.managementWindow) return;
+    this.managementWindow.classList.remove('minimized');
+    const content = this.managementWindow.querySelector('.booth-manager-content');
+    if (content) {
+      content.style.display = 'block';
+    }
+  }
+
   hideWindow() {
     if (this.managementWindow) {
       this.managementWindow.style.display = 'none';
@@ -786,6 +795,9 @@ class UIManager {
   }
 
   showFailedItemsModal(failedItems) {
+    // モーダルを表示するためにウィンドウを展開
+    this.expandWindow();
+
     // 既存のモーダルがある場合は削除
     this.hideFailedItemsModal();
     
@@ -893,6 +905,9 @@ class UIManager {
   }
 
   showManualAddModal() {
+    // モーダルを表示するためにウィンドウを展開
+    this.expandWindow();
+
     // 既存のモーダルがある場合は削除
     this.hideManualAddModal();
     
