@@ -35,18 +35,25 @@ function formatDate(date) {
 
 document.addEventListener('click', function (e) {
   // ダウンロードリンク（"https://booth.pm/downloadables/" で始まるもの）を検知
-  const downloadLink = e.target.closest('a[href^="https://booth.pm/downloadables/"]');
-  if (!downloadLink) return;
+  // 形式: .js-download-button (data-href属性を持つ)
+  const downloadButton = e.target.closest('.js-download-button[data-href^="https://booth.pm/downloadables/"]');
+  
+  if (!downloadButton) return;
 
-  debugLog('Order: Download link detected:', downloadLink.href);
+  const target = downloadButton;
+  const url = downloadButton.dataset.href;
+
+  debugLog('Order: Download link detected:', url);
 
   // ページ遷移を防ぐ
   e.preventDefault();
+  e.stopPropagation();
 
   // クリックされたリンクが含まれる .legacy-list-item を取得
-  const legacyItem = downloadLink.closest('.legacy-list-item');
+  const legacyItem = target.closest('.legacy-list-item');
   if (!legacyItem) {
     debugLog("Order: legacy-list-item not found");
+    window.location.href = url;
     return;
   }
 
@@ -54,13 +61,14 @@ document.addEventListener('click', function (e) {
   const fileNameElement = legacyItem.querySelector('b');
   if (!fileNameElement) {
     debugLog("Order: File name element not found");
+    window.location.href = url;
     return;
   }
   const fileName = fileNameElement.textContent.trim();
 
   // この .legacy-list-item が属する .sheet を探す
   // → そのシート内のタイトルリンク (.u-tpg-title4 a.nav) を取得
-  const sheet = downloadLink.closest('.sheet');
+  const sheet = target.closest('.sheet');
   let title = "何らかの理由でデータを取得できませんでした。作者に報告してください。";
   let boothID = "unknown";
   let itemUrl = "https://forms.gle/otwhoXKzc5EQQDti8";
@@ -70,7 +78,7 @@ document.addEventListener('click', function (e) {
     if (productLink) {
       title = productLink.textContent.trim();
       itemUrl = productLink.href;
-      const idMatch = itemUrl.match(/\/items\/(\d+)/);
+      const idMatch = /\/items\/(\d+)/.exec(itemUrl);
       boothID = idMatch ? idMatch[1] : "unknown";
     } else {
       debugLog("Order: productLink (title link) not found - using fallback data");
@@ -105,8 +113,8 @@ document.addEventListener('click', function (e) {
     history.push(newEntry);
     debugLog(`Order: Saving to downloadHistory, total entries: ${history.length}`);
     chrome.storage.local.set({ downloadHistory: history }, function () {
-      debugLog('Order: Download history saved, redirecting to:', downloadLink.href);
-      window.location.href = downloadLink.href;
+      debugLog('Order: Download history saved, redirecting to:', url);
+      window.location.href = url;
     });
   });
-});
+}, true);

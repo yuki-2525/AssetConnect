@@ -34,13 +34,17 @@ function formatDate(date) {
 }
 
 document.addEventListener('click', function (e) {
-  const downloadLink = e.target.closest('a[href^="https://booth.pm/downloadables/"]');
-  if (!downloadLink) return;
+  // 形式: .js-download-button (data-href属性を持つ)
+  const downloadButton = e.target.closest('.js-download-button[data-href^="https://booth.pm/downloadables/"]');
+  
+  if (!downloadButton) return;
 
-  debugLog('Library: Download link detected:', downloadLink.href);
+  const url = downloadButton.dataset.href;
+  debugLog('Library: Download link detected:', url);
 
   // ページ遷移を防ぐ
   e.preventDefault();
+  e.stopPropagation();
 
   // フォールバックデータを初期化
   let fileName = "何らかの理由でデータを取得できませんでした。作者に報告してください。";
@@ -49,7 +53,7 @@ document.addEventListener('click', function (e) {
   let itemUrl = "https://forms.gle/otwhoXKzc5EQQDti8";
 
   // ダウンロードエントリの取得（ファイル名が含まれる部分）
-  const downloadEntry = downloadLink.closest('.mt-16.desktop\\:flex');
+  const downloadEntry = downloadButton.closest('.mt-16.desktop\\:flex');
   if (downloadEntry) {
     // ファイル名の取得
     const fileNameElement = downloadEntry.querySelector('div.min-w-0.break-words.whitespace-pre-line > div.text-14');
@@ -63,7 +67,7 @@ document.addEventListener('click', function (e) {
   }
 
   // 外側コンテナの取得
-  const outerContainer = downloadLink.closest('.mb-16.bg-white.p-16');
+  const outerContainer = downloadButton.closest('.mb-16.bg-white.p-16');
   if (outerContainer) {
     // タイトルの取得：外側コンテナ内の指定要素から取得
     const titleElement = outerContainer.querySelector('.font-bold.text-16.break-all');
@@ -116,8 +120,8 @@ document.addEventListener('click', function (e) {
     history.push(newEntry);
     debugLog(`Library: Saving to downloadHistory, total entries: ${history.length}`);
     chrome.storage.local.set({ downloadHistory: history }, function () {
-      debugLog('Library: Download history saved, redirecting to:', downloadLink.href);
-      window.location.href = downloadLink.href;
+      debugLog('Library: Download history saved, redirecting to:', url);
+      window.location.href = url;
     });
   });
-});
+}, true);

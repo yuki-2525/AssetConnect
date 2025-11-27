@@ -140,7 +140,11 @@ document.addEventListener('DOMContentLoaded', function () {
     },
 
     showFolderNotSetAlert() {
-      alert(getMessage("saveFolderNotSet"));
+      // 翻訳キーがあればそれを使い、なければ日本語のデフォルト文言を使う
+      const translated = currentTranslations?.saveFolderNotSet?.message || chrome.i18n.getMessage("saveFolderNotSet");
+      const message = (translated && translated !== "saveFolderNotSet") ? translated : "ダウンロードフォルダのパスを入力してください";
+      console.debug('Helpers.showFolderNotSetAlert:', message);
+      alert(message);
     },
 
     createButton(text, onClick, isUnregistered = false) {

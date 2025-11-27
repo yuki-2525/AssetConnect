@@ -34,14 +34,17 @@ function formatDate(date) {
 }
 
 document.addEventListener('click', function (e) {
-    // ダウンロードリンク（"https://booth.pm/downloadables/" で始まるもの）を検知
-    const downloadLink = e.target.closest('a[href^="https://booth.pm/downloadables/"]');
-    if (!downloadLink) return;
+    // 形式: .js-download-button (data-href属性を持つ)
+    const downloadButton = e.target.closest('.js-download-button[data-href^="https://booth.pm/downloadables/"]');
+    
+    if (!downloadButton) return;
 
-    debugLog('Gift: Download link detected:', downloadLink.href);
+    const url = downloadButton.dataset.href;
+    debugLog('Gift: Download link detected:', url);
 
     // ページ遷移を防ぐ
     e.preventDefault();
+    e.stopPropagation();
 
     // フォールバックデータを初期化
     let fileName = "何らかの理由でデータを取得できませんでした。作者に報告してください。";
@@ -50,7 +53,7 @@ document.addEventListener('click', function (e) {
     let itemUrl = "https://forms.gle/otwhoXKzc5EQQDti8";
 
     // クリックされたリンクが含まれる要素を取得
-    const downloadContainer = downloadLink.closest('.desktop\\:flex');
+    const downloadContainer = downloadButton.closest('.desktop\\:flex');
     if (downloadContainer) {
         // ファイル名は text-14 クラスを持つ要素に入っている
         const fileNameElement = downloadContainer.querySelector('.text-14');
@@ -64,7 +67,7 @@ document.addEventListener('click', function (e) {
     }
 
     // 商品タイトルとURLを取得
-    const titleLink = document.querySelector('a[href^="https://"][href*="/items/"]');
+    const titleLink = document.querySelector('a[href*="/items/"]');
     if (titleLink) {
         title = titleLink.textContent.trim();
         itemUrl = titleLink.href;
@@ -104,8 +107,8 @@ document.addEventListener('click', function (e) {
         history.push(newEntry);
         debugLog(`Gift: Saving to downloadHistory, total entries: ${history.length}`);
         chrome.storage.local.set({ downloadHistory: history }, function () {
-            debugLog('Gift: Download history saved, redirecting to:', downloadLink.href);
-            window.location.href = downloadLink.href;
+            debugLog('Gift: Download history saved, redirecting to:', url);
+            window.location.href = url;
         });
     });
-});
+}, true);
