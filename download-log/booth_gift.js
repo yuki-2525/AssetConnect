@@ -129,7 +129,10 @@ document.addEventListener('click', function (e) {
 }, true);
 
 // 一括ダウンロードボタンを追加する関数
-function addDownloadAllButton() {
+async function addDownloadAllButton() {
+    // 翻訳システムの初期化
+    await initializeTranslations();
+
     const buttons = document.querySelectorAll('.js-download-button[data-href^="https://booth.pm/downloadables/"]');
     if (buttons.length < 2) return;
 
@@ -147,7 +150,7 @@ function addDownloadAllButton() {
     // 独自のボタンを作成（公式と区別するため独自スタイル）
     const newBtn = document.createElement('button');
     newBtn.type = 'button';
-    newBtn.textContent = '一括ダウンロード';
+    newBtn.textContent = getMessage('downloadAllButton');
     
     // スタイルを適用
     Object.assign(newBtn.style, {
@@ -179,13 +182,23 @@ function addDownloadAllButton() {
         e.preventDefault();
         e.stopPropagation();
         
-        if (!confirm(`${buttons.length}個のファイルを一括ダウンロードしますか？\n(ポップアップブロックが有効な場合、許可してください)`)) return;
+        if (!confirm(getMessage('downloadAllConfirm', { count: buttons.length }))) return;
         
         newBtn.disabled = true;
-        newBtn.style.opacity = '0.7';
         newBtn.style.cursor = 'wait';
         const originalText = newBtn.textContent;
-        newBtn.textContent = '処理中...';
+        
+        let processedCount = 0;
+        const totalCount = buttons.length;
+        
+        const updateProgress = () => {
+            const percent = Math.round((processedCount / totalCount) * 100);
+            newBtn.textContent = getMessage('downloadProcessingCount', { current: processedCount, total: totalCount });
+            // 進捗バーとして背景グラデーションを使用 (Slate-700 for progress, Slate-600 for remaining)
+            newBtn.style.background = `linear-gradient(to right, #334155 ${percent}%, #475569 ${percent}%)`;
+        };
+        
+        updateProgress();
         
         try {
             for (const button of buttons) {
@@ -198,8 +211,11 @@ function addDownloadAllButton() {
                 iframe.src = info.url;
                 document.body.appendChild(iframe);
                 
+                processedCount++;
+                updateProgress();
+                
                 // サーバー負荷軽減のため少し待機
-                await new Promise(r => setTimeout(r, 1500));
+                await new Promise(r => setTimeout(r, 500));
                 
                 // iframeは残しておいてもいいが、掃除したほうがいいかも？
                 setTimeout(() => {
@@ -208,11 +224,12 @@ function addDownloadAllButton() {
             }
         } catch (err) {
             console.error(err);
-            alert('エラーが発生しました: ' + err.message);
+            alert(getMessage('downloadError') + err.message);
         } finally {
             newBtn.disabled = false;
-            newBtn.style.opacity = '1';
             newBtn.style.cursor = 'pointer';
+            newBtn.style.background = '';
+            newBtn.style.backgroundColor = '#475569';
             newBtn.textContent = originalText;
         }
     };

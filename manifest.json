@@ -30,6 +30,7 @@
         "https://accounts.booth.pm/library*"
       ],
       "js": [
+        "shared/translation-manager.js",
         "download-log/booth_library.js"
       ]
     },
@@ -39,6 +40,7 @@
         "https://booth.pm/*/items/*"
       ],
       "js": [
+        "shared/translation-manager.js",
         "download-log/booth_shoppage.js"
       ]
     },
@@ -68,6 +70,7 @@
         "https://accounts.booth.pm/orders/*"
       ],
       "js": [
+        "shared/translation-manager.js",
         "download-log/booth_order.js"
       ]
     },
@@ -76,6 +79,7 @@
         "https://booth.pm/gifts/*"
       ],
       "js": [
+        "shared/translation-manager.js",
         "download-log/booth_gift.js"
       ]
     }

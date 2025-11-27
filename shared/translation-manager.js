@@ -107,7 +107,10 @@ class TranslationManager {
     
     // プレースホルダー置換 (例: {count}, {id}, {name})
     for (const [placeholder, value] of Object.entries(replacements)) {
+      // {key} 形式の置換
       message = message.replace(new RegExp(`{${placeholder}}`, 'g'), value);
+      // $KEY$ 形式の置換 (大文字小文字を区別しない)
+      message = message.replace(new RegExp(`\\$${placeholder}\\$`, 'gi'), value);
     }
     
     return message;

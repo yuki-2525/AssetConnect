@@ -418,5 +418,30 @@
     },
     "remainingItemsHelper": {
         "message": "You can continue to input the remaining {count} items."
+    },
+    "downloadAllButton": {
+        "message": "Download All"
+    },
+    "downloadAllConfirm": {
+        "message": "Do you want to download $COUNT$ files?\n(Please allow if popup blocker is enabled)",
+        "placeholders": {
+            "count": {
+                "content": "$1"
+            }
+        }
+    },
+    "downloadProcessing": {
+        "message": "Processing..."
+    },
+    "downloadProcessingCount": {
+        "message": "Processing... $CURRENT$/$TOTAL$",
+        "placeholders": {
+            "current": {
+                "content": "$1"
+            },
+            "total": {
+                "content": "$2"
+            }
+        }
     }
 }

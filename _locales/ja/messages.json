@@ -418,5 +418,30 @@
     },
     "remainingItemsHelper": {
         "message": "残り{count}個のアイテムも続けて入力できます。"
+    },
+    "downloadAllButton": {
+        "message": "一括ダウンロード"
+    },
+    "downloadAllConfirm": {
+        "message": "$COUNT$個のファイルを一括ダウンロードしますか？\n(ポップアップブロックが有効な場合、許可してください)",
+        "placeholders": {
+            "count": {
+                "content": "$1"
+            }
+        }
+    },
+    "downloadProcessing": {
+        "message": "処理中..."
+    },
+    "downloadProcessingCount": {
+        "message": "処理中... $CURRENT$/$TOTAL$",
+        "placeholders": {
+            "current": {
+                "content": "$1"
+            },
+            "total": {
+                "content": "$2"
+            }
+        }
     }
 }
