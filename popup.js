@@ -2,6 +2,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // 共通の定数と変数
   const ELEMENTS = {
     toggleFree: document.getElementById("toggleFree"),
+    toggleUnregistered: document.getElementById("toggleUnregistered"),
     toggleGroup: document.getElementById("toggleGroup"),
     toggleBulkRegister: document.getElementById("toggleBulkRegister"),
     folderInput: document.getElementById("downloadFolder"),
@@ -232,7 +233,10 @@ document.addEventListener('DOMContentLoaded', function () {
     chrome.storage.local.get("downloadHistory", function (result) {
       let history = result.downloadHistory || [];
       if (ELEMENTS.toggleFree.checked) {
-        history = history.filter(entry => entry.free === true);
+        history = history.filter(item => item.free);
+      }
+      if (ELEMENTS.toggleUnregistered.checked) {
+        history = history.filter(item => item.registered === false);
       }
       history.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
@@ -424,6 +428,7 @@ document.addEventListener('DOMContentLoaded', function () {
   // イベントリスナーの設定
   function setupEventListeners() {
     ELEMENTS.toggleFree.addEventListener("change", renderHistory);
+    ELEMENTS.toggleUnregistered.addEventListener("change", renderHistory);
     ELEMENTS.toggleGroup.addEventListener("change", function () {
       renderHistory();
       ELEMENTS.bulkRegisterToggle.style.display = this.checked ? 'flex' : 'none';

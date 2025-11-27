@@ -20,6 +20,9 @@
     "toggleFreeLabel": {
         "message": "Only free downloads"
     },
+    "toggleUnregisteredLabel": {
+        "message": "Only unregistered items"
+    },
     "toggleGroupLabel": {
         "message": "Group items by ID"
     },
