@@ -46,7 +46,7 @@ jobs:
 
       - name: Create Zip
         run: |
-          zip -r AssetConnect-${{ needs.get-version.outputs.version }}.zip . -x "*.git*" ".github/*" "docs/*" "*.DS_Store"
+          zip -r AssetConnect_v.${{ needs.get-version.outputs.version }}.zip . -x "*.git*" ".github/*" "docs/*" "*.DS_Store"
 
       - name: Create Tag
         uses: rickstaa/action-create-tag@v1
@@ -56,6 +56,6 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          files: AssetConnect-${{ needs.get-version.outputs.version }}.zip
+          files: AssetConnect_v.${{ needs.get-version.outputs.version }}.zip
           tag_name: ${{ needs.get-version.outputs.version }}
           generate_release_notes: true
