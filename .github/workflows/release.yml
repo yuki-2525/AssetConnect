@@ -25,11 +25,15 @@ jobs:
           prop_path: "version"
 
       - name: Check if tag exists
-        uses: rickstaa/action-contains-tag@v1
         id: check_tag
-        with:
-          reference: "main"
-          tag: "${{ steps.version.outputs.value }}"
+        shell: bash
+        run: |
+          git fetch --tags
+          if git show-ref --tags --verify --quiet "refs/tags/${{ steps.version.outputs.value }}"; then
+            echo "retval=true" >> $GITHUB_OUTPUT
+          else
+            echo "retval=false" >> $GITHUB_OUTPUT
+          fi
 
   build-and-release:
     needs: get-version
