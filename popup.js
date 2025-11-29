@@ -194,24 +194,39 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // 履歴の初期化
   async function initializeHistory() {
-    // 保存済みの言語設定を読み込む
-    chrome.storage.local.get("selectedLanguage", async function (result) {
+    // 設定と履歴をまとめて読み込む
+    chrome.storage.local.get([
+      "selectedLanguage", 
+      "downloadFolderPath", 
+      "downloadHistory",
+      "filterFree",
+      "filterUnregistered",
+      "groupItems",
+      "bulkRegister"
+    ], async function (result) {
+      // 言語設定
       const savedLang = result.selectedLanguage || chrome.i18n.getUILanguage().substring(0, 2);
       currentLanguage = SUPPORTED_LANGUAGES.includes(savedLang) ? savedLang : 'en';
       
       await loadTranslations(currentLanguage);
       ELEMENTS.languageSelect.value = currentLanguage;
       updateUITexts();
-    });
 
-    // 保存済みのフォルダパスを読み込む
-    chrome.storage.local.get("downloadFolderPath", function (result) {
+      // フォルダパス
       if (result.downloadFolderPath) {
         ELEMENTS.folderInput.value = result.downloadFolderPath;
       }
-    });
 
-    chrome.storage.local.get("downloadHistory", function (result) {
+      // チェックボックスの状態
+      if (result.filterFree !== undefined) ELEMENTS.toggleFree.checked = result.filterFree;
+      if (result.filterUnregistered !== undefined) ELEMENTS.toggleUnregistered.checked = result.filterUnregistered;
+      if (result.groupItems !== undefined) ELEMENTS.toggleGroup.checked = result.groupItems;
+      if (result.bulkRegister !== undefined) ELEMENTS.toggleBulkRegister.checked = result.bulkRegister;
+
+      // UI状態の更新
+      ELEMENTS.bulkRegisterToggle.style.display = ELEMENTS.toggleGroup.checked ? 'flex' : 'none';
+
+      // 履歴データのマイグレーションと描画
       let history = result.downloadHistory || [];
       let updated = false;
       for (let i = 0; i < history.length; i++) {
@@ -427,16 +442,23 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // イベントリスナーの設定
   function setupEventListeners() {
-    ELEMENTS.toggleFree.addEventListener("change", renderHistory);
-    ELEMENTS.toggleUnregistered.addEventListener("change", renderHistory);
+    ELEMENTS.toggleFree.addEventListener("change", function() {
+      chrome.storage.local.set({ filterFree: this.checked });
+      renderHistory();
+    });
+    ELEMENTS.toggleUnregistered.addEventListener("change", function() {
+      chrome.storage.local.set({ filterUnregistered: this.checked });
+      renderHistory();
+    });
     ELEMENTS.toggleGroup.addEventListener("change", function () {
+      chrome.storage.local.set({ groupItems: this.checked });
       renderHistory();
       ELEMENTS.bulkRegisterToggle.style.display = this.checked ? 'flex' : 'none';
-      if (!this.checked) {
-        ELEMENTS.toggleBulkRegister.checked = false;
-      }
     });
-    ELEMENTS.toggleBulkRegister.addEventListener("change", renderHistory);
+    ELEMENTS.toggleBulkRegister.addEventListener("change", function() {
+      chrome.storage.local.set({ bulkRegister: this.checked });
+      renderHistory();
+    });
     ELEMENTS.languageSelect.addEventListener("change", function () {
       changeLanguage(this.value);
     });
