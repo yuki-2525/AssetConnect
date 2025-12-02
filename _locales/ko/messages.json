@@ -330,7 +330,7 @@
         "message": "Restore"
     },
     "alwaysExclude": {
-        "message": "항상 제외"
+        "message": "Always Exclude"
     },
     "savedSection": {
         "message": "Saved"
