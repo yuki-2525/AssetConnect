@@ -96,17 +96,17 @@ class ClipboardManager {
         return items.map(item => item.name || `Item ${item.id}`).join('\n');
       
       case 'urls':
-        return items.map(item => `https://booth.pm/ja/items/${item.id}`).join('\n');
+        return items.map(item => item.url || `https://booth.pm/ja/items/${item.id}`).join('\n');
       
       case 'detailed':
         return items.map(item => 
-          `${item.name || 'Unnamed'} - https://booth.pm/ja/items/${item.id}`
+          `${item.name || 'Unnamed'} - ${item.url || `https://booth.pm/ja/items/${item.id}`}`
         ).join('\n');
       
       case 'csv':
         const csvHeader = 'Name,URL,Category\n';
         const csvRows = items.map(item => 
-          `"${(item.name || '').replace(/"/g, '""')}","https://booth.pm/ja/items/${item.id}","${item.category || 'unknown'}"`
+          `"${(item.name || '').replace(/"/g, '""')}","${item.url || `https://booth.pm/ja/items/${item.id}`}","${item.category || 'unknown'}"`
         ).join('\n');
         return csvHeader + csvRows;
       
@@ -220,6 +220,159 @@ class ClipboardManager {
       return {
         success: false,
         error: `エクスポート中にエラーが発生しました: ${error.message}`
+      };
+    }
+  }
+
+  /**
+   * 保存済み・新規タグをクリップボードにエクスポートする
+   * UI上に表示されているタグ（ストレージから取得済み）を使用
+   * @param {StorageManager} storageManager 
+   * @returns {Promise<Object>}
+   */
+  async exportSavedAndNewTags(storageManager) {
+    try {
+      const currentPageId = window.uiManager?.currentItemId || window.location.href;
+      
+      const allTags = await storageManager.getAllTags();
+      
+      // UI上に表示されているタグIDを取得（saved-tags, unsaved-tagsセクション）
+      const displayedTagIds = new Set();
+      const tagElements = document.querySelectorAll('#saved-tags-items .booth-item, #unsaved-tags-items .booth-item, #excluded-tags-items .booth-item');
+      tagElements.forEach(el => {
+        const tagId = el.getAttribute('data-tag-id');
+        if (tagId) displayedTagIds.add(tagId);
+      });
+      
+      // エクスポート対象のタグを収集
+      const exportTags = [];
+      const newTagsToSave = []; // ストレージに保存すべき新規タグ
+      const excludedTags = [];
+
+      // UI上に表示されているタグをストレージから取得
+      displayedTagIds.forEach(tagId => {
+        const stored = allTags[tagId];
+        if (stored) {
+          if (stored.category === 'saved' || stored.category === 'unsaved') {
+            exportTags.push(stored);
+            if (stored.category === 'unsaved') {
+              newTagsToSave.push(stored);
+            }
+          } else if (stored.category === 'excluded') {
+            excludedTags.push(stored);
+          }
+        }
+      });
+      
+      if (exportTags.length === 0) {
+        return {
+          success: false,
+          error: '保存済み・新規カテゴリにタグがありません'
+        };
+      }
+
+      // タグをリスト形式でフォーマット
+      const formattedText = this.formatItemsForExport(exportTags, 'list');
+      const result = await this.copyToClipboard(formattedText);
+
+      if (result.success) {
+        result.itemCount = exportTags.length;
+        
+        // エクスポート後の処理
+        const persistResult = await this.processPostExportTagActions(storageManager, newTagsToSave, excludedTags, currentPageId);
+        result.persistenceResult = persistResult;
+        
+        if (!persistResult.success) {
+          console.warn('Export succeeded but persistence failed:', persistResult.error);
+          result.warning = 'エクスポートは成功しましたが、データの保存に問題がありました';
+        }
+      }
+
+      return result;
+
+    } catch (error) {
+      console.error('Export saved and new tags error:', error);
+      return {
+        success: false,
+        error: `エクスポート中にエラーが発生しました: ${error.message}`
+      };
+    }
+  }
+
+  async processPostExportTagActions(storageManager, newTags, excludedTags, currentPageId) {
+    try {
+      const timestamp = new Date().toISOString();
+      let successCount = 0;
+      let failedItems = [];
+
+      // 1. 新規タグを保存済みに更新/保存
+      for (const tag of newTags) {
+        try {
+          const updateData = {
+            name: tag.name,
+            url: tag.url,
+            category: 'saved',
+            lastExported: timestamp,
+            exportCount: (tag.exportCount || 0) + 1,
+            currentPageId: undefined
+          };
+          
+          // updateTagは存在しない場合作成するので、saveTagの代わりにもなる
+          const success = await storageManager.updateTag(tag.id, updateData);
+          if (success) {
+            successCount++;
+          } else {
+            failedItems.push(tag.id);
+          }
+        } catch (error) {
+          console.error(`Failed to update new tag ${tag.id}:`, error);
+          failedItems.push(tag.id);
+        }
+      }
+
+      // 2. 除外タグを削除
+      for (const tag of excludedTags) {
+        try {
+          const success = await storageManager.deleteTag(tag.id);
+          if (success) {
+            successCount++;
+          } else {
+            failedItems.push(tag.id);
+          }
+        } catch (error) {
+          console.error(`Failed to delete excluded tag ${tag.id}:`, error);
+          failedItems.push(tag.id);
+        }
+      }
+
+      // 3. 他のページの編集中タグを削除（クリーンアップ）
+      const allTags = await storageManager.getAllTags();
+      for (const [tagId, tag] of Object.entries(allTags)) {
+        if ((tag.category === 'unsaved' || tag.category === 'excluded') &&
+            tag.currentPageId && tag.currentPageId !== currentPageId) {
+          try {
+            const success = await storageManager.deleteTag(tagId);
+            if (success) {
+              successCount++;
+            }
+          } catch (error) {
+            console.error(`Failed to cleanup tag ${tagId}:`, error);
+          }
+        }
+      }
+
+      return {
+        success: failedItems.length === 0,
+        successCount,
+        failedCount: failedItems.length,
+        failedItems
+      };
+
+    } catch (error) {
+      console.error('Post-export tag actions error:', error);
+      return {
+        success: false,
+        error: error.message
       };
     }
   }

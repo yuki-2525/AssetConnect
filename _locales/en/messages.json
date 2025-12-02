@@ -306,7 +306,7 @@
         "message": "Import error occurred: {error}"
     },
     "avatarClipboardTitle": {
-        "message": "AssetConnect Supported Avatars Batch Copy"
+        "message": "AssetConnect Batch Copy"
     },
     "unregisteredItemsFound": {
         "message": "Unregistered items found!!"
@@ -329,6 +329,9 @@
     "restore": {
         "message": "Restore"
     },
+    "alwaysExclude": {
+        "message": "Always Exclude"
+    },
     "savedSection": {
         "message": "Saved"
     },
@@ -337,6 +340,9 @@
     },
     "excludedSection": {
         "message": "Excluded"
+    },
+    "permanentlyExcludedSection": {
+        "message": "Always Excluded"
     },
     "itemId": {
         "message": "Item ID"
@@ -446,5 +452,14 @@
                 "content": "$2"
             }
         }
+    },
+    "avatarsTab": {
+        "message": "Avatars"
+    },
+    "tagsTab": {
+        "message": "Tags"
+    },
+    "tagName": {
+        "message": "Tag Name"
     }
 }

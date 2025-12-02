@@ -310,7 +310,7 @@ async function handleCrossOriginFetch(itemUrl, itemId) {
     };
 
   } catch (error) {
-    console.error('Background fetch error:', error);
+    console.warn('Background fetch error:', error);
     return {
       success: false,
       error: error.message,

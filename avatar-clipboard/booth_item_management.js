@@ -97,9 +97,18 @@ async function handlePageAnalysis() {
   await checkAndDisplayCurrentPageItem();
   
   if (itemsToFetch.length > 0) {
-    // どのアイテムが既に保存されているかをチェック
+    // 常に除外されたアイテムIDを取得
+    const permanentlyExcludedIds = await storageManager.getPermanentlyExcludedItemIds();
+    
+    // どのアイテムが既に保存されているか、または常に除外されているかをチェック
     const newItems = [];
     for (const item of itemsToFetch) {
+      // 常に除外されたアイテムはスキップ
+      if (permanentlyExcludedIds.has(item.id)) {
+        window.debugLogger?.log(`Item ${item.id} is permanently excluded, skipping`);
+        continue;
+      }
+      
       const exists = await storageManager.hasItem(item.id);
       if (!exists) {
         newItems.push(item);
@@ -199,12 +208,8 @@ async function handleItemFetch(itemId) {
             successCount++;
           }
         } else {
-          // CORS関連エラーでない場合のみエラーとしてログ出力
-          if (result.isCorsError) {
-            window.debugLogger?.log(`CORS fetch failed for item ${item.id}, trying background:`, result.error);
-          } else {
-            console.error(`Failed to fetch item ${item.id}:`, result.error);
-          }
+          // フェッチ失敗はデバッグログとして処理（HTTPエラーは想定内）
+          window.debugLogger?.log(`Fetch failed for item ${item.id}:`, result.error);
           
           if (result.needsBackgroundFetch || result.error.includes('CORS') || result.error.includes('Failed to fetch')) {
             window.debugLogger?.log(`Trying background fetch for item ${item.id} (CORS/Network error detected)`);
@@ -225,14 +230,14 @@ async function handleItemFetch(itemId) {
                   successCount++;
                 }
               } else {
-                console.error(`Background fetch also failed for item ${item.id}`);
+                window.debugLogger?.log(`Background fetch also failed for item ${item.id}`);
                 failedItems.push({
                   id: item.id,
                   error: 'Background fetch failed'
                 });
               }
             } catch (bgError) {
-              console.error(`Background fetch error for item ${item.id}:`, bgError);
+              window.debugLogger?.log(`Background fetch error for item ${item.id}:`, bgError.message);
               failedItems.push({
                 id: item.id,
                 error: bgError.message
@@ -253,7 +258,7 @@ async function handleItemFetch(itemId) {
         }
         
       } catch (error) {
-        console.error(`Error processing item ${item.id}:`, error);
+        window.debugLogger?.log(`Error processing item ${item.id}:`, error.message);
       }
     }
     
@@ -338,7 +343,7 @@ async function handleBackgroundFetch(itemId, itemUrl) {
           window.debugLogger?.log('Background fetch successful:', response.name);
           resolve(response);
         } else {
-          window.debugLogger?.error('Background fetch failed:', response?.error);
+          window.debugLogger?.log('Background fetch failed:', response?.error);
           resolve({ success: false, error: response?.error || 'Unknown error' });
         }
       });
