@@ -832,28 +832,45 @@ class UIManager {
   }
 
   hideFailedItemsModal() {
-    const existingModal = this.getCachedElement(this.MODAL_IDS.FAILED_ITEMS);
+    const modalId = this.MODAL_IDS.FAILED_ITEMS;
+    const existingModal = document.getElementById(modalId);
     if (existingModal) {
       existingModal.remove();
-      this.domCache.delete(this.MODAL_IDS.FAILED_ITEMS);
+      this.domCache.delete(modalId);
     }
   }
 
   attachFailedItemsModalEventListeners(modal, failedItems) {
     // 閉じるボタン
     const closeBtn = this.getModalElement(modal, this.MODAL_SELECTORS.CLOSE);
-    closeBtn.addEventListener('click', () => this.hideFailedItemsModal());
+    if (closeBtn) {
+      closeBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.hideFailedItemsModal();
+      });
+    }
     
     // キャンセルボタン
     const cancelBtn = this.getModalElement(modal, this.MODAL_SELECTORS.CANCEL);
-    cancelBtn.addEventListener('click', () => this.hideFailedItemsModal());
+    if (cancelBtn) {
+      cancelBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.hideFailedItemsModal();
+      });
+    }
     
     // 確認ボタン
     const confirmBtn = this.getModalElement(modal, this.MODAL_SELECTORS.CONFIRM);
-    confirmBtn.addEventListener('click', () => {
-      this.hideFailedItemsModal();
-      this.handleFailedItemsConfirm(failedItems);
-    });
+    if (confirmBtn) {
+      confirmBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.hideFailedItemsModal();
+        this.handleFailedItemsConfirm(failedItems);
+      });
+    }
     
     // 外側クリックで閉じる
     modal.addEventListener('click', (e) => {
@@ -940,25 +957,44 @@ class UIManager {
   }
 
   hideManualAddModal() {
-    const existingModal = this.getCachedElement(this.MODAL_IDS.MANUAL_ADD);
+    const modalId = this.MODAL_IDS.MANUAL_ADD;
+    const existingModal = document.getElementById(modalId);
     if (existingModal) {
       existingModal.remove();
-      this.domCache.delete(this.MODAL_IDS.MANUAL_ADD);
+      this.domCache.delete(modalId);
     }
   }
 
   attachModalEventListeners(modal) {
     // 閉じるボタン
     const closeBtn = this.getModalElement(modal, this.MODAL_SELECTORS.CLOSE);
-    closeBtn.addEventListener('click', () => this.hideManualAddModal());
+    if (closeBtn) {
+      closeBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.hideManualAddModal();
+      });
+    }
     
     // キャンセルボタン
     const cancelBtn = this.getModalElement(modal, this.MODAL_SELECTORS.CANCEL);
-    cancelBtn.addEventListener('click', () => this.hideManualAddModal());
+    if (cancelBtn) {
+      cancelBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.hideManualAddModal();
+      });
+    }
     
     // 追加ボタン
     const addBtn = this.getModalElement(modal, this.MODAL_SELECTORS.ADD);
-    addBtn.addEventListener('click', () => this.handleModalManualAdd());
+    if (addBtn) {
+      addBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.handleModalManualAdd();
+      });
+    }
     
     // 外側クリックで閉じる
     modal.addEventListener('click', (e) => {
@@ -972,11 +1008,14 @@ class UIManager {
     const nameInput = this.getCachedElement(this.ELEMENT_IDS.MANUAL_ITEM_NAME);
     
     [idInput, nameInput].forEach(input => {
-      input.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-          this.handleModalManualAdd();
-        }
-      });
+      if (input) {
+        input.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            this.handleModalManualAdd();
+          }
+        });
+      }
     });
   }
 
