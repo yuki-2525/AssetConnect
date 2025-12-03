@@ -1616,13 +1616,23 @@ class UIManager {
       const { tagsToFetch } = await (window.pageParser || new PageParser()).fetchTagsFromPage();
       const storedTags = await storageManager.getAllTags();
       
-      tagsToFetch.forEach(tag => {
+      for (const tag of tagsToFetch) {
         const stored = storedTags[tag.id];
-        const tagToDisplay = stored ? stored : { ...tag, category: 'unsaved' };
+        let tagToDisplay;
+        
+        if (stored) {
+          tagToDisplay = stored;
+        } else {
+          // 新規タグをストレージに保存
+          tagToDisplay = { ...tag, category: 'unsaved', currentPageId: this.currentItemId || window.location.href };
+          await storageManager.saveTag(tag.id, tagToDisplay);
+          window.debugLogger?.log(`UIManager: New tag saved to storage: ${tag.id}`);
+        }
+        
         const category = tagToDisplay.category || 'unsaved';
         const sectionId = `${category}-tags`;
         this.addTagToSection(sectionId, tagToDisplay);
-      });
+      }
       
       this.tagsFetched = true;
       window.debugLogger?.log('UIManager: Tags fetched and displayed');
