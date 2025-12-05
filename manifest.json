@@ -11,7 +11,8 @@
     "contextMenus"
   ],
   "host_permissions": [
-    "*://*.booth.pm/*"
+    "*://*.booth.pm/*",
+    "https://assetconnect.sakurayuki.dev/*"
   ],
   "action": {
     "default_popup": "popup.html"
