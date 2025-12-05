@@ -1,0 +1,61 @@
+name: Build Release
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+jobs:
+  get-version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.value }}
+      tag_exists: ${{ steps.check_tag.outputs.retval }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get Version from manifest.json
+        id: version
+        uses: zoexx/github-action-json-file-properties@b9f36ce6ee6fe2680cd3c32b2c62e22eade7e590
+        with:
+          file_path: "manifest.json"
+          prop_path: "version"
+
+      - name: Check if tag exists
+        id: check_tag
+        shell: bash
+        run: |
+          git fetch --tags
+          if git show-ref --tags --verify --quiet "refs/tags/${{ steps.version.outputs.value }}"; then
+            echo "retval=true" >> $GITHUB_OUTPUT
+          else
+            echo "retval=false" >> $GITHUB_OUTPUT
+          fi
+
+  build-and-release:
+    needs: get-version
+    if: needs.get-version.outputs.tag_exists == 'false'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Create Zip
+        run: |
+          zip -r AssetConnect_v.${{ needs.get-version.outputs.version }}.zip . -x "*.git*" ".github/*" "docs/*" "*.DS_Store"
+
+      - name: Create Tag
+        uses: rickstaa/action-create-tag@v1
+        with:
+          tag: "${{ needs.get-version.outputs.version }}"
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: AssetConnect_v.${{ needs.get-version.outputs.version }}.zip
+          tag_name: ${{ needs.get-version.outputs.version }}
+          generate_release_notes: true

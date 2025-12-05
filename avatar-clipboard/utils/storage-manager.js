@@ -198,6 +198,10 @@ class StorageManager {
         if (item.category === 'saved') {
           pageItems[itemId] = item;
         }
+        // 常に除外アイテムを含める（どのページでも表示）
+        else if (item.category === 'permanentlyExcluded') {
+          pageItems[itemId] = item;
+        }
         // 編集中アイテム（未保存/除外）は現在のページのもののみ含める
         else if ((item.category === 'unsaved' || item.category === 'excluded') && 
                  item.currentPageId === currentPageId) {
@@ -223,6 +227,199 @@ class StorageManager {
     } catch (error) {
       console.error('Error clearing storage:', error);
       return false;
+    }
+  }
+
+  /**
+   * 常に除外されたアイテムのIDセットを取得する
+   * @returns {Promise<Set<string>>} 常に除外されたアイテムIDのセット
+   */
+  async getPermanentlyExcludedItemIds() {
+    try {
+      const allItems = await this.getAllItems();
+      const excludedIds = new Set();
+      
+      Object.entries(allItems).forEach(([itemId, item]) => {
+        if (item.category === 'permanentlyExcluded') {
+          excludedIds.add(itemId);
+        }
+      });
+      
+      return excludedIds;
+    } catch (error) {
+      window.errorHandler?.handleStorageError(error, 'getPermanentlyExcludedItemIds');
+      return new Set();
+    }
+  }
+
+  // --- タグ管理用メソッド ---
+
+  /**
+   * タグをストレージに保存する
+   * @param {string} tagId - タグID
+   * @param {Object} tagData - タグデータ
+   * @returns {Promise<boolean>} 保存成功時true
+   */
+  async saveTag(tagId, tagData) {
+    try {
+      const allTags = await this.getAllTags();
+      
+      const minimalTag = {
+        id: tagId,
+        name: tagData.name,
+        category: tagData.category || 'unsaved'
+      };
+
+      if (tagData.currentPageId && (minimalTag.category === 'unsaved' || minimalTag.category === 'excluded')) {
+        minimalTag.currentPageId = tagData.currentPageId;
+      }
+
+      if (minimalTag.category === 'excluded' && tagData.previousCategory) {
+        minimalTag.previousCategory = tagData.previousCategory;
+      }
+
+      allTags[tagId] = minimalTag;
+      await chrome.storage.local.set({ 'boothTags': allTags });
+      return true;
+    } catch (error) {
+      window.errorHandler?.handleStorageError(error, 'saveTag', tagId);
+      return false;
+    }
+  }
+
+  /**
+   * 全てのタグを取得する
+   * @returns {Promise<Object>} 全タグのオブジェクト
+   */
+  async getAllTags() {
+    try {
+      const data = await chrome.storage.local.get('boothTags');
+      return data['boothTags'] || {};
+    } catch (error) {
+      window.errorHandler?.handleStorageError(error, 'getAllTags');
+      return {};
+    }
+  }
+
+  /**
+   * 指定したタグを取得する
+   * @param {string} tagId 
+   * @returns {Promise<Object|null>}
+   */
+  async getTag(tagId) {
+    try {
+      const tags = await this.getAllTags();
+      return tags[tagId] || null;
+    } catch (error) {
+      window.errorHandler?.handleStorageError(error, 'getTag', tagId);
+      return null;
+    }
+  }
+
+  /**
+   * タグを更新する
+   * @param {string} tagId 
+   * @param {Object} updateData 
+   * @returns {Promise<boolean>}
+   */
+  async updateTag(tagId, updateData) {
+    try {
+      const existingTag = await this.getTag(tagId);
+      
+      if (!existingTag) {
+        // 新規作成
+        const newTag = {
+          id: tagId,
+          name: updateData.name || tagId,
+          category: updateData.category || 'unsaved'
+        };
+        
+        if (updateData.currentPageId && (newTag.category === 'unsaved' || newTag.category === 'excluded')) {
+          newTag.currentPageId = updateData.currentPageId;
+        }
+        
+        if (newTag.category === 'excluded' && updateData.previousCategory) {
+          newTag.previousCategory = updateData.previousCategory;
+        }
+        
+        const allTags = await this.getAllTags();
+        allTags[tagId] = newTag;
+        await chrome.storage.local.set({ 'boothTags': allTags });
+        return true;
+      }
+
+      // 更新
+      const updatedTag = {
+        ...existingTag,
+        name: updateData.name !== undefined ? updateData.name : existingTag.name,
+        category: updateData.category !== undefined ? updateData.category : existingTag.category
+      };
+
+      if (updatedTag.category === 'unsaved' || updatedTag.category === 'excluded') {
+        if (updateData.currentPageId !== undefined) {
+          updatedTag.currentPageId = updateData.currentPageId;
+        }
+      } else if (updatedTag.category === 'saved') {
+        delete updatedTag.currentPageId;
+      }
+
+      if (updatedTag.category === 'excluded') {
+        updatedTag.previousCategory = updateData.previousCategory || existingTag.previousCategory;
+      } else if (updatedTag.category === 'saved') {
+        delete updatedTag.previousCategory;
+      }
+
+      const allTags = await this.getAllTags();
+      allTags[tagId] = updatedTag;
+      await chrome.storage.local.set({ 'boothTags': allTags });
+      return true;
+
+    } catch (error) {
+      window.errorHandler?.handleStorageError(error, 'updateTag', tagId);
+      return false;
+    }
+  }
+
+  /**
+   * タグを削除する
+   * @param {string} tagId 
+   * @returns {Promise<boolean>}
+   */
+  async deleteTag(tagId) {
+    try {
+      const allTags = await this.getAllTags();
+      delete allTags[tagId];
+      await chrome.storage.local.set({ 'boothTags': allTags });
+      return true;
+    } catch (error) {
+      window.errorHandler?.handleStorageError(error, 'deleteTag', tagId);
+      return false;
+    }
+  }
+
+  /**
+   * 現在のページに関連するタグを取得する
+   * @param {string} currentPageId 
+   * @returns {Promise<Object>}
+   */
+  async getTagsForCurrentPage(currentPageId) {
+    try {
+      const allTags = await this.getAllTags();
+      const pageTags = {};
+      
+      Object.entries(allTags).forEach(([tagId, tag]) => {
+        if (tag.category === 'saved') {
+          pageTags[tagId] = tag;
+        } else if ((tag.category === 'unsaved' || tag.category === 'excluded') && 
+                   tag.currentPageId === currentPageId) {
+          pageTags[tagId] = tag;
+        }
+      });
+      
+      return pageTags;
+    } catch (error) {
+      window.errorHandler?.handleStorageError(error, 'getTagsForCurrentPage', currentPageId);
+      return {};
     }
   }
 }

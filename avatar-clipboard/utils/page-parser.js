@@ -186,4 +186,70 @@ class PageParser {
       itemsToFetch
     };
   }
+
+  getCurrentPageTagId() {
+      const match = window.location.href.match(/\/tags\/([^/?#]+)/);
+      return match ? decodeURIComponent(match[1]) : null;
+  }
+
+  /**
+   * ページのJSONデータからタグを取得する
+   * @returns {Promise<Array>} タグ情報の配列
+   */
+  async fetchTagsFromJson() {
+    const itemId = this.getCurrentPageItemId();
+    if (!itemId) return [];
+
+    try {
+      // 現在のURLをベースにJSON URLを構築
+      let url = window.location.href.split(/[?#]/)[0];
+      if (!url.endsWith('.json')) {
+        url += '.json';
+      }
+
+      window.debugLogger?.log(`Fetching tags from JSON: ${url}`);
+      
+      const response = await fetch(url);
+      if (!response.ok) {
+        return [];
+      }
+
+      const data = await response.json();
+      if (!data.tags || !Array.isArray(data.tags)) {
+        return [];
+      }
+
+      return data.tags.map(tag => ({
+        id: tag.name,
+        name: tag.name,
+        url: tag.url,
+        cleanUrl: `${window.location.origin}/tags/${encodeURIComponent(tag.name)}`
+      }));
+
+    } catch (error) {
+      window.debugLogger?.log('Error fetching tags from JSON:', error);
+      return [];
+    }
+  }
+
+  async fetchTagsFromPage() {
+    // JSONからタグを取得（アイテムページの場合）
+    const tags = await this.fetchTagsFromJson();
+    
+    const currentTagId = this.getCurrentPageTagId();
+    
+    const externalTags = tags.filter(tag => tag.id !== currentTagId);
+    
+    const tagsToFetch = externalTags.map(tag => ({
+        id: tag.id,
+        name: tag.name,
+        url: tag.cleanUrl || tag.url,
+        category: 'unsaved'
+    }));
+
+    return {
+        totalFound: tags.length,
+        tagsToFetch
+    };
+  }
 }
