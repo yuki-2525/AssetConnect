@@ -366,6 +366,7 @@ document.addEventListener('DOMContentLoaded', function () {
     link.href = data.url && data.url.trim() ? data.url : createBoothUrl(data.boothID);
     link.target = "_blank";
     link.textContent = data.title;
+    link.title = data.title; // マウスオーバーで全文表示
     Object.assign(link.style, STYLES.titleLink);
     div.appendChild(link);
     return div;
@@ -773,4 +774,183 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     }
   });
+
+  // 広告バナーのロード処理
+  async function loadAdBanner() {
+    const adContent = document.getElementById('ad-content');
+    const adIndicators = document.getElementById('ad-indicators');
+    const prevBtn = document.getElementById('ad-prev');
+    const nextBtn = document.getElementById('ad-next');
+    const adBanner = document.getElementById('ad-banner');
+    
+    if (!adContent) return;
+
+    let adImages = [];
+    try {
+      const response = await fetch('https://ads.sakurayuki.dev/ads.json');
+      if (response.ok) {
+        adImages = await response.json();
+      } else {
+        console.warn('Failed to load ads.json');
+      }
+    } catch (error) {
+      console.error('Error loading ads.json:', error);
+    }
+
+    // 画像がない場合はプレースホルダーを表示
+    if (!adImages || adImages.length === 0) {
+      const placeholder = document.createElement('div');
+      placeholder.className = 'ad-slide active';
+      placeholder.style.color = '#888';
+      placeholder.style.fontSize = '12px';
+      placeholder.textContent = 'Advertising Space (728x90)';
+      adContent.appendChild(placeholder);
+      
+      // ナビゲーション非表示
+      if (prevBtn) prevBtn.style.display = 'none';
+      if (nextBtn) nextBtn.style.display = 'none';
+      return;
+    }
+
+    // ランダムな開始位置を決定
+    let currentIndex = Math.floor(Math.random() * adImages.length);
+    let slideInterval;
+    const intervalTime = 5000; // 5秒ごとに切り替え
+
+    // 画像要素の生成
+    adImages.forEach((adData, index) => {
+      const imageFile = adData.src;
+      const linkUrl = adData.url;
+
+      // スライド
+      const slide = document.createElement('div');
+      slide.className = `ad-slide ${index === currentIndex ? 'active' : ''}`;
+      
+      // リンクがある場合はaタグを作成
+      let contentContainer = slide;
+      if (linkUrl) {
+        const link = document.createElement('a');
+        link.href = linkUrl;
+        link.target = '_blank';
+        link.style.display = 'block';
+        link.style.width = '100%';
+        link.style.height = '100%';
+        link.title = linkUrl;
+        slide.appendChild(link);
+        contentContainer = link;
+      }
+      
+      const img = document.createElement('img');
+      if (imageFile.startsWith('http://') || imageFile.startsWith('https://')) {
+        img.src = imageFile;
+      } else {
+        img.src = `assets/ads/${imageFile}`;
+      }
+      img.alt = 'Advertisement';
+      img.onerror = function() {
+        this.style.display = 'none';
+        // 画像読み込みエラー時は親要素（slideまたはaタグ）にテキストを表示
+        // aタグの場合はクリック可能にするためテキストを表示
+        const errorText = document.createElement('div');
+        errorText.textContent = 'Image not found';
+        errorText.style.color = '#888';
+        errorText.style.display = 'flex';
+        errorText.style.justifyContent = 'center';
+        errorText.style.alignItems = 'center';
+        errorText.style.height = '100%';
+        contentContainer.appendChild(errorText);
+      };
+      
+      contentContainer.appendChild(img);
+      adContent.appendChild(slide);
+
+      // インジケーター
+      const dot = document.createElement('div');
+      dot.className = `ad-dot ${index === currentIndex ? 'active' : ''}`;
+      dot.addEventListener('click', () => {
+        goToSlide(index);
+        resetTimer();
+      });
+      adIndicators.appendChild(dot);
+    });
+
+    // 画像が1枚だけの場合はナビゲーション非表示
+    if (adImages.length <= 1) {
+      if (prevBtn) prevBtn.style.display = 'none';
+      if (nextBtn) nextBtn.style.display = 'none';
+      if (adIndicators) adIndicators.style.display = 'none';
+      return; // タイマーも設定しない
+    }
+
+    function showSlide(index) {
+      const slides = adContent.querySelectorAll('.ad-slide');
+      const dots = adIndicators.querySelectorAll('.ad-dot');
+      
+      slides.forEach(slide => slide.classList.remove('active'));
+      dots.forEach(dot => dot.classList.remove('active'));
+      
+      slides[index].classList.add('active');
+      dots[index].classList.add('active');
+      currentIndex = index;
+    }
+
+    function nextSlide() {
+      let newIndex = currentIndex + 1;
+      if (newIndex >= adImages.length) {
+        newIndex = 0;
+      }
+      showSlide(newIndex);
+    }
+
+    function prevSlide() {
+      let newIndex = currentIndex - 1;
+      if (newIndex < 0) {
+        newIndex = adImages.length - 1;
+      }
+      showSlide(newIndex);
+    }
+
+    function goToSlide(index) {
+      showSlide(index);
+    }
+
+    function startTimer() {
+      slideInterval = setInterval(nextSlide, intervalTime);
+    }
+
+    function stopTimer() {
+      clearInterval(slideInterval);
+    }
+
+    function resetTimer() {
+      stopTimer();
+      startTimer();
+    }
+
+    // イベントリスナー
+    if (nextBtn) {
+      nextBtn.addEventListener('click', () => {
+        nextSlide();
+        resetTimer();
+      });
+    }
+
+    if (prevBtn) {
+      prevBtn.addEventListener('click', () => {
+        prevSlide();
+        resetTimer();
+      });
+    }
+
+    // ホバーでタイマー停止
+    if (adBanner) {
+      adBanner.addEventListener('mouseenter', stopTimer);
+      adBanner.addEventListener('mouseleave', startTimer);
+    }
+
+    // 開始
+    startTimer();
+  }
+
+  loadAdBanner();
 });

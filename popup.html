@@ -15,11 +15,14 @@
 
     body {
       font-family: "Segoe UI", "Meiryo UI", system-ui, -apple-system, sans-serif;
-      width: 700px;
+      width: 750px;
+      box-sizing: border-box;
       padding: 10px;
-      margin-bottom: 40px;
+      margin: 0;
+      margin-bottom: 120px;
       color: var(--text-color);
       background-color: #fff;
+      overflow-x: hidden;
     }
 
     .settings-section {
@@ -131,25 +134,131 @@
     .entry a {
       color: var(--primary-color);
       text-decoration: none;
+      display: inline-block;
+      max-width: 100%;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      vertical-align: bottom;
     }
 
     .entry a:hover {
       text-decoration: underline;
     }
 
-    #fixed-bar {
+    #footer-container {
       position: fixed;
       bottom: 0;
       left: 0;
-      width: calc(100% - 20px);
+      width: 100%;
+      background: white;
+      z-index: 1000;
+      box-shadow: 0 -1px 4px rgba(0, 0, 0, 0.1);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    #ad-wrapper {
+      width: 728px;
+      margin: 0 auto;
+      position: relative;
+    }
+
+    #ad-banner {
+      width: 728px;
+      height: 90px;
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--border-color);
+      background-color: var(--secondary-color);
+    }
+
+    .ad-slide {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      transition: opacity 0.5s ease-in-out;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      pointer-events: none; /* クリックを透過させる（リンクがある場合用） */
+    }
+
+    .ad-slide.active {
+      opacity: 1;
+      z-index: 1;
+      pointer-events: auto;
+    }
+
+    .ad-slide img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .ad-nav-btn {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background-color: rgba(0, 0, 0, 0.3);
+      color: white;
+      border: none;
+      padding: 15px 8px;
+      cursor: pointer;
+      z-index: 10;
+      font-size: 18px;
+      transition: background-color 0.3s;
+      opacity: 0; /* デフォルト非表示 */
+    }
+
+    #ad-banner:hover .ad-nav-btn {
+      opacity: 1;
+    }
+
+    .ad-nav-btn:hover {
+      background-color: rgba(0, 0, 0, 0.7);
+    }
+
+    .ad-nav-btn.prev { left: 0; border-radius: 0 4px 4px 0; }
+    .ad-nav-btn.next { right: 0; border-radius: 4px 0 0 4px; }
+
+    .ad-indicators {
+      position: absolute;
+      bottom: 5px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 6px;
+      z-index: 10;
+    }
+
+    .ad-dot {
+      width: 8px;
+      height: 8px;
+      background-color: rgba(255, 255, 255, 0.5);
+      border-radius: 50%;
+      cursor: pointer;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    }
+
+    .ad-dot.active {
+      background-color: white;
+      transform: scale(1.2);
+    }
+
+    #fixed-bar {
+      width: 100%;
+      box-sizing: border-box;
       background: white;
       border-top: 1px solid var(--border-color);
-      padding: 8px 10px;
-      box-shadow: 0 -1px 4px rgba(0, 0, 0, 0.1);
+      padding: 2px 10px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      z-index: 1000;
     }
 
     #fixed-bar a {
@@ -209,6 +318,10 @@
       }
 
       #fixed-bar {
+        background-color: #1a1a1a;
+      }
+
+      #footer-container {
         background-color: #1a1a1a;
       }
 
@@ -431,21 +544,33 @@
   <div id="history-list"></div>
   <script src="popup.js"></script>
 
-  <div id="fixed-bar">
-    <div id="fixed-bar-left">
-      <a href="popup.html" target="_blank" id="popup-tab-button" data-i18n="popupTab">タブで表示</a>
-      <span data-i18n="languageLabel">Language:</span>
-      <select id="languageSelect">
-        <option value="ja">日本語</option>
-        <option value="en">English</option>
-        <option value="ko">한국어</option>
-      </select>
+  <div id="footer-container">
+    <div id="ad-wrapper">
+      <div id="ad-banner">
+        <div id="ad-content">
+          <!-- JavaScriptで画像を動的に追加 -->
+        </div>
+        <button class="ad-nav-btn prev" id="ad-prev">❮</button>
+        <button class="ad-nav-btn next" id="ad-next">❯</button>
+        <div class="ad-indicators" id="ad-indicators"></div>
+      </div>
     </div>
-    <div id="fixed-bar-right">
-      <button id="btn-support" class="update-history-btn" data-i18n="support">開発を支援する</button>
-      <button id="btn-update-history" class="update-history-btn" data-i18n="updateHistory">アップデート履歴</button>
-      <a href="https://x.com/yuk1_vrc" target="_blank" id="Developer-x-button" data-i18n="DeveloperX">作者X</a>
-      <a href="https://discord.gg/6gvucjC4FE" target="_blank" id="feedback-button" data-i18n="feedback">お問い合わせ</a>
+    <div id="fixed-bar">
+      <div id="fixed-bar-left">
+        <a href="popup.html" target="_blank" id="popup-tab-button" data-i18n="popupTab">タブで表示</a>
+        <span data-i18n="languageLabel">Language:</span>
+        <select id="languageSelect">
+          <option value="ja">日本語</option>
+          <option value="en">English</option>
+          <option value="ko">한국어</option>
+        </select>
+      </div>
+      <div id="fixed-bar-right">
+        <button id="btn-support" class="update-history-btn" data-i18n="support">開発を支援する</button>
+        <button id="btn-update-history" class="update-history-btn" data-i18n="updateHistory">アップデート履歴</button>
+        <a href="https://x.com/yuk1_vrc" target="_blank" id="Developer-x-button" data-i18n="DeveloperX">作者X</a>
+        <a href="https://discord.gg/6gvucjC4FE" target="_blank" id="feedback-button" data-i18n="feedback">お問い合わせ</a>
+      </div>
     </div>
   </div>
 
