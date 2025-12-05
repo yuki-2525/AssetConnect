@@ -787,7 +787,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     let adImages = [];
     try {
-      const response = await fetch('https://assetconnect.sakurayuki.dev/ads/ads.json');
+      const response = await fetch('https://ads.sakurayuki.dev/ads.json');
       if (response.ok) {
         adImages = await response.json();
       } else {
@@ -835,6 +835,7 @@ document.addEventListener('DOMContentLoaded', function () {
         link.style.display = 'block';
         link.style.width = '100%';
         link.style.height = '100%';
+        link.title = linkUrl;
         slide.appendChild(link);
         contentContainer = link;
       }
