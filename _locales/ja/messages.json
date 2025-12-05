@@ -20,6 +20,9 @@
     "toggleFreeLabel": {
         "message": "無料ダウンロードのみ"
     },
+    "toggleUnregisteredLabel": {
+        "message": "未登録アイテムのみ"
+    },
     "toggleGroupLabel": {
         "message": "同一IDのアイテムをまとめる"
     },
@@ -303,7 +306,7 @@
         "message": "インポート中にエラーが発生しました: {error}"
     },
     "avatarClipboardTitle": {
-        "message": "AssetConnect 対応アバター一括コピー"
+        "message": "AssetConnect 一括コピー"
     },
     "unregisteredItemsFound": {
         "message": "未登録のアイテムが見つかりました!!"
@@ -326,6 +329,9 @@
     "restore": {
         "message": "戻す"
     },
+    "alwaysExclude": {
+        "message": "常に除外"
+    },
     "savedSection": {
         "message": "保存済み"
     },
@@ -334,6 +340,9 @@
     },
     "excludedSection": {
         "message": "除外"
+    },
+    "permanentlyExcludedSection": {
+        "message": "常に除外"
     },
     "itemId": {
         "message": "アイテムID"
@@ -418,5 +427,39 @@
     },
     "remainingItemsHelper": {
         "message": "残り{count}個のアイテムも続けて入力できます。"
+    },
+    "downloadAllButton": {
+        "message": "一括ダウンロード"
+    },
+    "downloadAllConfirm": {
+        "message": "$COUNT$個のファイルを一括ダウンロードしますか？\n(ポップアップブロックが有効な場合、許可してください)",
+        "placeholders": {
+            "count": {
+                "content": "$1"
+            }
+        }
+    },
+    "downloadProcessing": {
+        "message": "処理中..."
+    },
+    "downloadProcessingCount": {
+        "message": "処理中... $CURRENT$/$TOTAL$",
+        "placeholders": {
+            "current": {
+                "content": "$1"
+            },
+            "total": {
+                "content": "$2"
+            }
+        }
+    },
+    "avatarsTab": {
+        "message": "アバター"
+    },
+    "tagsTab": {
+        "message": "タグ"
+    },
+    "tagName": {
+        "message": "タグ名"
     }
 }

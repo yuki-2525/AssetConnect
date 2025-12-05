@@ -27,7 +27,8 @@ class UIManager {
     };
     
     // セクション定数
-    this.SECTIONS = ['saved', 'unsaved', 'excluded'];
+    this.SECTIONS = ['saved', 'unsaved', 'excluded', 'permanentlyExcluded'];
+    this.TAG_SECTIONS = ['saved-tags', 'unsaved-tags', 'excluded-tags', 'permanentlyExcluded-tags'];
     
     // モーダル要素セレクター定数
     this.MODAL_SELECTORS = {
@@ -41,6 +42,11 @@ class UIManager {
     this.MODAL_IDS = {
       FAILED_ITEMS: 'booth-failed-items-modal',
       MANUAL_ADD: 'booth-manual-add-modal'
+    };
+    
+    // ストレージキー定数
+    this.STORAGE_KEYS = {
+      WINDOW_SIZE: 'boothClipboardWindowSize'
     };
     
     // 要素ID定数
@@ -67,6 +73,7 @@ class UIManager {
       MANUAL_ADD_TOGGLE_BTN: 'booth-manual-add-toggle-btn',
       SECTION_HEADER: 'booth-section-header',
       EXCLUDE_BTN: 'booth-exclude-btn',
+      PERMANENTLY_EXCLUDE_BTN: 'booth-permanently-exclude-btn',
       RESTORE_BTN: 'booth-restore-btn',
       ITEM_NAME: 'booth-item-name',
       ITEMS_LIST: 'booth-items-list',
@@ -74,10 +81,34 @@ class UIManager {
       FAILED_ITEMS_LIST: 'booth-failed-items-list',
       MANUAL_ADD_FORM: 'booth-manual-add-form',
       MANUAL_INPUTS: 'booth-manual-inputs',
-      MANUAL_INPUT: 'booth-manual-input'
+      MANUAL_INPUT: 'booth-manual-input',
+      TAB_BTN: 'booth-tab-btn',
+      TAB_CONTENT: 'booth-tab-content'
+    };
+    
+    // エンティティタイプ設定（アイテムとタグの統一処理用）
+    this.ENTITY_CONFIG = {
+      item: {
+        storageGet: 'getItem',
+        storageUpdate: 'updateItem',
+        storageSave: 'saveItem',
+        idAttr: 'data-item-id',
+        sectionSuffix: '',
+        logPrefix: 'Item'
+      },
+      tag: {
+        storageGet: 'getTag',
+        storageUpdate: 'updateTag',
+        storageSave: 'saveTag',
+        idAttr: 'data-tag-id',
+        sectionSuffix: '-tags',
+        logPrefix: 'Tag'
+      }
     };
     
     this.initializeCurrentItemId();             // 商品ID取得
+    this.currentTab = 'items'; // デフォルトタブ
+    this.tagsFetched = false;  // タグが既にフェッチされたかどうか
   }
 
   /**
@@ -238,6 +269,138 @@ class UIManager {
   }
 
   /**
+   * 汎用エンティティ名前編集ハンドラ（アイテム・タグ共通）
+   * @param {string} entityType - 'item' または 'tag'
+   * @param {string} entityId - エンティティID
+   * @param {string} newName - 新しい名前
+   */
+  async handleEntityNameEdit(entityType, entityId, newName) {
+    // デバウンス: 既存のタイマーをクリア
+    const timeoutKey = `${entityType}-${entityId}`;
+    if (this.nameEditTimeouts.has(timeoutKey)) {
+      clearTimeout(this.nameEditTimeouts.get(timeoutKey));
+    }
+    
+    const config = this.ENTITY_CONFIG[entityType];
+    const timeoutId = setTimeout(async () => {
+      try {
+        const storageManager = this.validateStorageManager();
+        if (storageManager) {
+          const success = await storageManager[config.storageUpdate](entityId, { name: newName });
+          if (success) {
+            window.debugLogger?.log(`UIManager: ${config.logPrefix} ${entityId} name updated to: ${newName}`);
+          }
+        }
+        this.nameEditTimeouts.delete(timeoutKey);
+      } catch (error) {
+        window.errorHandler?.handleUIError(error, `${entityType}-name-edit`, entityId);
+        this.nameEditTimeouts.delete(timeoutKey);
+      }
+    }, this.DELAYS.DEBOUNCE_INPUT);
+    
+    this.nameEditTimeouts.set(timeoutKey, timeoutId);
+  }
+
+  /**
+   * 汎用エンティティ除外ハンドラ（アイテム・タグ共通）
+   * @param {string} entityType - 'item' または 'tag'
+   * @param {string} entityId - エンティティID
+   * @param {string} currentCategory - 現在のカテゴリ
+   */
+  async handleEntityExclude(entityType, entityId, currentCategory) {
+    const config = this.ENTITY_CONFIG[entityType];
+    window.debugLogger?.log(`UIManager: ${config.logPrefix} excluded:`, entityId, 'from', currentCategory);
+    
+    try {
+      const storageManager = this.validateStorageManager();
+      if (storageManager) {
+        const success = await storageManager[config.storageUpdate](entityId, { 
+          category: 'excluded',
+          previousCategory: currentCategory,
+          currentPageId: entityType === 'item' ? this.currentItemId : (this.currentItemId || window.location.href)
+        });
+        if (!success) {
+          window.errorHandler?.handleUIError(new Error(`Failed to update ${entityType} category in storage`), `${entityType}-exclude`, entityId);
+          return;
+        }
+      }
+      
+      this.refreshItemDisplay();
+      window.debugLogger?.log(`UIManager: ${config.logPrefix} ${entityId} moved to excluded section`);
+    } catch (error) {
+      window.errorHandler?.handleUIError(error, `${entityType}-exclude`, entityId);
+    }
+  }
+
+  /**
+   * 汎用エンティティ復元ハンドラ（アイテム・タグ共通）
+   * @param {string} entityType - 'item' または 'tag'
+   * @param {string} entityId - エンティティID
+   * @param {string} originalCategory - 元のカテゴリ
+   */
+  async handleEntityRestore(entityType, entityId, originalCategory) {
+    const config = this.ENTITY_CONFIG[entityType];
+    window.debugLogger?.log(`UIManager: ${config.logPrefix} restored:`, entityId, 'to', originalCategory);
+    
+    try {
+      const storageManager = this.validateStorageManager();
+      if (storageManager) {
+        const currentPageId = originalCategory === 'unsaved' 
+          ? (entityType === 'item' ? this.currentItemId : (this.currentItemId || window.location.href))
+          : undefined;
+        
+        const success = await storageManager[config.storageUpdate](entityId, { 
+          category: originalCategory,
+          previousCategory: null,
+          currentPageId
+        });
+        if (!success) {
+          window.errorHandler?.handleUIError(new Error(`Failed to restore ${entityType} category in storage`), `${entityType}-restore`, entityId);
+          return;
+        }
+      }
+      
+      this.refreshItemDisplay();
+      window.debugLogger?.log(`UIManager: ${config.logPrefix} ${entityId} restored to ${originalCategory} section`);
+    } catch (error) {
+      window.errorHandler?.handleUIError(error, `${entityType}-restore`, entityId);
+    }
+  }
+
+  /**
+   * 汎用エンティティ常時除外ハンドラ（アイテム・タグ共通）
+   * @param {string} entityType - 'item' または 'tag'
+   * @param {string} entityId - エンティティID
+   */
+  async handleEntityPermanentlyExclude(entityType, entityId) {
+    const config = this.ENTITY_CONFIG[entityType];
+    window.debugLogger?.log(`UIManager: ${config.logPrefix} permanently excluded:`, entityId);
+    
+    try {
+      const storageManager = this.validateStorageManager();
+      if (storageManager) {
+        const currentEntity = await storageManager[config.storageGet](entityId);
+        const previousCategory = currentEntity?.previousCategory || currentEntity?.category || 'unsaved';
+        
+        const success = await storageManager[config.storageUpdate](entityId, { 
+          category: 'permanentlyExcluded',
+          previousCategory: previousCategory,
+          currentPageId: undefined
+        });
+        if (!success) {
+          window.errorHandler?.handleUIError(new Error(`Failed to permanently exclude ${entityType} in storage`), `${entityType}-permanently-exclude`, entityId);
+          return;
+        }
+      }
+      
+      this.refreshItemDisplay();
+      window.debugLogger?.log(`UIManager: ${config.logPrefix} ${entityId} permanently excluded`);
+    } catch (error) {
+      window.errorHandler?.handleUIError(error, `${entityType}-permanently-exclude`, entityId);
+    }
+  }
+
+  /**
    * バリデーション処理を行うヘルパーメソッド
    * @param {string} itemId - アイテムID
    * @param {string} itemName - アイテム名
@@ -310,7 +473,8 @@ class UIManager {
    * 全セクションをクリアするヘルパーメソッド
    */
   clearAllSections() {
-    this.SECTIONS.forEach(section => {
+    const allSections = [...this.SECTIONS, ...this.TAG_SECTIONS];
+    allSections.forEach(section => {
       const container = this.getCachedElement(`${section}-items`);
       if (container) {
         container.innerHTML = '';
@@ -348,18 +512,44 @@ class UIManager {
   }
 
   /**
-   * フィルタリングされたアイテムを表示するヘルパーメソッド
-   * @param {Object} pageItems - ページアイテムデータ
-   * @param {Set} pageItemIds - 表示するアイテムIDのセット
+   * セクションHTML生成ヘルパーメソッド
+   * @param {string} sectionId - セクションID
+   * @param {string} labelKey - ラベル翻訳キー
+   * @param {boolean} collapsed - 折りたたみ状態
+   * @returns {string} セクションHTML
    */
-  displayFilteredItems(pageItems, pageItemIds) {
-    Object.values(pageItems).forEach(item => {
-      if (pageItemIds.has(item.id)) {
-        const category = item.category || 'unsaved';
-        this.addItemToSection(category, item);
-        window.debugLogger?.log(`RefreshItemDisplay: Added item ${item.id} to ${category} category`);
-      }
-    });
+  generateSectionHtml(sectionId, labelKey, collapsed = false) {
+    const collapsedClass = collapsed ? ' collapsed' : '';
+    const toggleIcon = collapsed ? '▶' : '▼';
+    const displayStyle = collapsed ? ' style="display: none;"' : '';
+    const label = this.getMessage(labelKey) || labelKey;
+    
+    return `
+      <div class="booth-section" id="${sectionId}-section">
+        <h4 class="booth-section-header${collapsedClass}" data-section="${sectionId}">
+          <span class="booth-section-toggle">${toggleIcon}</span>
+          ${label}
+          <span class="booth-section-count" id="${sectionId}-count">0</span>
+        </h4>
+        <div class="booth-items-list" id="${sectionId}-items"${displayStyle}></div>
+      </div>
+    `;
+  }
+
+  /**
+   * タブコンテンツ用のセクションHTML一括生成
+   * @param {string} suffix - タグ用の場合は '-tags'
+   * @returns {string} セクションHTML
+   */
+  generateAllSectionsHtml(suffix = '') {
+    const sections = [
+      { id: `saved${suffix}`, labelKey: 'savedSection', collapsed: true },
+      { id: `unsaved${suffix}`, labelKey: 'unsavedSection', collapsed: false },
+      { id: `excluded${suffix}`, labelKey: 'excludedSection', collapsed: false },
+      { id: `permanentlyExcluded${suffix}`, labelKey: 'permanentlyExcludedSection', collapsed: true }
+    ];
+    
+    return sections.map(s => this.generateSectionHtml(s.id, s.labelKey, s.collapsed)).join('');
   }
 
   /**
@@ -387,58 +577,203 @@ class UIManager {
           <button class="booth-manager-close" type="button">×</button>
         </div>
       </div>
+      <div class="booth-manager-tabs">
+        <button class="booth-tab-btn active" data-tab="items">${this.getMessage('avatarsTab') || 'Avatars'}</button>
+        <button class="booth-tab-btn" data-tab="tags">${this.getMessage('tagsTab') || 'Tags'}</button>
+      </div>
       <div class="booth-manager-content">
-        <div class="booth-manager-notification" id="booth-notification" style="display: none;">
-          <p>${this.getMessage('unregisteredItemsFound')}</p>
-          <div class="booth-found-items" id="booth-found-items" style="display: none;"></div>
-          <div class="booth-notification-actions">
-            <button class="booth-fetch-btn" type="button">${this.getMessage('fetchItemInfo')}</button>
+        <div id="items-tab-content" class="booth-tab-content active">
+          <div class="booth-manager-notification" id="booth-notification" style="display: none;">
+            <p>${this.getMessage('unregisteredItemsFound')}</p>
+            <div class="booth-found-items" id="booth-found-items" style="display: none;"></div>
+            <div class="booth-notification-actions">
+              <button class="booth-fetch-btn" type="button">${this.getMessage('fetchItemInfo')}</button>
+            </div>
+          </div>
+          <div class="booth-manager-sections">
+            ${this.generateAllSectionsHtml()}
           </div>
         </div>
-        <div class="booth-manager-sections">
-          <div class="booth-section" id="saved-section">
-            <h4 class="booth-section-header collapsed" data-section="saved">
-              <span class="booth-section-toggle">▶</span>
-              ${this.getMessage('savedSection')}
-              <span class="booth-section-count" id="saved-count">0</span>
-            </h4>
-            <div class="booth-items-list" id="saved-items" style="display: none;"></div>
+        <div id="tags-tab-content" class="booth-tab-content" style="display: none;">
+          <div class="booth-manager-notification booth-tags-notification" id="booth-tags-notification" style="display: none;">
+            <p></p>
           </div>
-          <div class="booth-section" id="unsaved-section">
-            <h4 class="booth-section-header" data-section="unsaved">
-              <span class="booth-section-toggle">▼</span>
-              ${this.getMessage('unsavedSection')}
-              <span class="booth-section-count" id="unsaved-count">0</span>
-            </h4>
-            <div class="booth-items-list" id="unsaved-items"></div>
-          </div>
-          <div class="booth-section" id="excluded-section">
-            <h4 class="booth-section-header" data-section="excluded">
-              <span class="booth-section-toggle">▼</span>
-              ${this.getMessage('excludedSection')}
-              <span class="booth-section-count" id="excluded-count">0</span>
-            </h4>
-            <div class="booth-items-list" id="excluded-items"></div>
+          <div class="booth-manager-sections">
+            ${this.generateAllSectionsHtml('-tags')}
           </div>
         </div>
-        <div class="booth-manager-actions">
-          <button class="booth-export-btn" type="button">${this.getMessage('copyToClipboard')}</button>
-          <button class="booth-manual-add-toggle-btn" type="button">${this.getMessage('manualAdd')}</button>
-        </div>
+      </div>
+      <div class="booth-manager-actions">
+        <button class="booth-export-btn" type="button">${this.getMessage('copyToClipboard')}</button>
+        <button class="booth-manual-add-toggle-btn" type="button">${this.getMessage('manualAdd')}</button>
       </div>
     `;
   // start minimized (タイトルのみ表示)
   windowContainer.classList.add('minimized');
 
+  // リサイズハンドルを追加
+  this.addResizeHandles(windowContainer);
+
   this.attachEventListeners(windowContainer);
     document.body.appendChild(windowContainer);
     this.managementWindow = windowContainer;
     
-    // DOM要素をキャッシュ
+    // DOM要素をキャッシュ（アバター用）
     this.notificationEl = this.getCachedElement('booth-notification');
     this.foundItemsEl = this.getCachedElement('booth-found-items');
+    // DOM要素をキャッシュ（タグ用）
+    this.tagsNotificationEl = this.getCachedElement('booth-tags-notification');
     
     return windowContainer;
+  }
+
+  /**
+   * リサイズハンドルを追加
+   * @param {HTMLElement} container - ウィンドウコンテナ
+   */
+  addResizeHandles(container) {
+    // 上辺のリサイズハンドル
+    const topHandle = document.createElement('div');
+    topHandle.className = 'booth-resize-handle booth-resize-handle-top';
+    container.appendChild(topHandle);
+
+    // 左辺のリサイズハンドル
+    const leftHandle = document.createElement('div');
+    leftHandle.className = 'booth-resize-handle booth-resize-handle-left';
+    container.appendChild(leftHandle);
+
+    // 左上角のリサイズハンドル
+    const cornerHandle = document.createElement('div');
+    cornerHandle.className = 'booth-resize-handle booth-resize-handle-corner';
+    container.appendChild(cornerHandle);
+
+    // リサイズイベントを設定
+    this.setupResizeEvents(topHandle, 'top');
+    this.setupResizeEvents(leftHandle, 'left');
+    this.setupResizeEvents(cornerHandle, 'corner');
+  }
+
+  /**
+   * リサイズイベントを設定
+   * @param {HTMLElement} handle - リサイズハンドル
+   * @param {string} direction - リサイズ方向 ('top', 'left', 'corner')
+   */
+  setupResizeEvents(handle, direction) {
+    let isResizing = false;
+    let startX, startY, startWidth, startHeight, startBottom, startRight;
+
+    const onMouseDown = (e) => {
+      // 最小化状態ではリサイズ不可
+      if (this.managementWindow.classList.contains('minimized')) return;
+      
+      isResizing = true;
+      startX = e.clientX;
+      startY = e.clientY;
+      
+      const rect = this.managementWindow.getBoundingClientRect();
+      startWidth = rect.width;
+      startHeight = rect.height;
+      startBottom = window.innerHeight - rect.bottom;
+      startRight = window.innerWidth - rect.right;
+
+      document.addEventListener('mousemove', onMouseMove);
+      document.addEventListener('mouseup', onMouseUp);
+      
+      // テキスト選択を防ぐ
+      e.preventDefault();
+    };
+
+    const onMouseMove = (e) => {
+      if (!isResizing) return;
+
+      const deltaX = startX - e.clientX;
+      const deltaY = startY - e.clientY;
+
+      if (direction === 'top' || direction === 'corner') {
+        // 上方向へのリサイズ（高さを増やす）
+        const newHeight = Math.min(Math.max(startHeight + deltaY, 200), 1300);
+        this.managementWindow.style.height = `${newHeight}px`;
+        // max-heightは設定しない（flexboxで管理）
+        this.updateContentMaxHeight(newHeight);
+      }
+
+      if (direction === 'left' || direction === 'corner') {
+        // 左方向へのリサイズ（幅を増やす）
+        const newWidth = Math.min(Math.max(startWidth + deltaX, 300), 600);
+        this.managementWindow.style.width = `${newWidth}px`;
+      }
+    };
+
+    const onMouseUp = () => {
+      isResizing = false;
+      document.removeEventListener('mousemove', onMouseMove);
+      document.removeEventListener('mouseup', onMouseUp);
+      
+      // リサイズ完了時にサイズを保存
+      this.saveWindowSize();
+    };
+
+    handle.addEventListener('mousedown', onMouseDown);
+  }
+
+  /**
+   * ウィンドウサイズをストレージに保存
+   */
+  async saveWindowSize() {
+    if (!this.managementWindow) return;
+    
+    const rect = this.managementWindow.getBoundingClientRect();
+    const size = {
+      width: rect.width,
+      height: rect.height
+    };
+    
+    try {
+      await chrome.storage.local.set({ [this.STORAGE_KEYS.WINDOW_SIZE]: size });
+      window.debugLogger?.log('UIManager: Window size saved:', size);
+    } catch (error) {
+      window.debugLogger?.log('UIManager: Failed to save window size:', error);
+    }
+  }
+
+  /**
+   * 保存されたウィンドウサイズを読み込んで適用
+   */
+  async loadWindowSize() {
+    if (!this.managementWindow) return;
+    
+    try {
+      const result = await chrome.storage.local.get(this.STORAGE_KEYS.WINDOW_SIZE);
+      const size = result[this.STORAGE_KEYS.WINDOW_SIZE];
+      
+      if (size && size.width && size.height) {
+        // 保存されたサイズを適用（制限内に収める）
+        const width = Math.min(Math.max(size.width, 300), 600);
+        const height = Math.min(Math.max(size.height, 200), 1300);
+        
+        this.managementWindow.style.width = `${width}px`;
+        this.managementWindow.style.height = `${height}px`;
+        // max-heightは設定しない（flexboxで管理）
+        this.updateContentMaxHeight(height);
+        
+        window.debugLogger?.log('UIManager: Window size loaded:', { width, height });
+      }
+    } catch (error) {
+      window.debugLogger?.log('UIManager: Failed to load window size:', error);
+    }
+  }
+
+  /**
+   * コンテンツ領域の最大高さを更新
+   * @param {number} windowHeight - ウィンドウ全体の高さ
+   */
+  updateContentMaxHeight(windowHeight) {
+    const content = this.managementWindow.querySelector('.booth-manager-content');
+    if (content) {
+      // header(44px) + tabs(42px) + actions(60px) = 146px
+      const contentHeight = windowHeight - 146;
+      content.style.height = `${Math.max(contentHeight, 50)}px`;
+    }
   }
 
   attachEventListeners(container) {
@@ -454,13 +789,31 @@ class UIManager {
       if (element) element.addEventListener('click', handler);
     });
 
+    // タブ切り替え
+    const tabBtns = container.querySelectorAll(`.${this.CSS_CLASSES.TAB_BTN}`);
+    tabBtns.forEach(btn => {
+      btn.addEventListener('click', (e) => this.handleTabChange(e.target));
+    });
+
+    // タブバー領域クリックで展開（最小化はしない）
+    const tabsEl = container.querySelector('.booth-manager-tabs');
+    if (tabsEl) {
+      tabsEl.addEventListener('click', (e) => {
+        // 最小化状態の場合のみ展開する
+        if (this.managementWindow && this.managementWindow.classList.contains('minimized')) {
+          this.expandWindow();
+        }
+        // 展開状態の場合は何もしない（最小化しない）
+      });
+    }
+
     // セクショントグル機能
     const sectionHeaders = container.querySelectorAll(`.${this.CSS_CLASSES.SECTION_HEADER}`);
     sectionHeaders.forEach(header => {
       header.addEventListener('click', () => this.handleSectionToggle(header));
     });
 
-    // タイトル部クリックで最小化/展開を切り替える（コントロール部クリックは無視）
+    // タイトル部クリックで最小化/展開を切り替える（コントロール部とタブ領域のクリックは無視）
     const headerEl = container.querySelector('.booth-manager-header');
     if (headerEl) {
       headerEl.addEventListener('click', (e) => {
@@ -468,6 +821,49 @@ class UIManager {
         if (e.target.closest('.booth-manager-controls')) return;
         this.toggleMinimized();
       });
+    }
+  }
+
+  handleTabChange(targetBtn) {
+    const tabName = targetBtn.getAttribute('data-tab');
+    if (this.currentTab === tabName) return;
+
+    this.currentTab = tabName;
+
+    // タブボタンのスタイル更新
+    const tabBtns = this.managementWindow.querySelectorAll(`.${this.CSS_CLASSES.TAB_BTN}`);
+    tabBtns.forEach(btn => {
+      if (btn.getAttribute('data-tab') === tabName) {
+        btn.classList.add('active');
+      } else {
+        btn.classList.remove('active');
+      }
+    });
+
+    // タブコンテンツの表示切り替え
+    const itemsContent = this.managementWindow.querySelector('#items-tab-content');
+    const tagsContent = this.managementWindow.querySelector('#tags-tab-content');
+    const manualAddBtn = this.managementWindow.querySelector(`.${this.CSS_CLASSES.MANUAL_ADD_TOGGLE_BTN}`);
+
+    if (tabName === 'items') {
+      itemsContent.style.display = 'block';
+      itemsContent.classList.add('active');
+      tagsContent.style.display = 'none';
+      tagsContent.classList.remove('active');
+      // アバタータブでは手動追加ボタンを表示
+      if (manualAddBtn) manualAddBtn.style.display = 'inline-block';
+    } else {
+      itemsContent.style.display = 'none';
+      itemsContent.classList.remove('active');
+      tagsContent.style.display = 'block';
+      tagsContent.classList.add('active');
+      // タグタブでは手動追加ボタンを非表示
+      if (manualAddBtn) manualAddBtn.style.display = 'none';
+      
+      // タグタブへの初回切り替え時のみタグをフェッチ
+      if (!this.tagsFetched) {
+        this.fetchAndDisplayTags();
+      }
     }
   }
 
@@ -523,13 +919,45 @@ class UIManager {
     });
   }
 
-  showWindow() {
+  async showWindow() {
     if (!this.managementWindow) {
       this.createManagementWindow();
     }
     // 表示時はデフォルトで最小化状態（タイトルのみ）にする
     this.managementWindow.style.display = 'block';
     this.managementWindow.classList.add('minimized');
+    // リサイズで設定されたインラインスタイルをクリア（高さのみ）
+    this.managementWindow.style.height = '';
+    this.managementWindow.style.maxHeight = '';
+    
+    // 保存された幅を適用
+    try {
+      const result = await chrome.storage.local.get(this.STORAGE_KEYS.WINDOW_SIZE);
+      const size = result[this.STORAGE_KEYS.WINDOW_SIZE];
+      if (size && size.width) {
+        const width = Math.min(Math.max(size.width, 300), 600);
+        this.managementWindow.style.width = `${width}px`;
+      }
+    } catch (error) {
+      window.debugLogger?.log('UIManager: Failed to load window width:', error);
+    }
+  }
+
+  async expandWindow() {
+    if (!this.managementWindow) return;
+    this.managementWindow.classList.remove('minimized');
+    
+    // 保存されたサイズを読み込んで適用
+    await this.loadWindowSize();
+    
+    const content = this.managementWindow.querySelector('.booth-manager-content');
+    const actions = this.managementWindow.querySelector('.booth-manager-actions');
+    if (content) {
+      content.style.display = 'block';
+    }
+    if (actions) {
+      actions.style.display = 'flex';
+    }
   }
 
   hideWindow() {
@@ -541,18 +969,36 @@ class UIManager {
   /**
    * Toggle minimized/expanded state for the management window
    */
-  toggleMinimized() {
+  async toggleMinimized() {
     if (!this.managementWindow) return;
     const isNowMinimized = this.managementWindow.classList.toggle('minimized');
 
+    // 最小化時はリサイズで設定されたインラインスタイルをクリア
+    if (isNowMinimized) {
+      this.managementWindow.style.height = '';
+      this.managementWindow.style.maxHeight = '';
+    } else {
+      // 展開時は保存されたサイズを読み込んで適用
+      await this.loadWindowSize();
+    }
+
     const content = this.managementWindow.querySelector('.booth-manager-content');
+    const actions = this.managementWindow.querySelector('.booth-manager-actions');
     if (content) {
       if (isNowMinimized) {
         content.style.display = 'none';
+        content.style.maxHeight = '';
       } else {
         content.style.display = 'block';
         // フォーカスやスクロールの微調整を行う
         content.scrollTop = 0;
+      }
+    }
+    if (actions) {
+      if (isNowMinimized) {
+        actions.style.display = 'none';
+      } else {
+        actions.style.display = 'flex';
       }
     }
   }
@@ -629,30 +1075,25 @@ class UIManager {
     }
   }
 
-  attachItemEventListeners(itemEl) {
-    const nameInput = itemEl.querySelector(`.${this.CSS_CLASSES.ITEM_NAME}`);
-    if (nameInput) {
-      nameInput.addEventListener('input', (e) => {
-        this.handleNameEdit(itemEl.getAttribute('data-item-id'), e.target.value);
-      });
+  // タグ用通知メソッド（シンプル版）
+  showTagsNotification(message) {
+    if (this.tagsNotificationEl) {
+      this.tagsNotificationEl.style.display = 'block';
+      const messageEl = this.tagsNotificationEl.querySelector('p');
+      if (messageEl) {
+        messageEl.innerHTML = message;
+      }
     }
+  }
 
-    // 除外ボタン（×ボタン）
-    const excludeBtn = itemEl.querySelector(`.${this.CSS_CLASSES.EXCLUDE_BTN}`);
-    if (excludeBtn) {
-      excludeBtn.addEventListener('click', (e) => {
-        const currentCategory = this.extractCategoryFromElement(itemEl);
-        this.handleItemExclude(itemEl.getAttribute('data-item-id'), currentCategory);
-      });
-    }
+  showTagsNotificationWithTimeout(message, delay = this.DELAYS.NOTIFICATION_SHORT) {
+    this.showTagsNotification(message);
+    setTimeout(() => this.hideTagsNotification(), delay);
+  }
 
-    // 復元ボタン
-    const restoreBtn = itemEl.querySelector(`.${this.CSS_CLASSES.RESTORE_BTN}`);
-    if (restoreBtn) {
-      restoreBtn.addEventListener('click', (e) => {
-        const originalCategory = e.target.getAttribute('data-original-category');
-        this.handleItemRestore(itemEl.getAttribute('data-item-id'), originalCategory);
-      });
+  hideTagsNotification() {
+    if (this.tagsNotificationEl) {
+      this.tagsNotificationEl.style.display = 'none';
     }
   }
 
@@ -675,7 +1116,12 @@ class UIManager {
       const storageManager = this.validateStorageManager();
       if (!storageManager) return;
 
-      const result = await clipboardManager.exportSavedAndNewItems(storageManager);
+      let result;
+      if (this.currentTab === 'tags') {
+        result = await clipboardManager.exportSavedAndNewTags(storageManager);
+      } else {
+        result = await clipboardManager.exportSavedAndNewItems(storageManager);
+      }
       
       if (result.success) {
         let message = this.getMessage('itemsCopiedToClipboard', { count: result.itemCount });
@@ -705,87 +1151,10 @@ class UIManager {
     }
   }
 
-  async handleNameEdit(itemId, newName) {
-    // デバウンス: 既存のタイマーをクリア
-    if (this.nameEditTimeouts.has(itemId)) {
-      clearTimeout(this.nameEditTimeouts.get(itemId));
-    }
-    
-    // 設定された遅延時間後に実行するタイマーを設定
-    const timeoutId = setTimeout(async () => {
-      try {
-        // ストレージ内のアイテム名を更新
-        const storageManager = this.validateStorageManager();
-        if (storageManager) {
-          const success = await storageManager.updateItem(itemId, { name: newName });
-          if (success) {
-            window.debugLogger?.log(`UIManager: Item ${itemId} name updated to: ${newName}`);
-          }
-        }
-        // タイマー完了後にMapから削除
-        this.nameEditTimeouts.delete(itemId);
-      } catch (error) {
-        window.errorHandler?.handleUIError(error, 'name-edit', itemId);
-        this.nameEditTimeouts.delete(itemId);
-      }
-    }, this.DELAYS.DEBOUNCE_INPUT); // デバウンス待機
-    
-    this.nameEditTimeouts.set(itemId, timeoutId);
-  }
-
-  async handleItemExclude(itemId, currentCategory) {
-    window.debugLogger?.log('UIManager: Item excluded:', itemId, 'from', currentCategory);
-    
-    try {
-      const storageManager = this.validateStorageManager();
-      if (storageManager) {
-        const success = await storageManager.updateItem(itemId, { 
-          category: 'excluded',
-          previousCategory: currentCategory,
-          currentPageId: this.currentItemId
-        });
-        if (!success) {
-          window.errorHandler?.handleUIError(new Error('Failed to update item category in storage'), 'item-exclude', itemId);
-          return;
-        }
-      }
-      
-      // 正しいボタンを表示するために表示を更新
-      this.refreshItemDisplay();
-      
-      window.debugLogger?.log(`UIManager: Item ${itemId} moved to excluded section`);
-    } catch (error) {
-      window.errorHandler?.handleUIError(error, 'item-exclude', itemId);
-    }
-  }
-
-  async handleItemRestore(itemId, originalCategory) {
-    window.debugLogger?.log('UIManager: Item restored:', itemId, 'to', originalCategory);
-    
-    try {
-      const storageManager = this.validateStorageManager();
-      if (storageManager) {
-        const success = await storageManager.updateItem(itemId, { 
-          category: originalCategory,
-          previousCategory: null,
-          currentPageId: originalCategory === 'unsaved' ? this.currentItemId : undefined
-        });
-        if (!success) {
-          window.errorHandler?.handleUIError(new Error('Failed to restore item category in storage'), 'item-restore', itemId);
-          return;
-        }
-      }
-      
-      // 正しいボタンを表示するために表示を更新
-      this.refreshItemDisplay();
-      
-      window.debugLogger?.log(`UIManager: Item ${itemId} restored to ${originalCategory} section`);
-    } catch (error) {
-      window.errorHandler?.handleUIError(error, 'item-restore', itemId);
-    }
-  }
-
   showFailedItemsModal(failedItems) {
+    // モーダルを表示するためにウィンドウを展開
+    this.expandWindow();
+
     // 既存のモーダルがある場合は削除
     this.hideFailedItemsModal();
     
@@ -819,36 +1188,76 @@ class UIManager {
     this.focusModalElement(modalOverlay, '.booth-failed-items-confirm-btn');
   }
 
-  hideFailedItemsModal() {
-    const existingModal = this.getCachedElement(this.MODAL_IDS.FAILED_ITEMS);
+  /**
+   * 汎用モーダル非表示メソッド
+   * @param {string} modalId - モーダルID
+   */
+  hideModal(modalId) {
+    const existingModal = document.getElementById(modalId);
     if (existingModal) {
       existingModal.remove();
-      this.domCache.delete(this.MODAL_IDS.FAILED_ITEMS);
+      this.domCache.delete(modalId);
     }
   }
 
-  attachFailedItemsModalEventListeners(modal, failedItems) {
+  hideFailedItemsModal() {
+    this.hideModal(this.MODAL_IDS.FAILED_ITEMS);
+  }
+
+  /**
+   * 汎用モーダルイベントリスナー設定
+   * @param {HTMLElement} modal - モーダル要素
+   * @param {Function} hideCallback - 非表示コールバック
+   * @param {Function} confirmCallback - 確認コールバック（オプション）
+   */
+  attachCommonModalEventListeners(modal, hideCallback, confirmCallback = null) {
     // 閉じるボタン
     const closeBtn = this.getModalElement(modal, this.MODAL_SELECTORS.CLOSE);
-    closeBtn.addEventListener('click', () => this.hideFailedItemsModal());
+    if (closeBtn) {
+      closeBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        hideCallback();
+      });
+    }
     
     // キャンセルボタン
     const cancelBtn = this.getModalElement(modal, this.MODAL_SELECTORS.CANCEL);
-    cancelBtn.addEventListener('click', () => this.hideFailedItemsModal());
+    if (cancelBtn) {
+      cancelBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        hideCallback();
+      });
+    }
     
     // 確認ボタン
-    const confirmBtn = this.getModalElement(modal, this.MODAL_SELECTORS.CONFIRM);
-    confirmBtn.addEventListener('click', () => {
-      this.hideFailedItemsModal();
-      this.handleFailedItemsConfirm(failedItems);
-    });
+    if (confirmCallback) {
+      const confirmBtn = this.getModalElement(modal, this.MODAL_SELECTORS.CONFIRM);
+      if (confirmBtn) {
+        confirmBtn.addEventListener('click', (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          hideCallback();
+          confirmCallback();
+        });
+      }
+    }
     
     // 外側クリックで閉じる
     modal.addEventListener('click', (e) => {
       if (e.target === modal) {
-        this.hideFailedItemsModal();
+        hideCallback();
       }
     });
+  }
+
+  attachFailedItemsModalEventListeners(modal, failedItems) {
+    this.attachCommonModalEventListeners(
+      modal,
+      () => this.hideFailedItemsModal(),
+      () => this.handleFailedItemsConfirm(failedItems)
+    );
   }
 
   handleFailedItemsConfirm(failedItems) {
@@ -893,6 +1302,9 @@ class UIManager {
   }
 
   showManualAddModal() {
+    // モーダルを表示するためにウィンドウを展開
+    this.expandWindow();
+
     // 既存のモーダルがある場合は削除
     this.hideManualAddModal();
     
@@ -925,43 +1337,35 @@ class UIManager {
   }
 
   hideManualAddModal() {
-    const existingModal = this.getCachedElement(this.MODAL_IDS.MANUAL_ADD);
-    if (existingModal) {
-      existingModal.remove();
-      this.domCache.delete(this.MODAL_IDS.MANUAL_ADD);
-    }
+    this.hideModal(this.MODAL_IDS.MANUAL_ADD);
   }
 
   attachModalEventListeners(modal) {
-    // 閉じるボタン
-    const closeBtn = this.getModalElement(modal, this.MODAL_SELECTORS.CLOSE);
-    closeBtn.addEventListener('click', () => this.hideManualAddModal());
-    
-    // キャンセルボタン
-    const cancelBtn = this.getModalElement(modal, this.MODAL_SELECTORS.CANCEL);
-    cancelBtn.addEventListener('click', () => this.hideManualAddModal());
+    this.attachCommonModalEventListeners(modal, () => this.hideManualAddModal());
     
     // 追加ボタン
     const addBtn = this.getModalElement(modal, this.MODAL_SELECTORS.ADD);
-    addBtn.addEventListener('click', () => this.handleModalManualAdd());
-    
-    // 外側クリックで閉じる
-    modal.addEventListener('click', (e) => {
-      if (e.target === modal) {
-        this.hideManualAddModal();
-      }
-    });
+    if (addBtn) {
+      addBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        this.handleModalManualAdd();
+      });
+    }
     
     // エンターキーサポート
     const idInput = this.getCachedElement(this.ELEMENT_IDS.MANUAL_ITEM_ID);
     const nameInput = this.getCachedElement(this.ELEMENT_IDS.MANUAL_ITEM_NAME);
     
     [idInput, nameInput].forEach(input => {
-      input.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-          this.handleModalManualAdd();
-        }
-      });
+      if (input) {
+        input.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            this.handleModalManualAdd();
+          }
+        });
+      }
     });
   }
 
@@ -1041,17 +1445,103 @@ class UIManager {
     window.debugLogger?.log(`UIManager: Section ${sectionId} ${isCollapsed ? 'expanded' : 'collapsed'}`);
   }
 
+  /**
+   * セクションのアイテム数を更新するヘルパーメソッド
+   */
   updateSectionCounts() {
-    this.SECTIONS.forEach(sectionId => {
+    const allSections = [...this.SECTIONS, ...this.TAG_SECTIONS];
+    allSections.forEach(sectionId => {
       const itemsList = this.getCachedElement(`${sectionId}-items`);
       const countElement = this.getCachedElement(`${sectionId}-count`);
       
       if (itemsList && countElement) {
         const itemCount = itemsList.querySelectorAll(`.${this.CSS_CLASSES.BOOTH_ITEM}`).length;
         countElement.textContent = itemCount;
-        window.debugLogger?.log(`UIManager: Updated ${sectionId} count to ${itemCount}`);
       }
     });
+  }
+
+  /**
+   * エンティティ用ボタンHTMLを生成するヘルパーメソッド
+   * @param {string} entityType - 'item' または 'tag'
+   * @param {string} sectionId - セクションID
+   * @param {Object} entityData - エンティティデータ
+   * @returns {string} ボタンHTML
+   */
+  generateEntityButtons(entityType, sectionId, entityData) {
+    const dataTypeAttr = entityType === 'tag' ? ' data-type="tag"' : '';
+    const baseSectionId = sectionId.replace('-tags', '');
+    
+    if (baseSectionId === 'excluded') {
+      // 除外: 復元ボタンと常に除外ボタンを表示
+      return `
+        <button class="${this.CSS_CLASSES.RESTORE_BTN}"${dataTypeAttr} data-original-category="${entityData.previousCategory || 'unsaved'}">${this.getMessage('restore')}</button>
+        <button class="${this.CSS_CLASSES.PERMANENTLY_EXCLUDE_BTN}"${dataTypeAttr}>${this.getMessage('alwaysExclude')}</button>
+      `;
+    } else if (baseSectionId === 'permanentlyExcluded') {
+      // 常に除外: 復元ボタンのみ表示
+      return `
+        <button class="${this.CSS_CLASSES.RESTORE_BTN}"${dataTypeAttr} data-original-category="${entityData.previousCategory || 'unsaved'}">${this.getMessage('restore')}</button>
+      `;
+    } else if (baseSectionId === 'unsaved' && entityType === 'tag') {
+      // 新規タグ: 除外ボタンと常に除外ボタンを表示
+      return `
+        <button class="${this.CSS_CLASSES.EXCLUDE_BTN}"${dataTypeAttr} data-target="excluded">${this.getMessage('exclude')}</button>
+        <button class="${this.CSS_CLASSES.PERMANENTLY_EXCLUDE_BTN}"${dataTypeAttr}>${this.getMessage('alwaysExclude')}</button>
+      `;
+    } else {
+      // 保存済み・新規アイテム: 除外ボタンのみ表示
+      return `
+        <button class="${this.CSS_CLASSES.EXCLUDE_BTN}"${dataTypeAttr} data-target="excluded">${this.getMessage('exclude')}</button>
+      `;
+    }
+  }
+
+  /**
+   * 汎用エンティティイベントリスナー設定
+   * @param {string} entityType - 'item' または 'tag'
+   * @param {HTMLElement} entityEl - エンティティ要素
+   */
+  attachEntityEventListeners(entityType, entityEl) {
+    const config = this.ENTITY_CONFIG[entityType];
+    const entityId = entityEl.getAttribute(config.idAttr);
+    
+    // 名前入力
+    const nameInput = entityEl.querySelector(`.${this.CSS_CLASSES.ITEM_NAME}`);
+    if (nameInput) {
+      nameInput.addEventListener('input', (e) => {
+        this.handleEntityNameEdit(entityType, entityId, e.target.value);
+      });
+    }
+
+    // 除外ボタン
+    const excludeBtn = entityEl.querySelector(`.${this.CSS_CLASSES.EXCLUDE_BTN}`);
+    if (excludeBtn) {
+      excludeBtn.addEventListener('click', () => {
+        let currentCategory = this.extractCategoryFromElement(entityEl);
+        if (entityType === 'tag') {
+          currentCategory = currentCategory.replace('-tags', '');
+        }
+        this.handleEntityExclude(entityType, entityId, currentCategory);
+      });
+    }
+
+    // 常に除外ボタン
+    const permanentlyExcludeBtn = entityEl.querySelector(`.${this.CSS_CLASSES.PERMANENTLY_EXCLUDE_BTN}`);
+    if (permanentlyExcludeBtn) {
+      permanentlyExcludeBtn.addEventListener('click', () => {
+        this.handleEntityPermanentlyExclude(entityType, entityId);
+      });
+    }
+
+    // 復元ボタン
+    const restoreBtn = entityEl.querySelector(`.${this.CSS_CLASSES.RESTORE_BTN}`);
+    if (restoreBtn) {
+      restoreBtn.addEventListener('click', (e) => {
+        const originalCategory = e.target.getAttribute('data-original-category');
+        this.handleEntityRestore(entityType, entityId, originalCategory);
+      });
+    }
   }
 
   addItemToSection(sectionId, itemData) {
@@ -1062,20 +1552,7 @@ class UIManager {
     itemEl.className = this.CSS_CLASSES.BOOTH_ITEM;
     itemEl.setAttribute('data-item-id', itemData.id);
     
-    // 現在のカテゴリに基づいてボタンを生成
-    let buttonsHtml = '';
-    if (sectionId === 'excluded') {
-      // 除外アイテム: 復元ボタンを表示
-      buttonsHtml = `
-        <button class="${this.CSS_CLASSES.RESTORE_BTN}" data-original-category="${itemData.previousCategory || 'unsaved'}">${this.getMessage('restore')}</button>
-      `;
-    } else {
-      // 保存済み・新規アイテム: 除外ボタン（×）のみ表示
-      buttonsHtml = `
-        <button class="${this.CSS_CLASSES.EXCLUDE_BTN}" data-target="excluded">${this.getMessage('exclude')}</button>
-      `;
-    }
-    
+    const buttonsHtml = this.generateEntityButtons('item', sectionId, itemData);
     const itemUrl = this.createBoothUrl(itemData.id);
     
     itemEl.innerHTML = `
@@ -1090,37 +1567,130 @@ class UIManager {
       </div>
     `;
 
-    this.attachItemEventListeners(itemEl);
+    this.attachEntityEventListeners('item', itemEl);
     section.appendChild(itemEl);
-    
-    // セクションカウントを更新
     this.updateSectionCounts();
+  }
+
+  addTagToSection(sectionId, tagData) {
+    const section = this.getCachedElement(`${sectionId}-items`);
+    if (!section) return;
+
+    const tagEl = document.createElement('div');
+    tagEl.className = this.CSS_CLASSES.BOOTH_ITEM;
+    tagEl.setAttribute('data-tag-id', tagData.id);
+    
+    const buttonsHtml = this.generateEntityButtons('tag', sectionId, tagData);
+    
+    tagEl.innerHTML = `
+      <div class="${this.CSS_CLASSES.ITEM_MAIN}">
+        <input type="text" class="${this.CSS_CLASSES.ITEM_NAME}" value="${tagData.name || ''}" placeholder="${this.getMessage('tagName') || 'Tag Name'}">
+      </div>
+      <div class="booth-item-actions">
+        ${buttonsHtml}
+      </div>
+    `;
+
+    this.attachEntityEventListeners('tag', tagEl);
+    section.appendChild(tagEl);
+    this.updateSectionCounts();
+  }
+
+  /**
+   * タグをフェッチして表示する（初回のみ）
+   */
+  async fetchAndDisplayTags() {
+    try {
+      const storageManager = this.validateStorageManager();
+      if (!storageManager) return;
+
+      // タグセクションをクリア
+      this.TAG_SECTIONS.forEach(section => {
+        const container = this.getCachedElement(`${section}-items`);
+        if (container) {
+          container.innerHTML = '';
+        }
+      });
+
+      // ページタグを取得して表示
+      const { tagsToFetch } = await (window.pageParser || new PageParser()).fetchTagsFromPage();
+      const storedTags = await storageManager.getAllTags();
+      
+      for (const tag of tagsToFetch) {
+        const stored = storedTags[tag.id];
+        let tagToDisplay;
+        
+        if (stored) {
+          tagToDisplay = stored;
+        } else {
+          // 新規タグをストレージに保存
+          tagToDisplay = { ...tag, category: 'unsaved', currentPageId: this.currentItemId || window.location.href };
+          await storageManager.saveTag(tag.id, tagToDisplay);
+          window.debugLogger?.log(`UIManager: New tag saved to storage: ${tag.id}`);
+        }
+        
+        const category = tagToDisplay.category || 'unsaved';
+        const sectionId = `${category}-tags`;
+        this.addTagToSection(sectionId, tagToDisplay);
+      }
+      
+      this.tagsFetched = true;
+      window.debugLogger?.log('UIManager: Tags fetched and displayed');
+    } catch (error) {
+      window.errorHandler?.handleUIError(error, 'fetch-and-display-tags', 'tag-fetch');
+    }
+  }
+
+  /**
+   * アイテムをフェッチして表示する
+   */
+  async fetchAndDisplayItems() {
+    try {
+      const storageManager = this.validateStorageManager();
+      if (!storageManager) return;
+
+      // アイテムセクションをクリア
+      this.SECTIONS.forEach(section => {
+        const container = this.getCachedElement(`${section}-items`);
+        if (container) {
+          container.innerHTML = '';
+        }
+      });
+
+      // ページアイテムを取得して表示
+      if (this.currentItemId) {
+        const pageItemIds = await this.getPageItemIds();
+        const pageItems = await storageManager.getItemsForCurrentPage(this.currentItemId);
+        
+        Object.values(pageItems).forEach(item => {
+          if (pageItemIds.has(item.id)) {
+            const category = item.category || 'unsaved';
+            this.addItemToSection(category, item);
+          }
+        });
+      }
+      
+      window.debugLogger?.log('UIManager: Items fetched and displayed');
+    } catch (error) {
+      window.errorHandler?.handleUIError(error, 'fetch-and-display-items', 'item-fetch');
+    }
   }
 
   async refreshItemDisplay() {
     try {
       const storageManager = this.validateStorageManager();
-      if (!storageManager || !this.currentItemId) return;
+      if (!storageManager) return;
 
-      // 全セクションをクリア
-      this.clearAllSections();
-
-      // ページアイテムを取得して表示
-      const pageItemIds = await this.getPageItemIds();
-      const pageItems = await storageManager.getItemsForCurrentPage(this.currentItemId);
+      // 現在のタブに応じてリフレッシュ
+      if (this.currentTab === 'tags') {
+        await this.fetchAndDisplayTags();
+      } else {
+        await this.fetchAndDisplayItems();
+      }
       
-      this.displayFilteredItems(pageItems, pageItemIds);
-      
-      window.debugLogger?.log('UIManager: Item display refreshed for current page');
+      window.debugLogger?.log('UIManager: Display refreshed for current tab');
     } catch (error) {
       window.errorHandler?.handleUIError(error, 'refresh-item-display', 'display-refresh');
-    }
-  }
-
-  removeFromDOM() {
-    if (this.managementWindow) {
-      this.managementWindow.remove();
-      this.managementWindow = null;
     }
   }
 }

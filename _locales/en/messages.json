@@ -20,6 +20,9 @@
     "toggleFreeLabel": {
         "message": "Only free downloads"
     },
+    "toggleUnregisteredLabel": {
+        "message": "Only unregistered items"
+    },
     "toggleGroupLabel": {
         "message": "Group items by ID"
     },
@@ -303,7 +306,7 @@
         "message": "Import error occurred: {error}"
     },
     "avatarClipboardTitle": {
-        "message": "AssetConnect Supported Avatars Batch Copy"
+        "message": "AssetConnect Batch Copy"
     },
     "unregisteredItemsFound": {
         "message": "Unregistered items found!!"
@@ -326,6 +329,9 @@
     "restore": {
         "message": "Restore"
     },
+    "alwaysExclude": {
+        "message": "Always Exclude"
+    },
     "savedSection": {
         "message": "Saved"
     },
@@ -334,6 +340,9 @@
     },
     "excludedSection": {
         "message": "Excluded"
+    },
+    "permanentlyExcludedSection": {
+        "message": "Always Excluded"
     },
     "itemId": {
         "message": "Item ID"
@@ -418,5 +427,39 @@
     },
     "remainingItemsHelper": {
         "message": "You can continue to input the remaining {count} items."
+    },
+    "downloadAllButton": {
+        "message": "Download All"
+    },
+    "downloadAllConfirm": {
+        "message": "Do you want to download $COUNT$ files?\n(Please allow if popup blocker is enabled)",
+        "placeholders": {
+            "count": {
+                "content": "$1"
+            }
+        }
+    },
+    "downloadProcessing": {
+        "message": "Processing..."
+    },
+    "downloadProcessingCount": {
+        "message": "Processing... $CURRENT$/$TOTAL$",
+        "placeholders": {
+            "current": {
+                "content": "$1"
+            },
+            "total": {
+                "content": "$2"
+            }
+        }
+    },
+    "avatarsTab": {
+        "message": "Avatars"
+    },
+    "tagsTab": {
+        "message": "Tags"
+    },
+    "tagName": {
+        "message": "Tag Name"
     }
 }
