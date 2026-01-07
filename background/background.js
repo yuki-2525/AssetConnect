@@ -48,6 +48,13 @@ async function initializeContextMenus() {
     title: translations.importSavedItems || 'アバターデータをインポート',
     contexts: ['action']
   });
+
+  chrome.contextMenus.create({
+    id: 'show-avatar-clipboard',
+    title: translations.showAvatarClipboard || 'AssetConnect 一括コピーのウィンドウを表示する',
+    contexts: ['page'],
+    documentUrlPatterns: ["https://*.booth.pm/items/*", "https://booth.pm/*/items/*"]
+  });
 }
 
 async function loadTranslations(lang) {
@@ -89,6 +96,10 @@ async function updateContextMenusLanguage(lang) {
   
   chrome.contextMenus.update('import-saved-items', {
     title: translations.importSavedItems || 'アバターデータをインポート'
+  });
+
+  chrome.contextMenus.update('show-avatar-clipboard', {
+    title: translations.showAvatarClipboard || 'AssetConnect 一括コピーのウィンドウを表示する'
   });
   
   // Update debug mode title with proper translation
@@ -136,6 +147,15 @@ chrome.contextMenus.onClicked.addListener((info, tab) => {
   } else if (info.menuItemId === 'import-saved-items') {
     // Import items from file
     importItemsFromFile();
+  } else if (info.menuItemId === 'show-avatar-clipboard') {
+    // Show avatar clipboard window
+    if (tab && tab.id) {
+      chrome.tabs.sendMessage(tab.id, {
+        action: 'showAvatarClipboard'
+      }).catch(() => {
+        // Ignore errors if content script not loaded
+      });
+    }
   }
 });
 

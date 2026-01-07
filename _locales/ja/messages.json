@@ -17,8 +17,14 @@
     "saveButton": {
         "message": "保存"
     },
+    "showAvatarClipboard": {
+        "message": "AssetConnect 一括コピーのウィンドウを表示する"
+    },
     "toggleFreeLabel": {
         "message": "無料ダウンロードのみ"
+    },
+    "hideAvatarClipboardLabel": {
+        "message": "AssetConnect 一括コピーのウィンドウを非表示にする"
     },
     "toggleUnregisteredLabel": {
         "message": "未登録アイテムのみ"
@@ -54,7 +60,7 @@
         "message": "お問い合わせ"
     },
     "saveFolderNotSet": {
-        "message": "ダウンロード先フォルダが設定されていません。上部のフォルダ入力欄から設定してください。"
+        "message": "ダウンロード先フォルダが設定されていません。設定のフォルダ入力欄から設定してください。\n設定画面に移動しますか？"
     },
     "confirmClearHistory": {
         "message": "履歴を全削除しますか？"
@@ -461,5 +467,11 @@
     },
     "tagName": {
         "message": "タグ名"
+    },
+    "settings": {
+        "message": "設定"
+    },
+    "hideAvatarClipboardNote": {
+        "message": "※非表示中も、右クリックメニューから「$1」で開けます"
     }
 }

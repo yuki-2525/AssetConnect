@@ -920,6 +920,17 @@ class UIManager {
   }
 
   async showWindow() {
+    // ユーザー設定を確認
+    try {
+      const settings = await chrome.storage.local.get('hideAvatarClipboard');
+      if (settings.hideAvatarClipboard) {
+        window.debugLogger?.log('Avatar Clipboard window is hidden by user setting');
+        return;
+      }
+    } catch (error) {
+      console.error('Failed to get settings:', error);
+    }
+
     if (!this.managementWindow) {
       this.createManagementWindow();
     }
@@ -941,6 +952,21 @@ class UIManager {
     } catch (error) {
       window.debugLogger?.log('UIManager: Failed to load window width:', error);
     }
+  }
+
+  async forceShowWindow() {
+    if (!this.managementWindow) {
+      this.createManagementWindow();
+    }
+
+    // ウィンドウを表示し、強制的に展開状態にする
+    this.managementWindow.style.display = 'block';
+    
+    // 最小化解除のために expandWindow を呼ぶ（内部でサイズ復元なども行う）
+    await this.expandWindow();
+
+    // フォーカスを当てるなど必要ならここで行う
+    this.managementWindow.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 
   async expandWindow() {

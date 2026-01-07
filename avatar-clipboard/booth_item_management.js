@@ -75,6 +75,13 @@ window.pageParser = pageParser;
 const detector = new BoothItemDetector();
 const currentItemId = detector.init();
 
+// メッセージリスナーを設定
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.action === 'showAvatarClipboard') {
+    uiManager.forceShowWindow();
+  }
+});
+
 /**
  * ページ解析とアイテム検出のメイン処理
  * BOOTHアイテムURLを検索し、管理ウィンドウを表示する

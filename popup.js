@@ -10,7 +10,7 @@ document.addEventListener('DOMContentLoaded', function () {
     languageSelect: document.getElementById("languageSelect"),
     historyList: document.getElementById("history-list"),
     csvInput: document.getElementById("csvInput"),
-    exportAe: document.getElementById("export-ae"),
+    // exportAe: document.getElementById("export-ae"), // Removed
     btnCsvExport: document.getElementById("btn-csv-export"),
     btnImport: document.getElementById("btn-import"),
     btnClear: document.getElementById("btn-clear"),
@@ -19,6 +19,11 @@ document.addEventListener('DOMContentLoaded', function () {
     updateHistoryBtn: document.getElementById("btn-update-history"),
     updateHistoryModal: document.getElementById("update-history-modal"),
     updateHistoryClose: document.querySelector("#update-history-modal .close"),
+    // 設定モーダル要素
+    settingsBtn: document.getElementById("btn-settings"),
+    settingsModal: document.getElementById("settings-modal"),
+    settingsModalClose: document.querySelector("#settings-modal .close"),
+    hideAvatarClipboard: document.getElementById("hideAvatarClipboard"),
     // 支援モーダル要素
     supportBtn: document.getElementById("btn-support"),
     supportModal: document.getElementById("support-modal"),
@@ -98,7 +103,16 @@ document.addEventListener('DOMContentLoaded', function () {
   function updateUITexts() {
     document.querySelectorAll('[data-i18n]').forEach(function (el) {
       const key = el.getAttribute('data-i18n');
-      const message = getMessage(key);
+      let message = getMessage(key);
+
+      // Special handling for dynamic placeholders
+      if (key === 'hideAvatarClipboardNote') {
+        const menuTitle = getMessage('showAvatarClipboard');
+        if (menuTitle) {
+          message = message.replace(/\$1/g, menuTitle);
+        }
+      }
+
       if (message) {
         el.textContent = message;
       }
@@ -143,9 +157,14 @@ document.addEventListener('DOMContentLoaded', function () {
     showFolderNotSetAlert() {
       // 翻訳キーがあればそれを使い、なければ日本語のデフォルト文言を使う
       const translated = currentTranslations?.saveFolderNotSet?.message || chrome.i18n.getMessage("saveFolderNotSet");
-      const message = (translated && translated !== "saveFolderNotSet") ? translated : "ダウンロードフォルダのパスを入力してください";
+      const message = (translated && translated !== "saveFolderNotSet") ? translated : "ダウンロード先フォルダが設定されていません。設定のフォルダ入力欄から設定してください。\n設定画面に移動しますか？";
       console.debug('Helpers.showFolderNotSetAlert:', message);
-      alert(message);
+      
+      if (confirm(message)) {
+        if (ELEMENTS.settingsModal) {
+          ELEMENTS.settingsModal.style.display = "block";
+        }
+      }
     },
 
     createButton(text, onClick, isUnregistered = false) {
@@ -202,7 +221,8 @@ document.addEventListener('DOMContentLoaded', function () {
       "filterFree",
       "filterUnregistered",
       "groupItems",
-      "bulkRegister"
+      "bulkRegister",
+      "hideAvatarClipboard"
     ], async function (result) {
       // 言語設定
       const savedLang = result.selectedLanguage || chrome.i18n.getUILanguage().substring(0, 2);
@@ -222,6 +242,7 @@ document.addEventListener('DOMContentLoaded', function () {
       if (result.filterUnregistered !== undefined) ELEMENTS.toggleUnregistered.checked = result.filterUnregistered;
       if (result.groupItems !== undefined) ELEMENTS.toggleGroup.checked = result.groupItems;
       if (result.bulkRegister !== undefined) ELEMENTS.toggleBulkRegister.checked = result.bulkRegister;
+      if (result.hideAvatarClipboard !== undefined) ELEMENTS.hideAvatarClipboard.checked = result.hideAvatarClipboard;
 
       // UI状態の更新
       ELEMENTS.bulkRegisterToggle.style.display = ELEMENTS.toggleGroup.checked ? 'flex' : 'none';
@@ -295,10 +316,8 @@ document.addEventListener('DOMContentLoaded', function () {
       b.latestTimestamp - a.latestTimestamp
     );
 
-    // 一括登録モードの場合、複数アイテムのグループのみをフィルタリング
-    const filteredGroups = ELEMENTS.toggleBulkRegister.checked
-      ? sortedGroups.filter(group => group.entries.length > 1)
-      : sortedGroups;
+    // 一括登録モードの場合でも全てのグループを表示する（アイテム数によるフィルタリングを廃止）
+    const filteredGroups = sortedGroups;
 
     filteredGroups.forEach(group => {
       group.entries.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
@@ -385,12 +404,19 @@ document.addEventListener('DOMContentLoaded', function () {
     const fileListDiv = document.createElement("div");
     fileListDiv.style.flexGrow = "1";
     fileListDiv.style.fontSize = "0.9em";
+    fileListDiv.style.overflow = "hidden"; // 親要素にもoverflow: hiddenを設定
+    fileListDiv.style.minWidth = "0"; // flexboxの子要素で縮小を許可するために必要
+
     group.entries.forEach(entry => {
       const fileEntry = document.createElement("div");
       fileEntry.style.whiteSpace = "nowrap";
       fileEntry.style.overflow = "hidden";
       fileEntry.style.textOverflow = "ellipsis";
-      fileEntry.textContent = `[${Helpers.formatTimestamp(entry.timestamp)}] ${entry.filename}`;
+      
+      const text = `[${Helpers.formatTimestamp(entry.timestamp)}] ${entry.filename}`;
+      fileEntry.textContent = text;
+      fileEntry.title = text; // マウスオーバーで全文表示
+
       fileListDiv.appendChild(fileEntry);
     });
 
@@ -446,19 +472,26 @@ document.addEventListener('DOMContentLoaded', function () {
     ELEMENTS.toggleFree.addEventListener("change", function() {
       chrome.storage.local.set({ filterFree: this.checked });
       renderHistory();
+      window.scrollTo(0, 0);
     });
     ELEMENTS.toggleUnregistered.addEventListener("change", function() {
       chrome.storage.local.set({ filterUnregistered: this.checked });
       renderHistory();
+      window.scrollTo(0, 0);
     });
     ELEMENTS.toggleGroup.addEventListener("change", function () {
       chrome.storage.local.set({ groupItems: this.checked });
       renderHistory();
       ELEMENTS.bulkRegisterToggle.style.display = this.checked ? 'flex' : 'none';
+      window.scrollTo(0, 0);
     });
     ELEMENTS.toggleBulkRegister.addEventListener("change", function() {
       chrome.storage.local.set({ bulkRegister: this.checked });
       renderHistory();
+      window.scrollTo(0, 0);
+    });
+    ELEMENTS.hideAvatarClipboard.addEventListener("change", function() {
+      chrome.storage.local.set({ hideAvatarClipboard: this.checked });
     });
     ELEMENTS.languageSelect.addEventListener("change", function () {
       changeLanguage(this.value);
@@ -524,7 +557,21 @@ document.addEventListener('DOMContentLoaded', function () {
       if (event.target === ELEMENTS.supportModal) {
         ELEMENTS.supportModal.style.display = "none";
       }
+      if (event.target === ELEMENTS.settingsModal) {
+        ELEMENTS.settingsModal.style.display = "none";
+      }
     });
+
+    // 設定モーダルの制御
+    if (ELEMENTS.settingsBtn && ELEMENTS.settingsModal && ELEMENTS.settingsModalClose) {
+      ELEMENTS.settingsBtn.addEventListener("click", function () {
+        ELEMENTS.settingsModal.style.display = "block";
+      });
+
+      ELEMENTS.settingsModalClose.addEventListener("click", function () {
+        ELEMENTS.settingsModal.style.display = "none";
+      });
+    }
 
     // 支援モーダルの制御
     if (ELEMENTS.supportBtn && ELEMENTS.supportModal && ELEMENTS.supportModalClose) {
@@ -543,6 +590,7 @@ document.addEventListener('DOMContentLoaded', function () {
   setupEventListeners();
 
 
+  /*
   // JSON 出力 (AE Tools形式)
   ELEMENTS.exportAe.addEventListener("click", () => {
     chrome.storage.local.get("downloadHistory", function (result) {
@@ -586,6 +634,7 @@ document.addEventListener('DOMContentLoaded', function () {
       });
     });
   });
+  */
 
   // CSV 出力ボタン
   ELEMENTS.btnCsvExport.addEventListener("click", () => {

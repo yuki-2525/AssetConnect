@@ -17,8 +17,14 @@
     "saveButton": {
         "message": "Save"
     },
+    "showAvatarClipboard": {
+        "message": "Show AssetConnect Bulk Copy Window"
+    },
     "toggleFreeLabel": {
         "message": "Only free downloads"
+    },
+    "hideAvatarClipboardLabel": {
+        "message": "Hide AssetConnect Bulk Copy Window"
     },
     "toggleUnregisteredLabel": {
         "message": "Only unregistered items"
@@ -54,7 +60,7 @@
         "message": "Feedback"
     },
     "saveFolderNotSet": {
-        "message": "The download folder is not set. Please configure it in the input field above."
+        "message": "The download folder is not set. Please configure it in the settings.\nDo you want to go to the settings page now?"
     },
     "confirmClearHistory": {
         "message": "Are you sure you want to delete all history?"
@@ -461,5 +467,11 @@
     },
     "tagName": {
         "message": "Tag Name"
+    },
+    "settings": {
+        "message": "Settings"
+    },
+    "hideAvatarClipboardNote": {
+        "message": "Note: You can re-open it via '$1' in the context menu."
     }
 }
