@@ -73,12 +73,25 @@ window.uiManager = uiManager;
 window.pageParser = pageParser;
 
 const detector = new BoothItemDetector();
-const currentItemId = detector.init();
+let currentItemId = detector.init();
+let fetchHandler = null;
 
 // メッセージリスナーを設定
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
   if (message.action === 'showAvatarClipboard') {
-    uiManager.forceShowWindow();
+    await uiManager.forceShowWindow();
+
+    // ページ遷移していても反映するように再取得
+    const newItemId = detector.init();
+    
+    if (newItemId !== currentItemId) {
+      currentItemId = newItemId;
+      uiManager.initializeCurrentItemId();
+    }
+    
+    // 常に全アイテムをクリアしてから再解析を行う（未保存アイテムの検出のため）
+    uiManager.clearAllSections();
+    await handlePageAnalysis();
   }
 });
 
@@ -133,13 +146,20 @@ async function handlePageAnalysis() {
       // 新しいアイテムの通知をURL付きで表示
       uiManager.showFoundItemsNotification(newItems);
       
+      // 既存のリスナーがあれば削除
+      if (fetchHandler) {
+        document.removeEventListener('boothFetchItem', fetchHandler);
+      }
+
       // ユーザーのアイテム取得選択をリスン
-      document.addEventListener('boothFetchItem', async (event) => {
+      fetchHandler = async (event) => {
         if (event.detail.action === 'fetch') {
           window.debugLogger?.log('User chose to fetch BOOTH items from page content');
           await handleItemFetch();
         }
-      }, { once: true });
+      };
+      
+      document.addEventListener('boothFetchItem', fetchHandler, { once: true });
       
       // アイテム削除イベントをリスン
       document.addEventListener('boothItemRemoved', (event) => {
