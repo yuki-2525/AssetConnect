@@ -50,6 +50,9 @@
         "https://*.booth.pm/items/*",
         "https://booth.pm/*/items/*"
       ],
+      "exclude_matches": [
+        "https://manage.booth.pm/items/*"
+      ],
       "js": [
         "shared/debug-logger.js",
         "shared/error-handler.js",
