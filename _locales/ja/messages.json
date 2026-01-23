@@ -17,8 +17,14 @@
     "saveButton": {
         "message": "保存"
     },
+    "showAvatarClipboard": {
+        "message": "AssetConnect 一括コピーのウィンドウを表示する"
+    },
     "toggleFreeLabel": {
         "message": "無料ダウンロードのみ"
+    },
+    "hideAvatarClipboardLabel": {
+        "message": "AssetConnect 一括コピーのウィンドウを非表示にする"
     },
     "toggleUnregisteredLabel": {
         "message": "未登録アイテムのみ"
@@ -33,10 +39,16 @@
         "message": "JSON 出力(AE Tools形式)"
     },
     "exportCsv": {
-        "message": "CSV 出力"
+        "message": "ダウンロードログデータ(csv)をダウンロード"
     },
     "importCsv": {
-        "message": "CSVインポート"
+        "message": "ダウンロードログデータ(csv)をインポート"
+    },
+    "downloadSupportedAvatarData": {
+        "message": "対応アバターデータ(json)のダウンロード"
+    },
+    "importSupportedAvatarData": {
+        "message": "対応アバターデータ(json)のインポート"
     },
     "clearHistory": {
         "message": "履歴削除"
@@ -54,7 +66,7 @@
         "message": "お問い合わせ"
     },
     "saveFolderNotSet": {
-        "message": "ダウンロード先フォルダが設定されていません。上部のフォルダ入力欄から設定してください。"
+        "message": "ダウンロード先フォルダが設定されていません。設定のフォルダ入力欄から設定してください。\n設定画面に移動しますか？"
     },
     "confirmClearHistory": {
         "message": "履歴を全削除しますか？"
@@ -461,5 +473,33 @@
     },
     "tagName": {
         "message": "タグ名"
+    },
+    "settings": {
+        "message": "設定"
+    },
+    "hideAvatarClipboardNote": {
+        "message": "※非表示中も、右クリックメニューから「$1」で開けます"
+    },
+    "delete": {
+        "message": "削除"
+    },
+    "confirmDeleteStorageKey": {
+        "message": "ストレージキー「$KEY$」を削除してもよろしいですか？この操作は取り消せません。",
+        "placeholders": {
+            "key": {
+                "content": "$1"
+            }
+        }
+    },
+    "storageKeyDeleted": {
+        "message": "ストレージキーを削除しました"
+    },
+    "deleteError": {
+        "message": "削除エラー: $ERROR$",
+        "placeholders": {
+            "error": {
+                "content": "$1"
+            }
+        }
     }
 }

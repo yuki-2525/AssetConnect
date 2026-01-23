@@ -37,23 +37,23 @@ function getCachedElement(id) {
  */
 async function getCachedStorageData(keys = null, forceRefresh = false) {
     const now = Date.now();
-    
+
     // 全データ取得でキャッシュが有効な場合はキャッシュを返す
-    if (!forceRefresh && keys === null && storageDataCache && 
-        storageDataCacheTimestamp && 
+    if (!forceRefresh && keys === null && storageDataCache &&
+        storageDataCacheTimestamp &&
         (now - storageDataCacheTimestamp) < STORAGE_CACHE_DURATION) {
         return storageDataCache;
     }
-    
+
     // Storage から取得
     const result = await chrome.storage.local.get(keys);
-    
+
     // 全データ取得の場合はキャッシュに保存
     if (keys === null) {
         storageDataCache = result;
         storageDataCacheTimestamp = now;
     }
-    
+
     return result;
 }
 
@@ -93,7 +93,7 @@ function createBoothUrl(itemId) {
 function createUnifiedItemElement(config) {
     const itemDiv = document.createElement('div');
     itemDiv.className = `item ${config.className}`;
-    
+
     let actionElement = '';
     if (config.action.type === 'link') {
         actionElement = `<a href="${config.action.href}" target="_blank" class="item-link">${config.action.text}</a>`;
@@ -106,7 +106,7 @@ function createUnifiedItemElement(config) {
         }
         actionElement = `<button class="${config.action.className || 'action-btn'}" ${dataAttrs} type="button">${config.action.text}</button>`;
     }
-    
+
     itemDiv.innerHTML = `
         <div class="item-info">
             <div class="item-name">${escapeHtml(config.name)}</div>
@@ -114,7 +114,7 @@ function createUnifiedItemElement(config) {
         </div>
         ${actionElement}
     `;
-    
+
     return itemDiv;
 }
 
@@ -124,29 +124,29 @@ async function loadStorageData() {
         const result = await getCachedStorageData(null);
         const boothItems = result.boothItems || {};
         const downloadHistory = result.downloadHistory || [];
-        
+
         // Calculate statistics
         const boothStats = calculateBoothStats(boothItems);
         const downloadStats = calculateDownloadStats(downloadHistory);
         updateStatistics(boothStats, downloadStats);
-        
+
         // Display items by category
         displayBoothItemsByCategory(boothItems);
         displayDownloadHistory(downloadHistory);
         displayRawStorage(result);
-        
+
         // Calculate storage size
         const storageSize = calculateStorageSize(result);
         getCachedElement('storage-size').textContent = formatBytes(storageSize);
-        
+
         // Show clear button if there is data
         if (boothStats.total > 0 || downloadHistory.length > 0) {
             getCachedElement('clear-storage').style.display = 'block';
         }
-        
+
         // Hide loading
         getCachedElement('loading').style.display = 'none';
-        
+
     } catch (error) {
         console.error('Error loading storage data:', error);
         getCachedElement('loading').textContent = getMessage('loadingError');
@@ -160,7 +160,7 @@ function calculateBoothStats(items) {
         excluded: 0,
         total: 0
     };
-    
+
     Object.values(items).forEach(item => {
         if (item.category === 'saved') {
             stats.saved++;
@@ -171,7 +171,7 @@ function calculateBoothStats(items) {
         }
         stats.total++;
     });
-    
+
     return stats;
 }
 
@@ -197,7 +197,7 @@ function displayBoothItemsByCategory(items) {
         unsaved: { items: [], container: 'unsaved-items', section: 'unsaved-section' },
         excluded: { items: [], container: 'excluded-items', section: 'excluded-section' }
     };
-    
+
     // Categorize items
     Object.entries(items).forEach(([itemId, item]) => {
         const category = item.category || 'unsaved';
@@ -205,7 +205,7 @@ function displayBoothItemsByCategory(items) {
             categories[category].items.push({ id: itemId, ...item });
         }
     });
-    
+
     // Display each category
     let hasBoothItems = false;
     Object.entries(categories).forEach(([categoryName, categoryData]) => {
@@ -215,7 +215,7 @@ function displayBoothItemsByCategory(items) {
             displayCategoryItems(categoryData.items, categoryData.container, categoryName);
         }
     });
-    
+
     // Show "no items" message if needed
     if (!hasBoothItems) {
         getCachedElement('no-booth-items').style.display = 'block';
@@ -227,16 +227,16 @@ function displayDownloadHistory(downloadHistory) {
         getCachedElement('no-download-history').style.display = 'block';
         return;
     }
-    
+
     getCachedElement('download-history-section').style.display = 'block';
     const container = getCachedElement('download-history-items');
     container.innerHTML = '';
-    
+
     // Sort by timestamp (newest first)
-    const sortedHistory = [...downloadHistory].sort((a, b) => 
+    const sortedHistory = [...downloadHistory].sort((a, b) =>
         new Date(b.timestamp) - new Date(a.timestamp)
     );
-    
+
     sortedHistory.forEach(item => {
         const itemElement = createDownloadHistoryElement(item);
         container.appendChild(itemElement);
@@ -246,14 +246,14 @@ function displayDownloadHistory(downloadHistory) {
 function displayCategoryItems(items, containerId, category) {
     const container = getCachedElement(containerId);
     container.innerHTML = '';
-    
+
     // Sort items by name (alphabetical)
     items.sort((a, b) => {
         const nameA = (a.name || '').toLowerCase();
         const nameB = (b.name || '').toLowerCase();
         return nameA.localeCompare(nameB);
     });
-    
+
     items.forEach(item => {
         const itemElement = createItemElement(item, category);
         container.appendChild(itemElement);
@@ -263,7 +263,7 @@ function displayCategoryItems(items, containerId, category) {
 function createItemElement(item, category) {
     const itemUrl = createBoothUrl(item.id);
     const details = `ID: ${item.id} | ${getMessage('category')}: ${category}${item.previousCategory ? ` | ${getMessage('originalCategory')}: ${item.previousCategory}` : ''}`;
-    
+
     return createUnifiedItemElement({
         className: category,
         name: item.name || getMessage('itemNameUnknown'),
@@ -280,7 +280,7 @@ function createDownloadHistoryElement(item) {
     const itemUrl = item.url || createBoothUrl(item.boothID);
     const registeredText = item.registered === true ? getMessage('yes') : (item.registered === false ? getMessage('no') : getMessage('unknown'));
     const details = `ID: ${item.boothID} | ${getMessage('fileName')}: ${escapeHtml(item.filename || getMessage('none'))} | ${getMessage('dateTime')}: ${item.timestamp} | ${getMessage('free')}: ${item.free ? getMessage('yes') : getMessage('no')} | ${getMessage('registered')}: ${registeredText}`;
-    
+
     return createUnifiedItemElement({
         className: 'download',
         name: item.title || getMessage('titleUnknown'),
@@ -328,7 +328,7 @@ function setupEventListeners() {
             switchTab(tabId);
         });
     });
-    
+
     // Clear storage button
     getCachedElement('clear-storage').addEventListener('click', async () => {
         if (confirm(getMessage('confirmClearStorage'))) {
@@ -347,16 +347,16 @@ function setupEventListeners() {
 
 function displayRawStorage(allStorageData) {
     const rawStorageKeys = Object.keys(allStorageData);
-    
+
     if (rawStorageKeys.length === 0) {
         getCachedElement('no-raw-storage').style.display = 'block';
         return;
     }
-    
+
     getCachedElement('raw-storage-section').style.display = 'block';
     const container = getCachedElement('raw-storage-items');
     container.innerHTML = '';
-    
+
     // Sort keys alphabetically
     rawStorageKeys.sort().forEach(key => {
         const value = allStorageData[key];
@@ -369,7 +369,7 @@ function createRawStorageElement(key, value) {
     // Value preview processing
     let valuePreview = '';
     let dataType = '';
-    
+
     try {
         if (typeof value === 'object' && value !== null) {
             if (Array.isArray(value)) {
@@ -396,26 +396,62 @@ function createRawStorageElement(key, value) {
         dataType = getMessage('parseError');
         valuePreview = getMessage('dataParseError');
     }
-    
+
     const details = `${getMessage('dataType')}: ${dataType} | ${getMessage('size')}: ${formatBytes(new Blob([JSON.stringify(value)]).size)}<br><code style="background: #f1f1f1; padding: 2px 4px; border-radius: 3px; font-size: 0.8em; white-space: pre-wrap;">${escapeHtml(valuePreview)}</code>`;
-    
+
     const itemDiv = createUnifiedItemElement({
         className: 'raw-key',
         name: key,
         details: details,
-        action: {
-            type: 'button',
-            className: 'download-btn',
-            text: getMessage('download'),
-            dataset: { key: key }
-        }
+        action: { type: 'none' } // Custom action container
     });
-    
-    // Add event listener for download button
-    const downloadBtn = itemDiv.querySelector('.download-btn');
+
+    // Create action container
+    const actionContainer = document.createElement('div');
+    actionContainer.style.display = 'flex';
+    actionContainer.style.gap = '8px';
+
+    // Download button
+    const downloadBtn = document.createElement('button');
+    downloadBtn.className = 'download-btn';
+    downloadBtn.textContent = getMessage('download');
     downloadBtn.addEventListener('click', () => downloadStorageKey(key));
-    
+    actionContainer.appendChild(downloadBtn);
+
+    // Delete button
+    const deleteBtn = document.createElement('button');
+    deleteBtn.className = 'download-btn'; // Reuse style or add new class
+    deleteBtn.style.backgroundColor = '#dc3545'; // Red color for delete
+    deleteBtn.textContent = getMessage('delete');
+    deleteBtn.addEventListener('click', () => deleteStorageKey(key));
+    actionContainer.appendChild(deleteBtn);
+
+    itemDiv.appendChild(actionContainer);
+
     return itemDiv;
+}
+
+async function deleteStorageKey(keyName) {
+    const confirmMessage = getMessage('confirmDeleteStorageKey').replace('$KEY$', keyName);
+    if (!confirm(confirmMessage)) {
+        return;
+    }
+
+    try {
+        await chrome.storage.local.remove(keyName);
+
+        // Clear cache to force refresh
+        clearStorageCache();
+
+        alert(getMessage('storageKeyDeleted'));
+
+        // Reload data to update UI
+        loadStorageData();
+
+    } catch (error) {
+        console.error('Delete error:', error);
+        alert(getMessage('deleteError').replace('$ERROR$', error.message));
+    }
 }
 
 async function downloadStorageKey(keyName) {
@@ -428,45 +464,45 @@ async function downloadStorageKey(keyName) {
             const result = await getCachedStorageData([keyName]);
             keyData = result[keyName];
         }
-        
+
         if (keyData === undefined) {
             alert(getMessage('storageKeyNotFound', { key: keyName }));
             return;
         }
-        
+
         // Format the data for download
         const exportData = {
             exportDate: new Date().toISOString(),
             keyName: keyName,
             data: keyData
         };
-        
+
         const jsonString = JSON.stringify(exportData, null, 2);
-        
+
         // Generate filename with current date and key name
         const now = new Date();
         const dateString = now.toISOString().split('T')[0]; // YYYY-MM-DD
         const safeKeyName = keyName.replace(/[^a-zA-Z0-9_-]/g, '_'); // Sanitize filename
         const filename = `storage-${safeKeyName}-${dateString}.json`;
-        
+
         // Create data URL for download
         const dataUrl = 'data:application/json;charset=utf-8,' + encodeURIComponent(jsonString);
-        
+
         // Create temporary download link
         const downloadLink = document.createElement('a');
         downloadLink.href = dataUrl;
         downloadLink.download = filename;
         downloadLink.style.display = 'none';
         document.body.appendChild(downloadLink);
-        
+
         // Trigger download
         downloadLink.click();
-        
+
         // Clean up
         document.body.removeChild(downloadLink);
-        
+
         console.log(`Storage key "${keyName}" downloaded as ${filename}`);
-        
+
     } catch (error) {
         console.error('Download error:', error);
         alert(getMessage('downloadError', { error: error.message }));
@@ -479,7 +515,7 @@ function switchTab(tabId) {
         button.classList.remove('active');
     });
     document.querySelector(`[data-tab="${tabId}"]`).classList.add('active');
-    
+
     // Update tab content
     document.querySelectorAll('.tab-content').forEach(content => {
         content.classList.remove('active');

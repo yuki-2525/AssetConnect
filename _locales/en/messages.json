@@ -17,8 +17,14 @@
     "saveButton": {
         "message": "Save"
     },
+    "showAvatarClipboard": {
+        "message": "Show AssetConnect Bulk Copy Window"
+    },
     "toggleFreeLabel": {
         "message": "Only free downloads"
+    },
+    "hideAvatarClipboardLabel": {
+        "message": "Hide AssetConnect Bulk Copy Window"
     },
     "toggleUnregisteredLabel": {
         "message": "Only unregistered items"
@@ -33,10 +39,16 @@
         "message": "Export JSON (AE Tools format)"
     },
     "exportCsv": {
-        "message": "Export CSV"
+        "message": "Download Log Data (CSV)"
     },
     "importCsv": {
-        "message": "Import CSV"
+        "message": "Import Log Data (CSV)"
+    },
+    "downloadSupportedAvatarData": {
+        "message": "Download Supported Avatar Data (JSON)"
+    },
+    "importSupportedAvatarData": {
+        "message": "Import Supported Avatar Data (JSON)"
     },
     "clearHistory": {
         "message": "Clear History"
@@ -54,7 +66,7 @@
         "message": "Feedback"
     },
     "saveFolderNotSet": {
-        "message": "The download folder is not set. Please configure it in the input field above."
+        "message": "The download folder is not set. Please configure it in the settings.\nDo you want to go to the settings page now?"
     },
     "confirmClearHistory": {
         "message": "Are you sure you want to delete all history?"
@@ -461,5 +473,33 @@
     },
     "tagName": {
         "message": "Tag Name"
+    },
+    "settings": {
+        "message": "Settings"
+    },
+    "hideAvatarClipboardNote": {
+        "message": "Note: You can re-open it via '$1' in the context menu."
+    },
+    "delete": {
+        "message": "Delete"
+    },
+    "confirmDeleteStorageKey": {
+        "message": "Are you sure you want to delete storage key \"$KEY$\"? This action cannot be undone.",
+        "placeholders": {
+            "key": {
+                "content": "$1"
+            }
+        }
+    },
+    "storageKeyDeleted": {
+        "message": "Storage key deleted"
+    },
+    "deleteError": {
+        "message": "Delete error: $ERROR$",
+        "placeholders": {
+            "error": {
+                "content": "$1"
+            }
+        }
     }
 }

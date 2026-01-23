@@ -180,19 +180,22 @@ class UIManager {
    * @returns {HTMLElement|null} DOM要素
    */
   getCachedElement(id) {
-    if (!this.domCache.has(id)) {
-      this.domCache.set(id, document.getElementById(id));
+    let element = this.domCache.get(id);
+    
+    // キャッシュが存在し、かつDOMに含まれている場合はそれを返す
+    if (element && document.contains(element)) {
+      return element;
     }
-    const element = this.domCache.get(id);
-    // 要素がDOMから削除されている場合はキャッシュをクリア
-    if (element && !document.contains(element)) {
+    
+    // それ以外（キャッシュなし、キャッシュがnull、またはDOMから外れた）の場合は再取得
+    element = document.getElementById(id);
+    if (element) {
+      this.domCache.set(id, element);
+    } else {
+      // 見つからない場合はキャッシュに保存しない（nullをキャッシュすると不具合の原因になる）
       this.domCache.delete(id);
-      const newElement = document.getElementById(id);
-      if (newElement) {
-        this.domCache.set(id, newElement);
-      }
-      return newElement;
     }
+    
     return element;
   }
 
@@ -475,7 +478,7 @@ class UIManager {
   clearAllSections() {
     const allSections = [...this.SECTIONS, ...this.TAG_SECTIONS];
     allSections.forEach(section => {
-      const container = this.getCachedElement(`${section}-items`);
+      const container = this.getCachedElement(`ac-clip-${section}-items`);
       if (container) {
         container.innerHTML = '';
       }
@@ -525,13 +528,13 @@ class UIManager {
     const label = this.getMessage(labelKey) || labelKey;
     
     return `
-      <div class="booth-section" id="${sectionId}-section">
+      <div class="booth-section" id="ac-clip-${sectionId}-section">
         <h4 class="booth-section-header${collapsedClass}" data-section="${sectionId}">
           <span class="booth-section-toggle">${toggleIcon}</span>
           ${label}
-          <span class="booth-section-count" id="${sectionId}-count">0</span>
+          <span class="booth-section-count" id="ac-clip-${sectionId}-count">0</span>
         </h4>
-        <div class="booth-items-list" id="${sectionId}-items"${displayStyle}></div>
+        <div class="booth-items-list" id="ac-clip-${sectionId}-items"${displayStyle}></div>
       </div>
     `;
   }
@@ -920,6 +923,17 @@ class UIManager {
   }
 
   async showWindow() {
+    // ユーザー設定を確認
+    try {
+      const settings = await chrome.storage.local.get('hideAvatarClipboard');
+      if (settings.hideAvatarClipboard) {
+        window.debugLogger?.log('Avatar Clipboard window is hidden by user setting');
+        return;
+      }
+    } catch (error) {
+      console.error('Failed to get settings:', error);
+    }
+
     if (!this.managementWindow) {
       this.createManagementWindow();
     }
@@ -941,6 +955,21 @@ class UIManager {
     } catch (error) {
       window.debugLogger?.log('UIManager: Failed to load window width:', error);
     }
+  }
+
+  async forceShowWindow() {
+    if (!this.managementWindow) {
+      this.createManagementWindow();
+    }
+
+    // ウィンドウを表示し、強制的に展開状態にする
+    this.managementWindow.style.display = 'block';
+    
+    // 最小化解除のために expandWindow を呼ぶ（内部でサイズ復元なども行う）
+    await this.expandWindow();
+
+    // フォーカスを当てるなど必要ならここで行う
+    this.managementWindow.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 
   async expandWindow() {
@@ -1423,7 +1452,7 @@ class UIManager {
 
   handleSectionToggle(header) {
     const sectionId = header.getAttribute('data-section');
-    const itemsList = this.getCachedElement(`${sectionId}-items`);
+    const itemsList = this.getCachedElement(`ac-clip-${sectionId}-items`);
     const toggleIcon = header.querySelector(`.${this.CSS_CLASSES.SECTION_TOGGLE}`);
     
     if (!itemsList || !toggleIcon) return;
@@ -1451,8 +1480,8 @@ class UIManager {
   updateSectionCounts() {
     const allSections = [...this.SECTIONS, ...this.TAG_SECTIONS];
     allSections.forEach(sectionId => {
-      const itemsList = this.getCachedElement(`${sectionId}-items`);
-      const countElement = this.getCachedElement(`${sectionId}-count`);
+      const itemsList = this.getCachedElement(`ac-clip-${sectionId}-items`);
+      const countElement = this.getCachedElement(`ac-clip-${sectionId}-count`);
       
       if (itemsList && countElement) {
         const itemCount = itemsList.querySelectorAll(`.${this.CSS_CLASSES.BOOTH_ITEM}`).length;
@@ -1545,7 +1574,7 @@ class UIManager {
   }
 
   addItemToSection(sectionId, itemData) {
-    const section = this.getCachedElement(`${sectionId}-items`);
+    const section = this.getCachedElement(`ac-clip-${sectionId}-items`);
     if (!section) return;
 
     const itemEl = document.createElement('div');
@@ -1573,7 +1602,7 @@ class UIManager {
   }
 
   addTagToSection(sectionId, tagData) {
-    const section = this.getCachedElement(`${sectionId}-items`);
+    const section = this.getCachedElement(`ac-clip-${sectionId}-items`);
     if (!section) return;
 
     const tagEl = document.createElement('div');
@@ -1606,7 +1635,7 @@ class UIManager {
 
       // タグセクションをクリア
       this.TAG_SECTIONS.forEach(section => {
-        const container = this.getCachedElement(`${section}-items`);
+        const container = this.getCachedElement(`ac-clip-${section}-items`);
         if (container) {
           container.innerHTML = '';
         }
@@ -1651,7 +1680,7 @@ class UIManager {
 
       // アイテムセクションをクリア
       this.SECTIONS.forEach(section => {
-        const container = this.getCachedElement(`${section}-items`);
+        const container = this.getCachedElement(`ac-clip-${section}-items`);
         if (container) {
           container.innerHTML = '';
         }

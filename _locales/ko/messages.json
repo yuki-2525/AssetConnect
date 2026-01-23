@@ -17,6 +17,9 @@
     "saveButton": {
         "message": "Save"
     },
+    "showAvatarClipboard": {
+        "message": "Show AssetConnect Bulk Copy Window"
+    },
     "toggleFreeLabel": {
         "message": "Only free downloads"
     },
@@ -33,10 +36,16 @@
         "message": "Export JSON (AE Tools format)"
     },
     "exportCsv": {
-        "message": "Export CSV"
+        "message": "다운로드 로그 데이터(csv) 다운로드"
     },
     "importCsv": {
-        "message": "Import CSV"
+        "message": "다운로드 로그 데이터(csv) 가져오기"
+    },
+    "downloadSupportedAvatarData": {
+        "message": "지원되는 아바타 데이터(json) 다운로드"
+    },
+    "importSupportedAvatarData": {
+        "message": "지원되는 아바타 데이터(json) 가져오기"
     },
     "clearHistory": {
         "message": "Clear History"
@@ -54,7 +63,7 @@
         "message": "Feedback"
     },
     "saveFolderNotSet": {
-        "message": "다운로드 폴더가 설정되지 않았습니다. 위의 입력란에서 설정하세요."
+        "message": "다운로드 폴더가 설정되지 않았습니다. 설정에서 폴더를 지정해주세요.\n설정 화면으로 이동하시겠습니까?"
     },
     "confirmClearHistory": {
         "message": "모든 기록을 삭제하시겠습니까?"
@@ -461,5 +470,39 @@
     },
     "tagName": {
         "message": "Tag Name"
+    },
+    "settings": {
+        "message": "설정"
+    },
+    "hideAvatarClipboardLabel": {
+        "message": "AssetConnect 일괄 등록 창 표시 안함"
+    },
+    "showAvatarClipboard": {
+        "message": "AssetConnect 일괄 등록 창 표시"
+    },
+    "hideAvatarClipboardNote": {
+        "message": "※숨김 중에도 우클릭 메뉴의 '$1'를 통해 열 수 있습니다."
+    },
+    "delete": {
+        "message": "삭제"
+    },
+    "confirmDeleteStorageKey": {
+        "message": "스토리지 키 \"$KEY$\"를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다.",
+        "placeholders": {
+            "key": {
+                "content": "$1"
+            }
+        }
+    },
+    "storageKeyDeleted": {
+        "message": "스토리지 키가 삭제되었습니다"
+    },
+    "deleteError": {
+        "message": "삭제 오류: $ERROR$",
+        "placeholders": {
+            "error": {
+                "content": "$1"
+            }
+        }
     }
 }

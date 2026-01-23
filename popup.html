@@ -17,7 +17,7 @@
       font-family: "Segoe UI", "Meiryo UI", system-ui, -apple-system, sans-serif;
       width: 750px;
       box-sizing: border-box;
-      padding: 10px;
+      padding: 0 0 10px 0;
       margin: 0;
       margin-bottom: 120px;
       color: var(--text-color);
@@ -27,11 +27,16 @@
 
     .settings-section {
       background-color: var(--secondary-color);
-      padding: 8px;
-      border-radius: 4px;
-      margin-bottom: 10px;
+      padding: 6px 10px;
+      border-radius: 0;
+      margin-bottom: 0;
       box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      border-bottom: 1px solid var(--border-color);
     }
+
 
     .folder-setting {
       display: flex;
@@ -61,7 +66,11 @@
       display: flex;
       flex-wrap: wrap;
       gap: 6px;
-      margin-bottom: 8px;
+      margin-bottom: 0;
+    }
+
+    #history-list {
+      padding: 10px;
     }
 
     .toggle-item {
@@ -185,7 +194,8 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      pointer-events: none; /* クリックを透過させる（リンクがある場合用） */
+      pointer-events: none;
+      /* クリックを透過させる（リンクがある場合用） */
     }
 
     .ad-slide.active {
@@ -212,7 +222,8 @@
       z-index: 10;
       font-size: 18px;
       transition: background-color 0.3s;
-      opacity: 0; /* デフォルト非表示 */
+      opacity: 0;
+      /* デフォルト非表示 */
     }
 
     #ad-banner:hover .ad-nav-btn {
@@ -223,8 +234,15 @@
       background-color: rgba(0, 0, 0, 0.7);
     }
 
-    .ad-nav-btn.prev { left: 0; border-radius: 0 4px 4px 0; }
-    .ad-nav-btn.next { right: 0; border-radius: 4px 0 0 4px; }
+    .ad-nav-btn.prev {
+      left: 0;
+      border-radius: 0 4px 4px 0;
+    }
+
+    .ad-nav-btn.next {
+      right: 0;
+      border-radius: 4px 0 0 4px;
+    }
 
     .ad-indicators {
       position: absolute;
@@ -242,7 +260,7 @@
       background-color: rgba(255, 255, 255, 0.5);
       border-radius: 50%;
       cursor: pointer;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.3);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
     }
 
     .ad-dot.active {
@@ -484,7 +502,7 @@
       .modal-content {
         background-color: #1a1a1a;
       }
-      
+
       .modal-header {
         background-color: #1a1a1a;
         border-bottom: 1px solid var(--border-color);
@@ -507,12 +525,6 @@
 
 <body>
   <div class="settings-section">
-    <div class="folder-setting">
-      <label for="downloadFolder" data-i18n="downloadFolderLabel">ダウンロードフォルダのパス:</label>
-      <input type="text" id="downloadFolder" placeholder="C:\Users\USERNAME\Downloads">
-      <button id="saveFolder" data-i18n="saveButton">保存</button>
-    </div>
-
     <div class="toggle-container">
       <div class="toggle-item">
         <input type="checkbox" id="toggleFree">
@@ -530,14 +542,13 @@
         <input type="checkbox" id="toggleBulkRegister">
         <label for="toggleBulkRegister" data-i18n="toggleBulkRegisterLabel">同一IDのアイテムを一括登録する</label>
       </div>
-    </div>
-
-    <div class="button-container">
-      <button id="export-ae" data-i18n="exportAe">JSON 出力(AE Tools形式)</button>
-      <button id="btn-csv-export" data-i18n="exportCsv">CSV 出力</button>
-      <button id="btn-import" data-i18n="importCsv">CSVインポート</button>
-      <button id="btn-clear" data-i18n="clearHistory">履歴削除</button>
-      <input type="file" id="csvInput" accept=".csv" style="display: none;">
+      <button id="btn-settings" aria-label="Settings"
+        style="margin-left: auto; background: none; border: none; padding: 4px; cursor: pointer; color: var(--text-color); display: flex; align-items: center;">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+          <path
+            d="M19.14 12.94c.04-.3.06-.61.06-.94 0-.32-.02-.64-.07-.94l2.03-1.58a.49.49 0 0 0 .12-.61l-1.92-3.32a.488.488 0 0 0-.59-.22l-2.39.96c-.5-.38-1.03-.7-1.62-.96l-.36-2.54a.484.484 0 0 0-.48-.41h-3.84c-.24 0-.43.17-.47.41l-.36 2.54c-.59.26-1.13.59-1.62.96l-2.39-.96c-.21-.08-.47 0-.59.22L2.74 8.87c-.12.21-.08.47.12.61l2.03 1.58c-.05.3-.09.63-.09.94s.02.64.07.94l-2.03 1.58a.49.49 0 0 0-.12.61l1.92 3.32c.12.22.37.29.59.22l2.39-.96c.5.38 1.03.7 1.62.96l.36 2.54c.05.24.24.41.48.41h3.84c.24 0 .44-.17.47-.41l.36-2.54c.59-.26 1.13-.59 1.62-.96l2.39.96c.21.08.47 0 .59-.22l1.92-3.32c.12-.22.07-.47-.12-.61l-2.01-1.58zM12 15.6c-1.98 0-3.6-1.62-3.6-3.6s1.62-3.6 3.6-3.6 3.6 1.62 3.6 3.6-1.62 3.6-3.6 3.6z" />
+        </svg>
+      </button>
     </div>
   </div>
 
@@ -602,6 +613,65 @@
           <ul>
             <li>シャル様</li>
           </ul>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 設定モーダル -->
+  <div id="settings-modal" class="modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h2 data-i18n="settings">設定</h2>
+        <span class="close">&times;</span>
+      </div>
+      <div class="modal-body">
+        <!-- 設定項目はここに追加 -->
+        <div class="folder-setting"
+          style="border-bottom: 1px solid var(--border-color); padding-bottom: 15px; margin-bottom: 15px;">
+          <label for="downloadFolder" data-i18n="downloadFolderLabel"
+            style="display: block; margin-bottom: 5px;">ダウンロードフォルダのパス:</label>
+          <div style="display: flex; gap: 8px;">
+            <input type="text" id="downloadFolder" placeholder="C:\Users\USERNAME\Downloads"
+              style="flex-grow: 1; padding: 6px; border: 1px solid var(--border-color); border-radius: 4px;">
+            <button id="saveFolder" data-i18n="saveButton" style="padding: 6px 12px;">保存</button>
+          </div>
+        </div>
+
+        <div style="margin-bottom: 15px;">
+          <div class="toggle-item">
+            <input type="checkbox" id="hideAvatarClipboard">
+            <label for="hideAvatarClipboard" data-i18n="hideAvatarClipboardLabel">AssetConnect
+              一括コピーのウィンドウを非表示にする</label>
+          </div>
+          <div class="setting-note" data-i18n="hideAvatarClipboardNote"
+            style="font-size: 0.85em; color: #666; margin-left: 24px; margin-top: 4px;">
+            ※非表示中も、右クリックメニューから「AssetConnectの一括登録ウィンドウを表示」で開けます
+          </div>
+        </div>
+
+        <div class="button-container" style="display: flex; flex-direction: column; gap: 10px;">
+          <button id="btn-csv-export" data-i18n="exportCsv"
+            style="width: 100%; padding: 8px; text-align: center;">ダウンロードログデータ(csv)をダウンロード</button>
+
+          <div style="width: 100%;">
+            <button id="btn-import" data-i18n="importCsv"
+              style="width: 100%; padding: 8px; text-align: center;">ダウンロードログデータ(csv)をインポート</button>
+            <input type="file" id="csvInput" accept=".csv" style="display: none;">
+          </div>
+
+          <button id="btn-download-supported" data-i18n="downloadSupportedAvatarData"
+            style="width: 100%; padding: 8px; text-align: center;">対応アバターデータ(json)のダウンロード</button>
+
+          <button id="btn-import-supported" data-i18n="importSupportedAvatarData"
+            style="width: 100%; padding: 8px; text-align: center;">対応アバターデータ(json)のインポート</button>
+
+          <div style="width: 100%;">
+            <input type="file" id="jsonInput" accept=".json" style="display: none;">
+          </div>
+
+          <button id="btn-clear" data-i18n="clearHistory"
+            style="width: 100%; padding: 8px; text-align: center; margin-top: 10px;">履歴削除</button>
         </div>
       </div>
     </div>
