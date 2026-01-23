@@ -39,10 +39,16 @@
         "message": "JSON 出力(AE Tools形式)"
     },
     "exportCsv": {
-        "message": "CSV 出力"
+        "message": "ダウンロードログデータ(csv)をダウンロード"
     },
     "importCsv": {
-        "message": "CSVインポート"
+        "message": "ダウンロードログデータ(csv)をインポート"
+    },
+    "downloadSupportedAvatarData": {
+        "message": "対応アバターデータ(json)のダウンロード"
+    },
+    "importSupportedAvatarData": {
+        "message": "対応アバターデータ(json)のインポート"
     },
     "clearHistory": {
         "message": "履歴削除"
@@ -473,5 +479,27 @@
     },
     "hideAvatarClipboardNote": {
         "message": "※非表示中も、右クリックメニューから「$1」で開けます"
+    },
+    "delete": {
+        "message": "削除"
+    },
+    "confirmDeleteStorageKey": {
+        "message": "ストレージキー「$KEY$」を削除してもよろしいですか？この操作は取り消せません。",
+        "placeholders": {
+            "key": {
+                "content": "$1"
+            }
+        }
+    },
+    "storageKeyDeleted": {
+        "message": "ストレージキーを削除しました"
+    },
+    "deleteError": {
+        "message": "削除エラー: $ERROR$",
+        "placeholders": {
+            "error": {
+                "content": "$1"
+            }
+        }
     }
 }

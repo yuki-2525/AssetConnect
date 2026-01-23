@@ -90,8 +90,16 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["avatar-clipboard/styles/*", "storage-management/storage-overview.html", "storage-management/storage-overview.js", "storage-management/import.html", "storage-management/import.js", "_locales/*/messages.json"],
-      "matches": ["*://*.booth.pm/*", "*://booth.pm/*"]
+      "resources": [
+        "avatar-clipboard/styles/*",
+        "storage-management/storage-overview.html",
+        "storage-management/storage-overview.js",
+        "_locales/*/messages.json"
+      ],
+      "matches": [
+        "*://*.booth.pm/*",
+        "*://booth.pm/*"
+      ]
     }
   ]
 }

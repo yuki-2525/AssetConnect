@@ -39,10 +39,16 @@
         "message": "Export JSON (AE Tools format)"
     },
     "exportCsv": {
-        "message": "Export CSV"
+        "message": "Download Log Data (CSV)"
     },
     "importCsv": {
-        "message": "Import CSV"
+        "message": "Import Log Data (CSV)"
+    },
+    "downloadSupportedAvatarData": {
+        "message": "Download Supported Avatar Data (JSON)"
+    },
+    "importSupportedAvatarData": {
+        "message": "Import Supported Avatar Data (JSON)"
     },
     "clearHistory": {
         "message": "Clear History"
@@ -473,5 +479,27 @@
     },
     "hideAvatarClipboardNote": {
         "message": "Note: You can re-open it via '$1' in the context menu."
+    },
+    "delete": {
+        "message": "Delete"
+    },
+    "confirmDeleteStorageKey": {
+        "message": "Are you sure you want to delete storage key \"$KEY$\"? This action cannot be undone.",
+        "placeholders": {
+            "key": {
+                "content": "$1"
+            }
+        }
+    },
+    "storageKeyDeleted": {
+        "message": "Storage key deleted"
+    },
+    "deleteError": {
+        "message": "Delete error: $ERROR$",
+        "placeholders": {
+            "error": {
+                "content": "$1"
+            }
+        }
     }
 }

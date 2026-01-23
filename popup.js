@@ -13,6 +13,9 @@ document.addEventListener('DOMContentLoaded', function () {
     // exportAe: document.getElementById("export-ae"), // Removed
     btnCsvExport: document.getElementById("btn-csv-export"),
     btnImport: document.getElementById("btn-import"),
+    btnDownloadSupported: document.getElementById("btn-download-supported"),
+    btnImportSupported: document.getElementById("btn-import-supported"),
+    jsonInput: document.getElementById("jsonInput"),
     btnClear: document.getElementById("btn-clear"),
     feedbackButton: document.getElementById("feedback-button"),
     bulkRegisterToggle: document.getElementById("bulkRegisterToggle"),
@@ -96,8 +99,17 @@ document.addEventListener('DOMContentLoaded', function () {
     }
   }
 
-  function getMessage(key) {
-    return currentTranslations[key]?.message || chrome.i18n.getMessage(key) || key;
+  function getMessage(key, replacements = {}) {
+    let message = currentTranslations[key]?.message || chrome.i18n.getMessage(key) || key;
+
+    // Placeholder replacement (e.g. {count}, $COUNT$, etc.)
+    for (const [placeholder, value] of Object.entries(replacements)) {
+      // {key} format
+      message = message.replace(new RegExp(`{${placeholder}}`, 'g'), value);
+      // $KEY$ format (case insensitive)
+      message = message.replace(new RegExp(`\\$${placeholder}\\$`, 'gi'), value);
+    }
+    return message;
   }
 
   function updateUITexts() {
@@ -121,13 +133,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
   async function changeLanguage(lang) {
     if (!SUPPORTED_LANGUAGES.includes(lang)) return;
-    
+
     currentLanguage = lang;
     await loadTranslations(lang);
     updateUITexts();
-    
+
     chrome.storage.local.set({ selectedLanguage: lang });
-    
+
     // Notify background script to update context menus
     chrome.runtime.sendMessage({
       action: 'languageChanged',
@@ -135,7 +147,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }).catch(error => {
       console.error('Failed to notify background script of language change:', error);
     });
-    
+
     renderHistory();
   }
 
@@ -159,7 +171,7 @@ document.addEventListener('DOMContentLoaded', function () {
       const translated = currentTranslations?.saveFolderNotSet?.message || chrome.i18n.getMessage("saveFolderNotSet");
       const message = (translated && translated !== "saveFolderNotSet") ? translated : "ダウンロード先フォルダが設定されていません。設定のフォルダ入力欄から設定してください。\n設定画面に移動しますか？";
       console.debug('Helpers.showFolderNotSetAlert:', message);
-      
+
       if (confirm(message)) {
         if (ELEMENTS.settingsModal) {
           ELEMENTS.settingsModal.style.display = "block";
@@ -215,8 +227,8 @@ document.addEventListener('DOMContentLoaded', function () {
   async function initializeHistory() {
     // 設定と履歴をまとめて読み込む
     chrome.storage.local.get([
-      "selectedLanguage", 
-      "downloadFolderPath", 
+      "selectedLanguage",
+      "downloadFolderPath",
       "downloadHistory",
       "filterFree",
       "filterUnregistered",
@@ -227,7 +239,7 @@ document.addEventListener('DOMContentLoaded', function () {
       // 言語設定
       const savedLang = result.selectedLanguage || chrome.i18n.getUILanguage().substring(0, 2);
       currentLanguage = SUPPORTED_LANGUAGES.includes(savedLang) ? savedLang : 'en';
-      
+
       await loadTranslations(currentLanguage);
       ELEMENTS.languageSelect.value = currentLanguage;
       updateUITexts();
@@ -412,7 +424,7 @@ document.addEventListener('DOMContentLoaded', function () {
       fileEntry.style.whiteSpace = "nowrap";
       fileEntry.style.overflow = "hidden";
       fileEntry.style.textOverflow = "ellipsis";
-      
+
       const text = `[${Helpers.formatTimestamp(entry.timestamp)}] ${entry.filename}`;
       fileEntry.textContent = text;
       fileEntry.title = text; // マウスオーバーで全文表示
@@ -469,12 +481,12 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // イベントリスナーの設定
   function setupEventListeners() {
-    ELEMENTS.toggleFree.addEventListener("change", function() {
+    ELEMENTS.toggleFree.addEventListener("change", function () {
       chrome.storage.local.set({ filterFree: this.checked });
       renderHistory();
       window.scrollTo(0, 0);
     });
-    ELEMENTS.toggleUnregistered.addEventListener("change", function() {
+    ELEMENTS.toggleUnregistered.addEventListener("change", function () {
       chrome.storage.local.set({ filterUnregistered: this.checked });
       renderHistory();
       window.scrollTo(0, 0);
@@ -485,12 +497,12 @@ document.addEventListener('DOMContentLoaded', function () {
       ELEMENTS.bulkRegisterToggle.style.display = this.checked ? 'flex' : 'none';
       window.scrollTo(0, 0);
     });
-    ELEMENTS.toggleBulkRegister.addEventListener("change", function() {
+    ELEMENTS.toggleBulkRegister.addEventListener("change", function () {
       chrome.storage.local.set({ bulkRegister: this.checked });
       renderHistory();
       window.scrollTo(0, 0);
     });
-    ELEMENTS.hideAvatarClipboard.addEventListener("change", function() {
+    ELEMENTS.hideAvatarClipboard.addEventListener("change", function () {
       chrome.storage.local.set({ hideAvatarClipboard: this.checked });
     });
     ELEMENTS.languageSelect.addEventListener("change", function () {
@@ -679,6 +691,127 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
+  // 対応アバターデータのダウンロード (JSON)
+  ELEMENTS.btnDownloadSupported.addEventListener("click", () => {
+    chrome.storage.local.get(['boothItems'], (result) => {
+      const boothItems = result.boothItems || {};
+      const savedItems = Object.values(boothItems).filter(item => item.category === 'saved');
+
+      if (savedItems.length === 0) {
+        alert(getMessage('noBoothItems') || 'No supported avatar data');
+        return;
+      }
+
+      const exportData = {
+        exportDate: new Date().toISOString(),
+        version: "1.0",
+        items: savedItems.map(item => ({
+          id: item.id,
+          name: item.name || `Item ${item.id}`
+        }))
+      };
+
+      const jsonString = JSON.stringify(exportData, null, 2);
+      const blob = new Blob([jsonString], { type: "application/json" });
+      const urlBlob = URL.createObjectURL(blob);
+
+      const now = new Date();
+      const dateString = now.toISOString().split('T')[0];
+      const filename = `booth-items-${dateString}.json`;
+
+      chrome.downloads.download({
+        url: urlBlob,
+        filename: filename,
+        saveAs: true
+      }, () => {
+        setTimeout(() => URL.revokeObjectURL(urlBlob), 10000);
+      });
+    });
+  });
+
+  // 対応アバターデータのインポート (JSON)
+  ELEMENTS.btnImportSupported.addEventListener("click", () => {
+    ELEMENTS.jsonInput.click();
+  });
+
+  ELEMENTS.jsonInput.addEventListener("change", (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    if (file.type !== 'application/json' && !file.name.endsWith('.json')) {
+      alert(getMessage('selectJsonFile') || 'Please select a JSON file.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        const jsonData = JSON.parse(event.target.result);
+
+        // Validate JSON
+        if (!jsonData.items || !Array.isArray(jsonData.items)) {
+          alert(getMessage('invalidJsonFormat') || 'Invalid JSON format.');
+          return;
+        }
+
+        const validItems = [];
+        jsonData.items.forEach(item => {
+          if (item.id && item.name) {
+            validItems.push({
+              id: String(item.id),
+              name: String(item.name),
+              category: 'saved'
+            });
+          }
+        });
+
+        if (validItems.length === 0) {
+          alert(getMessage('noValidItems') || 'No valid items found.');
+          return;
+        }
+
+        const confirmMessage = getMessage('importReady', { count: validItems.length }) || `${validItems.length} items ready for import.`;
+        if (!confirm(confirmMessage + '\n' + (getMessage('replaceDuplicates') || 'Existing items will be updated.'))) {
+          return;
+        }
+
+        // Import logic (Simplified: Merge/Upsert)
+        const result = await chrome.storage.local.get(['boothItems']);
+        const existingItems = result.boothItems || {};
+
+        let importedCount = 0;
+        let updatedCount = 0;
+
+        validItems.forEach(item => {
+          if (existingItems[item.id]) {
+            existingItems[item.id] = { ...existingItems[item.id], name: item.name, category: 'saved' };
+            updatedCount++;
+          } else {
+            existingItems[item.id] = item;
+            importedCount++;
+          }
+        });
+
+        await chrome.storage.local.set({ boothItems: existingItems });
+
+        let resultMsg = getMessage('importComplete') || 'Import complete: ';
+        const results = [];
+        if (importedCount > 0) results.push(getMessage('newItemsAdded', { count: importedCount }) || `${importedCount} added`);
+        if (updatedCount > 0) results.push(getMessage('itemsUpdated', { count: updatedCount }) || `${updatedCount} updated`);
+
+        alert(resultMsg + results.join(', '));
+
+        // Reset input
+        ELEMENTS.jsonInput.value = '';
+
+      } catch (error) {
+        console.error('Import error:', error);
+        alert((getMessage('jsonParseError') || 'JSON Parse Error') + ': ' + error.message);
+      }
+    };
+    reader.readAsText(file);
+  });
+
   // CSVインポート処理
   ELEMENTS.btnImport.addEventListener("click", function () {
     ELEMENTS.csvInput.click();
@@ -831,7 +964,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const prevBtn = document.getElementById('ad-prev');
     const nextBtn = document.getElementById('ad-next');
     const adBanner = document.getElementById('ad-banner');
-    
+
     if (!adContent) return;
 
     let adImages = [];
@@ -854,7 +987,7 @@ document.addEventListener('DOMContentLoaded', function () {
       placeholder.style.fontSize = '12px';
       placeholder.textContent = 'Advertising Space (728x90)';
       adContent.appendChild(placeholder);
-      
+
       // ナビゲーション非表示
       if (prevBtn) prevBtn.style.display = 'none';
       if (nextBtn) nextBtn.style.display = 'none';
@@ -874,7 +1007,7 @@ document.addEventListener('DOMContentLoaded', function () {
       // スライド
       const slide = document.createElement('div');
       slide.className = `ad-slide ${index === currentIndex ? 'active' : ''}`;
-      
+
       // リンクがある場合はaタグを作成
       let contentContainer = slide;
       if (linkUrl) {
@@ -888,7 +1021,7 @@ document.addEventListener('DOMContentLoaded', function () {
         slide.appendChild(link);
         contentContainer = link;
       }
-      
+
       const img = document.createElement('img');
       if (imageFile.startsWith('http://') || imageFile.startsWith('https://')) {
         img.src = imageFile;
@@ -896,7 +1029,7 @@ document.addEventListener('DOMContentLoaded', function () {
         img.src = `assets/ads/${imageFile}`;
       }
       img.alt = 'Advertisement';
-      img.onerror = function() {
+      img.onerror = function () {
         this.style.display = 'none';
         // 画像読み込みエラー時は親要素（slideまたはaタグ）にテキストを表示
         // aタグの場合はクリック可能にするためテキストを表示
@@ -909,7 +1042,7 @@ document.addEventListener('DOMContentLoaded', function () {
         errorText.style.height = '100%';
         contentContainer.appendChild(errorText);
       };
-      
+
       contentContainer.appendChild(img);
       adContent.appendChild(slide);
 
@@ -934,10 +1067,10 @@ document.addEventListener('DOMContentLoaded', function () {
     function showSlide(index) {
       const slides = adContent.querySelectorAll('.ad-slide');
       const dots = adIndicators.querySelectorAll('.ad-dot');
-      
+
       slides.forEach(slide => slide.classList.remove('active'));
       dots.forEach(dot => dot.classList.remove('active'));
-      
+
       slides[index].classList.add('active');
       dots[index].classList.add('active');
       currentIndex = index;
