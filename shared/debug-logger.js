@@ -1,12 +1,15 @@
 class DebugLogger {
   constructor() {
     this.debugMode = false;
+    // Initialize loggers based on default debugMode
+    this._updateLoggers();
     this.initializeDebugMode();
-    
+
     // Listen for debug mode changes from background script
     chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
       if (request.action === 'debugModeChanged') {
         this.debugMode = request.debugMode;
+        this._updateLoggers();
         this.log('Debug mode changed to:', this.debugMode);
       }
     });
@@ -20,29 +23,23 @@ class DebugLogger {
       // Silently fail if storage is not available
       this.debugMode = false;
     }
+    this._updateLoggers();
   }
 
-  log(...args) {
+  _updateLoggers() {
     if (this.debugMode) {
-      console.log('[AC DEBUG]', ...args);
-    }
-  }
-
-  error(...args) {
-    if (this.debugMode) {
-      console.error('[AC DEBUG ERROR]', ...args);
-    }
-  }
-
-  warn(...args) {
-    if (this.debugMode) {
-      console.warn('[AC DEBUG WARN]', ...args);
-    }
-  }
-
-  info(...args) {
-    if (this.debugMode) {
-      console.info('[AC DEBUG INFO]', ...args);
+      // Use bind to preserve the original call site in the console
+      this.log = console.log.bind(window.console, '[AC DEBUG]');
+      this.error = console.error.bind(window.console, '[AC DEBUG ERROR]');
+      this.warn = console.warn.bind(window.console, '[AC DEBUG WARN]');
+      this.info = console.info.bind(window.console, '[AC DEBUG INFO]');
+    } else {
+      // No-op functions when debug mode is off
+      const noop = () => { };
+      this.log = noop;
+      this.error = noop;
+      this.warn = noop;
+      this.info = noop;
     }
   }
 
