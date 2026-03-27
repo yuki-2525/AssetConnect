@@ -27,6 +27,7 @@ document.addEventListener('DOMContentLoaded', function () {
     settingsModal: document.getElementById("settings-modal"),
     settingsModalClose: document.querySelector("#settings-modal .close"),
     hideAvatarClipboard: document.getElementById("hideAvatarClipboard"),
+    aev2CopyMode: document.getElementById("aev2CopyMode"),
     // 支援モーダル要素
     supportBtn: document.getElementById("btn-support"),
     supportModal: document.getElementById("support-modal"),
@@ -234,7 +235,8 @@ document.addEventListener('DOMContentLoaded', function () {
       "filterUnregistered",
       "groupItems",
       "bulkRegister",
-      "hideAvatarClipboard"
+      "hideAvatarClipboard",
+      "aev2CopyMode"
     ], async function (result) {
       // 言語設定
       const savedLang = result.selectedLanguage || chrome.i18n.getUILanguage().substring(0, 2);
@@ -255,6 +257,7 @@ document.addEventListener('DOMContentLoaded', function () {
       if (result.groupItems !== undefined) ELEMENTS.toggleGroup.checked = result.groupItems;
       if (result.bulkRegister !== undefined) ELEMENTS.toggleBulkRegister.checked = result.bulkRegister;
       if (result.hideAvatarClipboard !== undefined) ELEMENTS.hideAvatarClipboard.checked = result.hideAvatarClipboard;
+      if (result.aev2CopyMode !== undefined) ELEMENTS.aev2CopyMode.checked = result.aev2CopyMode;
 
       // UI状態の更新
       ELEMENTS.bulkRegisterToggle.style.display = ELEMENTS.toggleGroup.checked ? 'flex' : 'none';
@@ -504,6 +507,9 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     ELEMENTS.hideAvatarClipboard.addEventListener("change", function () {
       chrome.storage.local.set({ hideAvatarClipboard: this.checked });
+    });
+    ELEMENTS.aev2CopyMode.addEventListener("change", function () {
+      chrome.storage.local.set({ aev2CopyMode: this.checked });
     });
     ELEMENTS.languageSelect.addEventListener("change", function () {
       changeLanguage(this.value);

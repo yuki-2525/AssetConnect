@@ -17,11 +17,14 @@
     "saveButton": {
         "message": "Save"
     },
-    "showAvatarClipboard": {
-        "message": "Show AssetConnect Bulk Copy Window"
-    },
     "toggleFreeLabel": {
         "message": "Only free downloads"
+    },
+    "aev2CopyModeLabel": {
+        "message": "지원 아바타 일괄 복사 AEV2 모드"
+    },
+    "aev2CopyModeNote": {
+        "message": "ON 시 1234567 2345678 형식으로 복사됩니다"
     },
     "toggleUnregisteredLabel": {
         "message": "Only unregistered items"
@@ -328,6 +331,15 @@
     },
     "copyToClipboard": {
         "message": "Copy to Clipboard"
+    },
+    "copyModeDefaultActive": {
+        "message": "모드: KonoAsset"
+    },
+    "copyModeAev2Active": {
+        "message": "모드: AEV2"
+    },
+    "copyModeAev2Short": {
+        "message": "AEV2 모드"
     },
     "manualAdd": {
         "message": "Manual Add"
