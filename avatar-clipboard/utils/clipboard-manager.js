@@ -8,6 +8,10 @@ class ClipboardManager {
       'plain': 'text/plain', // プレーンテキスト
       'html': 'text/html'     // HTMLフォーマット
     };
+
+    this.storageKeys = {
+      AEV2_COPY_MODE: 'aev2CopyMode'
+    };
   }
 
   /**
@@ -118,6 +122,37 @@ class ClipboardManager {
     }
   }
 
+  formatItemsForAev2Export(items) {
+    if (!items || items.length === 0) {
+      return '';
+    }
+
+    const seenIds = new Set();
+    return items
+      .map(item => item?.id)
+      .filter(id => id !== undefined && id !== null && `${id}`.trim() !== '')
+      .filter(id => {
+        const normalizedId = `${id}`;
+        if (seenIds.has(normalizedId)) {
+          return false;
+        }
+        seenIds.add(normalizedId);
+        return true;
+      })
+      .map(id => `${id}`)
+      .join(' ');
+  }
+
+  async isAev2CopyModeEnabled() {
+    try {
+      const settings = await chrome.storage.local.get(this.storageKeys.AEV2_COPY_MODE);
+      return Boolean(settings[this.storageKeys.AEV2_COPY_MODE]);
+    } catch (error) {
+      console.warn('Failed to read AEV2 copy mode setting:', error);
+      return false;
+    }
+  }
+
   stripHtml(html) {
     const temp = document.createElement('div');
     temp.innerHTML = html;
@@ -196,12 +231,24 @@ class ClipboardManager {
         };
       }
 
-      // アイテムをリスト形式（名前のみ、改行区切り）でフォーマット
-      const formattedText = this.formatItemsForExport(exportItems, 'list');
+      const isAev2Mode = await this.isAev2CopyModeEnabled();
+      // AEV2モード時はIDを半角スペース区切りで出力
+      const formattedText = isAev2Mode
+        ? this.formatItemsForAev2Export(exportItems)
+        : this.formatItemsForExport(exportItems, 'list');
+
+      if (!formattedText) {
+        return {
+          success: false,
+          error: 'コピー可能なアイテムIDがありません'
+        };
+      }
+
       const result = await this.copyToClipboard(formattedText);
       
       if (result.success) {
         result.itemCount = exportItems.length;
+        result.copyMode = isAev2Mode ? 'aev2' : 'default';
         
         // エクスポート後の処理を実行（現在のページのアイテムのみ）
         const persistResult = await this.processPostExportActions(storageManager, newItems, excludedItems, currentItemId);

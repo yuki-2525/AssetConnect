@@ -46,13 +46,15 @@ class UIManager {
     
     // ストレージキー定数
     this.STORAGE_KEYS = {
-      WINDOW_SIZE: 'boothClipboardWindowSize'
+      WINDOW_SIZE: 'boothClipboardWindowSize',
+      AEV2_COPY_MODE: 'aev2CopyMode'
     };
     
     // 要素ID定数
     this.ELEMENT_IDS = {
       MANUAL_ITEM_ID: 'modal-manual-item-id',
-      MANUAL_ITEM_NAME: 'modal-manual-item-name'
+      MANUAL_ITEM_NAME: 'modal-manual-item-name',
+      COPY_MODE_LABEL: 'booth-copy-mode-label'
     };
     
     // CSSクラス名定数
@@ -570,7 +572,10 @@ class UIManager {
     
     windowContainer.innerHTML = `
       <div class="booth-manager-header">
-        <h3>${this.getMessage('avatarClipboardTitle')}</h3>
+        <div class="booth-manager-title-wrap">
+          <h3>${this.getMessage('avatarClipboardTitle')}</h3>
+          <span class="booth-copy-mode-label" id="booth-copy-mode-label"></span>
+        </div>
         <div class="booth-manager-controls">
           <a href="https://assetconnect.sakurayuki.dev/tutorial#avatar-copy" target="_blank" class="booth-help-btn" title="Help">
             <svg class="help-icon" viewBox="0 0 24 24" width="16" height="16">
@@ -626,8 +631,27 @@ class UIManager {
     this.foundItemsEl = this.getCachedElement('booth-found-items');
     // DOM要素をキャッシュ（タグ用）
     this.tagsNotificationEl = this.getCachedElement('booth-tags-notification');
+    this.updateCopyModeLabel();
     
     return windowContainer;
+  }
+
+  async updateCopyModeLabel() {
+    if (!this.managementWindow) return;
+
+    const modeLabelEl = this.managementWindow.querySelector(`#${this.ELEMENT_IDS.COPY_MODE_LABEL}`);
+    if (!modeLabelEl) return;
+
+    try {
+      const result = await chrome.storage.local.get(this.STORAGE_KEYS.AEV2_COPY_MODE);
+      const isAev2Mode = Boolean(result[this.STORAGE_KEYS.AEV2_COPY_MODE]);
+      modeLabelEl.textContent = isAev2Mode
+        ? this.getMessage('copyModeAev2Active')
+        : this.getMessage('copyModeDefaultActive');
+    } catch (error) {
+      window.debugLogger?.log('UIManager: Failed to load copy mode setting:', error);
+      modeLabelEl.textContent = this.getMessage('copyModeDefaultActive');
+    }
   }
 
   /**
@@ -937,6 +961,7 @@ class UIManager {
     if (!this.managementWindow) {
       this.createManagementWindow();
     }
+    await this.updateCopyModeLabel();
     // 表示時はデフォルトで最小化状態（タイトルのみ）にする
     this.managementWindow.style.display = 'block';
     this.managementWindow.classList.add('minimized');
@@ -961,6 +986,8 @@ class UIManager {
     if (!this.managementWindow) {
       this.createManagementWindow();
     }
+
+    await this.updateCopyModeLabel();
 
     // ウィンドウを表示し、強制的に展開状態にする
     this.managementWindow.style.display = 'block';
@@ -1153,7 +1180,11 @@ class UIManager {
       }
       
       if (result.success) {
+        await this.updateCopyModeLabel();
         let message = this.getMessage('itemsCopiedToClipboard', { count: result.itemCount });
+        if (result.copyMode === 'aev2') {
+          message += ` (${this.getMessage('copyModeAev2Short')})`;
+        }
         
         // 永続化に失敗した場合は警告を表示
         if (result.warning) {

@@ -26,6 +26,12 @@
     "hideAvatarClipboardLabel": {
         "message": "Hide AssetConnect Bulk Copy Window"
     },
+    "aev2CopyModeLabel": {
+        "message": "Supported Avatar Batch Copy AEV2 Mode"
+    },
+    "aev2CopyModeNote": {
+        "message": "When enabled, copies as 1234567 2345678 format"
+    },
     "toggleUnregisteredLabel": {
         "message": "Only unregistered items"
     },
@@ -331,6 +337,15 @@
     },
     "copyToClipboard": {
         "message": "Copy to Clipboard"
+    },
+    "copyModeDefaultActive": {
+        "message": "Mode: KonoAsset"
+    },
+    "copyModeAev2Active": {
+        "message": "Mode: AEV2"
+    },
+    "copyModeAev2Short": {
+        "message": "AEV2 mode"
     },
     "manualAdd": {
         "message": "Manual Add"

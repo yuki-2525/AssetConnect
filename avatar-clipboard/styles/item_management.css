@@ -87,6 +87,13 @@
   box-sizing: border-box;
 }
 
+.booth-manager-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
 .booth-manager-header h3 {
   margin: 0;
   font-size: 14px;
@@ -516,6 +523,16 @@
   height: 60px;
   box-sizing: border-box;
   align-items: center;
+}
+
+.booth-copy-mode-label {
+  font-size: 11px;
+  color: #6c757d;
+  background: #e9ecef;
+  border-radius: 999px;
+  padding: 1px 8px;
+  line-height: 1.4;
+  white-space: nowrap;
 }
 
 .booth-manual-add-toggle-btn {

@@ -26,6 +26,12 @@
     "hideAvatarClipboardLabel": {
         "message": "AssetConnect 一括コピーのウィンドウを非表示にする"
     },
+    "aev2CopyModeLabel": {
+        "message": "対応アバター一括コピーAEV2モード"
+    },
+    "aev2CopyModeNote": {
+        "message": "ON時は1234567 2345678形式でコピーされます"
+    },
     "toggleUnregisteredLabel": {
         "message": "未登録アイテムのみ"
     },
@@ -331,6 +337,15 @@
     },
     "copyToClipboard": {
         "message": "クリップボードにコピー"
+    },
+    "copyModeDefaultActive": {
+        "message": "モード: KonoAsset"
+    },
+    "copyModeAev2Active": {
+        "message": "モード: AEV2"
+    },
+    "copyModeAev2Short": {
+        "message": "AEV2モード"
     },
     "manualAdd": {
         "message": "手動追加"
