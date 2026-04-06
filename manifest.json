@@ -6,7 +6,6 @@
   "description": "__MSG_description__",
   "permissions": [
     "downloads",
-    "clipboardWrite",
     "storage",
     "unlimitedStorage",
     "contextMenus"
