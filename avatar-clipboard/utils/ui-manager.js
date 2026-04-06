@@ -8,6 +8,7 @@ class UIManager {
     this.windowId = 'booth-clipboard-manager';   // ウィンドウのID
     this.nameEditTimeouts = new Map();          // デバウンス用タイマー管理
     this.currentItemId = null;                  // 現在表示中の商品ID
+    this.isAev2CopyMode = false;                // AEV2コピー設定の同期キャッシュ
     this.translationManager = window.translationManager; // 共有翻訳マネージャー
     
     // DOM要素キャッシュ
@@ -111,6 +112,15 @@ class UIManager {
     this.initializeCurrentItemId();             // 商品ID取得
     this.currentTab = 'items'; // デフォルトタブ
     this.tagsFetched = false;  // タグが既にフェッチされたかどうか
+
+    if (typeof chrome !== 'undefined' && chrome.storage?.onChanged) {
+      chrome.storage.onChanged.addListener((changes, areaName) => {
+        if (areaName === 'local' && changes[this.STORAGE_KEYS.AEV2_COPY_MODE]) {
+          this.isAev2CopyMode = Boolean(changes[this.STORAGE_KEYS.AEV2_COPY_MODE].newValue);
+          this.updateCopyModeLabel();
+        }
+      });
+    }
   }
 
   /**
@@ -270,7 +280,23 @@ class UIManager {
    */
   extractCategoryFromElement(element) {
     const itemsList = element.closest(`.${this.CSS_CLASSES.ITEMS_LIST}`);
-    return itemsList ? itemsList.id.replace('-items', '') : 'unsaved';
+    return itemsList ? this.normalizeCategoryName(itemsList.id.replace('-items', '')) : 'unsaved';
+  }
+
+  /**
+   * セクションIDや保存値から正規のカテゴリ名を取り出すヘルパーメソッド
+   * @param {string} category - 変換元カテゴリ
+   * @returns {string} 正規化されたカテゴリ名
+   */
+  normalizeCategoryName(category) {
+    if (!category) {
+      return 'unsaved';
+    }
+
+    return category
+      .replace(/^ac-clip-/, '')
+      .replace(/-tags$/, '')
+      .replace(/-items$/, '');
   }
 
   /**
@@ -345,6 +371,7 @@ class UIManager {
    */
   async handleEntityRestore(entityType, entityId, originalCategory) {
     const config = this.ENTITY_CONFIG[entityType];
+    originalCategory = this.normalizeCategoryName(originalCategory);
     window.debugLogger?.log(`UIManager: ${config.logPrefix} restored:`, entityId, 'to', originalCategory);
     
     try {
@@ -385,7 +412,7 @@ class UIManager {
       const storageManager = this.validateStorageManager();
       if (storageManager) {
         const currentEntity = await storageManager[config.storageGet](entityId);
-        const previousCategory = currentEntity?.previousCategory || currentEntity?.category || 'unsaved';
+        const previousCategory = this.normalizeCategoryName(currentEntity?.previousCategory || currentEntity?.category || 'unsaved');
         
         const success = await storageManager[config.storageUpdate](entityId, { 
           category: 'permanentlyExcluded',
@@ -645,6 +672,7 @@ class UIManager {
     try {
       const result = await chrome.storage.local.get(this.STORAGE_KEYS.AEV2_COPY_MODE);
       const isAev2Mode = Boolean(result[this.STORAGE_KEYS.AEV2_COPY_MODE]);
+      this.isAev2CopyMode = isAev2Mode;
       modeLabelEl.textContent = isAev2Mode
         ? this.getMessage('copyModeAev2Active')
         : this.getMessage('copyModeDefaultActive');
@@ -1180,7 +1208,7 @@ class UIManager {
       }
       
       if (result.success) {
-        await this.updateCopyModeLabel();
+        this.updateCopyModeLabel();
         let message = this.getMessage('itemsCopiedToClipboard', { count: result.itemCount });
         if (result.copyMode === 'aev2') {
           message += ` (${this.getMessage('copyModeAev2Short')})`;
@@ -1200,9 +1228,17 @@ class UIManager {
           }
         }
         
-        this.showNotificationWithTimeout(message);
+        if (this.currentTab === 'tags') {
+          this.showTagsNotificationWithTimeout(message);
+        } else {
+          this.showNotificationWithTimeout(message);
+        }
       } else {
-        this.showNotificationWithTimeout(result.error, this.DELAYS.NOTIFICATION_LONG);
+        if (this.currentTab === 'tags') {
+          this.showTagsNotificationWithTimeout(result.error, this.DELAYS.NOTIFICATION_LONG);
+        } else {
+          this.showNotificationWithTimeout(result.error, this.DELAYS.NOTIFICATION_LONG);
+        }
       }
       
     } catch (error) {
@@ -1535,13 +1571,13 @@ class UIManager {
     if (baseSectionId === 'excluded') {
       // 除外: 復元ボタンと常に除外ボタンを表示
       return `
-        <button class="${this.CSS_CLASSES.RESTORE_BTN}"${dataTypeAttr} data-original-category="${entityData.previousCategory || 'unsaved'}">${this.getMessage('restore')}</button>
+        <button class="${this.CSS_CLASSES.RESTORE_BTN}"${dataTypeAttr} data-original-category="${this.normalizeCategoryName(entityData.previousCategory || 'unsaved')}">${this.getMessage('restore')}</button>
         <button class="${this.CSS_CLASSES.PERMANENTLY_EXCLUDE_BTN}"${dataTypeAttr}>${this.getMessage('alwaysExclude')}</button>
       `;
     } else if (baseSectionId === 'permanentlyExcluded') {
       // 常に除外: 復元ボタンのみ表示
       return `
-        <button class="${this.CSS_CLASSES.RESTORE_BTN}"${dataTypeAttr} data-original-category="${entityData.previousCategory || 'unsaved'}">${this.getMessage('restore')}</button>
+        <button class="${this.CSS_CLASSES.RESTORE_BTN}"${dataTypeAttr} data-original-category="${this.normalizeCategoryName(entityData.previousCategory || 'unsaved')}">${this.getMessage('restore')}</button>
       `;
     } else if (baseSectionId === 'unsaved' && entityType === 'tag') {
       // 新規タグ: 除外ボタンと常に除外ボタンを表示
@@ -1580,7 +1616,7 @@ class UIManager {
       excludeBtn.addEventListener('click', () => {
         let currentCategory = this.extractCategoryFromElement(entityEl);
         if (entityType === 'tag') {
-          currentCategory = currentCategory.replace('-tags', '');
+          currentCategory = this.normalizeCategoryName(currentCategory);
         }
         this.handleEntityExclude(entityType, entityId, currentCategory);
       });
@@ -1598,7 +1634,7 @@ class UIManager {
     const restoreBtn = entityEl.querySelector(`.${this.CSS_CLASSES.RESTORE_BTN}`);
     if (restoreBtn) {
       restoreBtn.addEventListener('click', (e) => {
-        const originalCategory = e.target.getAttribute('data-original-category');
+        const originalCategory = this.normalizeCategoryName(e.currentTarget.getAttribute('data-original-category'));
         this.handleEntityRestore(entityType, entityId, originalCategory);
       });
     }

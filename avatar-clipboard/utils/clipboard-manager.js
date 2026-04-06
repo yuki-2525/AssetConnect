@@ -159,6 +159,62 @@ class ClipboardManager {
     return temp.textContent || temp.innerText || '';
   }
 
+  collectVisibleExportItems(entityType) {
+    const selectors = entityType === 'tag'
+      ? [
+          '#ac-clip-saved-tags-items .booth-item',
+          '#ac-clip-unsaved-tags-items .booth-item',
+          '#ac-clip-excluded-tags-items .booth-item',
+          '#ac-clip-permanentlyExcluded-tags-items .booth-item'
+        ]
+      : [
+          '#ac-clip-saved-items .booth-item',
+          '#ac-clip-unsaved-items .booth-item',
+          '#ac-clip-excluded-items .booth-item',
+          '#ac-clip-permanentlyExcluded-items .booth-item'
+        ];
+
+    const exportItems = [];
+    const newItems = [];
+    const excludedItems = [];
+
+    document.querySelectorAll(selectors.join(', ')).forEach((entityEl) => {
+      const entityId = entityType === 'tag' ? entityEl.dataset.tagId : entityEl.dataset.itemId;
+      if (!entityId) {
+        return;
+      }
+
+      const nameInput = entityEl.querySelector('.booth-item-name');
+      const sectionId = entityEl.closest('.booth-items-list')?.id || '';
+      const category = sectionId
+        .replace(/^ac-clip-/, '')
+        .replace(/-items$/, '')
+        .replace(/-tags$/, '');
+
+      const entity = {
+        id: entityId,
+        name: nameInput?.value?.trim() || '',
+        category
+      };
+
+      if (entity.category === 'saved' || entity.category === 'unsaved') {
+        exportItems.push(entity);
+      }
+
+      if (entity.category === 'unsaved') {
+        newItems.push(entity);
+      } else if (entity.category === 'excluded') {
+        excludedItems.push(entity);
+      }
+    });
+
+    return {
+      exportItems,
+      newItems,
+      excludedItems
+    };
+  }
+
 
   async getClipboardPermissions() {
     try {
@@ -191,38 +247,7 @@ class ClipboardManager {
           error: '現在のページIDが取得できません'
         };
       }
-      
-      const allItems = await storageManager.getAllItems();
-      
-      // 現在のページに存在するアイテムのみを取得
-      const pageParser = window.pageParser || new PageParser();
-      const { parseResult } = await pageParser.fetchItemsFromPage();
-      const pageItemIds = new Set();
-      
-      // 現在のページのアイテムIDが存在する場合は追加
-      if (currentItemId) {
-        pageItemIds.add(currentItemId);
-      }
-      
-      // ページで見つかった全アイテムを追加
-      parseResult.externalItems.forEach(item => {
-        pageItemIds.add(item.itemId);
-      });
-      
-      // 現在のページに存在するアイテムのみにフィルタリング
-      const pageItems = {};
-      Object.entries(allItems).forEach(([itemId, item]) => {
-        if (pageItemIds.has(itemId)) {
-          pageItems[itemId] = item;
-        }
-      });
-      
-      // 現在のページに存在する保存済み・未保存アイテムのみを取得
-      const savedItems = Object.values(pageItems).filter(item => item.category === 'saved');
-      const newItems = Object.values(pageItems).filter(item => item.category === 'unsaved');
-      const excludedItems = Object.values(pageItems).filter(item => item.category === 'excluded');
-      
-      const exportItems = [...savedItems, ...newItems];
+      const { exportItems, newItems, excludedItems } = this.collectVisibleExportItems('item');
       
       if (exportItems.length === 0) {
         return {
@@ -231,7 +256,7 @@ class ClipboardManager {
         };
       }
 
-      const isAev2Mode = await this.isAev2CopyModeEnabled();
+      const isAev2Mode = Boolean(globalThis.uiManager?.isAev2CopyMode);
       // AEV2モード時はIDを半角スペース区切りで出力
       const formattedText = isAev2Mode
         ? this.formatItemsForAev2Export(exportItems)
@@ -280,36 +305,7 @@ class ClipboardManager {
   async exportSavedAndNewTags(storageManager) {
     try {
       const currentPageId = window.uiManager?.currentItemId || window.location.href;
-      
-      const allTags = await storageManager.getAllTags();
-      
-      // UI上に表示されているタグIDを取得（saved-tags, unsaved-tagsセクション）
-      const displayedTagIds = new Set();
-      const tagElements = document.querySelectorAll('#saved-tags-items .booth-item, #unsaved-tags-items .booth-item, #excluded-tags-items .booth-item');
-      tagElements.forEach(el => {
-        const tagId = el.getAttribute('data-tag-id');
-        if (tagId) displayedTagIds.add(tagId);
-      });
-      
-      // エクスポート対象のタグを収集
-      const exportTags = [];
-      const newTagsToSave = []; // ストレージに保存すべき新規タグ
-      const excludedTags = [];
-
-      // UI上に表示されているタグをストレージから取得
-      displayedTagIds.forEach(tagId => {
-        const stored = allTags[tagId];
-        if (stored) {
-          if (stored.category === 'saved' || stored.category === 'unsaved') {
-            exportTags.push(stored);
-            if (stored.category === 'unsaved') {
-              newTagsToSave.push(stored);
-            }
-          } else if (stored.category === 'excluded') {
-            excludedTags.push(stored);
-          }
-        }
-      });
+      const { exportItems: exportTags, newItems: newTagsToSave, excludedItems } = this.collectVisibleExportItems('tag');
       
       if (exportTags.length === 0) {
         return {
@@ -326,7 +322,7 @@ class ClipboardManager {
         result.itemCount = exportTags.length;
         
         // エクスポート後の処理
-        const persistResult = await this.processPostExportTagActions(storageManager, newTagsToSave, excludedTags, currentPageId);
+        const persistResult = await this.processPostExportTagActions(storageManager, newTagsToSave, excludedItems, currentPageId);
         result.persistenceResult = persistResult;
         
         if (!persistResult.success) {
