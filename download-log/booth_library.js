@@ -58,7 +58,7 @@ function getDownloadInfo(downloadButton) {
   }
 
   // 外側コンテナの取得
-  const outerContainer = downloadButton.closest('.mb-16.bg-white.p-16');
+  const outerContainer = downloadButton.closest('.bg-white.p-16');
   if (outerContainer) {
     // タイトルの取得：外側コンテナ内の指定要素から取得
     const titleElement = outerContainer.querySelector('.font-bold.text-16.break-all');
@@ -147,7 +147,7 @@ async function addDownloadAllButtons() {
     await initializeTranslations();
 
     // 商品コンテナを取得
-    const itemContainers = document.querySelectorAll('.mb-16.bg-white.p-16');
+    const itemContainers = document.querySelectorAll('.bg-white.p-16');
     
     itemContainers.forEach(container => {
         // 既にボタンが追加されているかチェック
