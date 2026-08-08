@@ -1,26 +1,6 @@
 // booth_order.js
 
-// Debug logging function
-let debugMode = false;
-
-// Initialize debug mode from storage
-chrome.storage.local.get(['debugMode'], (result) => {
-    debugMode = result.debugMode || false;
-});
-
-// Listen for debug mode changes
-chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
-    if (request.action === 'debugModeChanged') {
-        debugMode = request.debugMode;
-        debugLog('Debug mode changed to:', debugMode);
-    }
-});
-
-function debugLog(...args) {
-    if (debugMode) {
-        console.log('[ORDER DEBUG]', ...args);
-    }
-}
+const debugLog = (...args) => window.debugLogger?.log('[ORDER]', ...args);
 
 // ヘルパー関数：日付を "YYYY-MM-DD HH:mm:ss" 形式にフォーマット
 function formatDate(date) {
@@ -88,7 +68,7 @@ function saveDownloadHistory(info) {
             timestamp: timestamp,
             url: info.itemUrl,
             free: false,
-            registered: false
+            registered: info.registered === true
         };
 
         debugLog('Order: Created download entry:', newEntry);
@@ -109,10 +89,18 @@ function saveDownloadHistory(info) {
     });
 }
 
+window.assetConnectDownloadAdapter = {
+  getInfo: getDownloadInfo,
+  save: saveDownloadHistory
+};
+
 document.addEventListener('click', function (e) {
   // ダウンロードリンク（"https://booth.pm/downloadables/" で始まるもの）を検知
   // 形式: .js-download-button (data-href属性を持つ)
-  const downloadButton = e.target.closest('.js-download-button[data-href^="https://booth.pm/downloadables/"]');
+  const downloadButton = e.target.closest(
+    '.js-download-button[data-test="downloadable"]' +
+    '[data-href^="https://booth.pm/downloadables/"]'
+  );
   
   if (!downloadButton) return;
 
@@ -144,7 +132,10 @@ async function addDownloadAllButtons() {
         // 既にボタンが追加されているかチェック
         if (sheet.querySelector('.asset-connect-download-all')) return;
 
-        const buttons = sheet.querySelectorAll('.js-download-button[data-href^="https://booth.pm/downloadables/"]');
+        const buttons = sheet.querySelectorAll(
+            '.js-download-button[data-test="downloadable"]' +
+            '[data-href^="https://booth.pm/downloadables/"]'
+        );
         if (buttons.length < 2) return;
 
         // 挿入位置を探す (ダウンロードリストのコンテナ)
@@ -160,7 +151,8 @@ async function addDownloadAllButtons() {
         // 独自のボタンを作成
         const newBtn = document.createElement('button');
         newBtn.type = 'button';
-        newBtn.textContent = getMessage('downloadAllButton');
+        newBtn.textContent = window.assetConnectDefaultDownload?.getBulkButtonLabel()
+            || getMessage('downloadAllButton');
         
         // スタイルを適用
         Object.assign(newBtn.style, {
@@ -212,14 +204,22 @@ async function addDownloadAllButtons() {
             
             try {
                 for (const button of buttons) {
-                    const info = getDownloadInfo(button);
-                    await saveDownloadHistory(info);
-                    
-                    // iframeを使用してダウンロード
-                    const iframe = document.createElement('iframe');
-                    iframe.style.display = 'none';
-                    iframe.src = info.url;
-                    document.body.appendChild(iframe);
+                    const method = window.assetConnectDefaultDownload?.getMethod() || 'normal';
+                    if (method === 'normal') {
+                        const info = getDownloadInfo(button);
+                        await saveDownloadHistory(info);
+
+                        const iframe = document.createElement('iframe');
+                        iframe.style.display = 'none';
+                        iframe.src = info.url;
+                        document.body.appendChild(iframe);
+
+                        setTimeout(() => {
+                            if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
+                        }, 60000);
+                    } else {
+                        await window.assetConnectDefaultDownload.launchForRegular(button);
+                    }
                     
                     processedCount++;
                     updateProgress();
@@ -227,10 +227,6 @@ async function addDownloadAllButtons() {
                     // サーバー負荷軽減のため少し待機
                     await new Promise(r => setTimeout(r, 500));
                     
-                    // iframeは残しておいてもいいが、掃除したほうがいいかも？
-                    setTimeout(() => {
-                        if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
-                    }, 60000);
                 }
             } catch (err) {
                 console.error(err);
@@ -251,9 +247,109 @@ async function addDownloadAllButtons() {
     });
 }
 
+// 「その他のDL方法」にAvatarExplorer連携を追加する
+function addAvatarExplorerDownloadButtons(root = document) {
+    const dropdowns = root.querySelectorAll(
+        '.js-download-button[data-test="other-downloads-button"][data-dropdown-items]'
+    );
+
+    dropdowns.forEach(dropdown => {
+        if (dropdown.querySelector('.asset-connect-avatar-explorer-download')) return;
+
+        let items;
+        try {
+            items = JSON.parse(dropdown.dataset.dropdownItems);
+        } catch (error) {
+            debugLog('Order: Failed to parse other download methods:', error);
+            return;
+        }
+
+        const libraryManagerItem = items.find(item =>
+            item.deeplinkDownloadableUrl &&
+            item.deeplinkDownloadableUrl.includes('client=booth-library-manager')
+        );
+        if (!libraryManagerItem) return;
+
+        const menu = dropdown.querySelector('.absolute.top-full');
+        if (!menu) return;
+
+        const sourceRow = Array.from(menu.children).find(row =>
+            row.textContent.includes('BOOTH Library Manager')
+        );
+        if (!sourceRow) return;
+
+        const avatarExplorerRow = sourceRow.cloneNode(true);
+        avatarExplorerRow.classList.add('asset-connect-avatar-explorer-download');
+
+        const textNode = Array.from(avatarExplorerRow.childNodes).find(node =>
+            node.nodeType === Node.TEXT_NODE && node.textContent.includes('BOOTH Library Manager')
+        );
+        if (textNode) textNode.textContent = 'AvatarExplorerでDL';
+
+        avatarExplorerRow.addEventListener('click', async event => {
+            event.preventDefault();
+            event.stopPropagation();
+
+            const launchWindow = window.prepareAvatarExplorerLaunch();
+            avatarExplorerRow.style.pointerEvents = 'none';
+            try {
+                const downloadableId = /\/downloadables\/(\d+)/.exec(
+                    libraryManagerItem.deeplinkDownloadableUrl
+                )?.[1];
+                debugLog('AvatarExplorer deeplink requested:', { downloadableId });
+                const response = await chrome.runtime.sendMessage({
+                    action: 'fetchAvatarExplorerDeeplink',
+                    deeplinkUrl: libraryManagerItem.deeplinkDownloadableUrl
+                });
+                if (!response?.success || !response.deeplink) {
+                    window.debugLogger?.warn('[ORDER] AvatarExplorer deeplink failed:', response);
+                    throw new Error(response?.error || 'AvatarExplorer deeplink could not be created');
+                }
+                debugLog('AvatarExplorer deeplink converted:', {
+                    downloadableId,
+                    scheme: response.deeplink.split(':', 1)[0]
+                });
+
+                debugLog('Launching AvatarExplorer:', { downloadableId });
+                window.launchAvatarExplorer(response.deeplink, launchWindow);
+
+                const regularDownloadButton = dropdown.closest('.legacy-list-item')
+                    ?.querySelector(
+                        '.js-download-button[data-test="downloadable"]' +
+                        '[data-href^="https://booth.pm/downloadables/"]'
+                    );
+                if (regularDownloadButton) {
+                    const info = getDownloadInfo(regularDownloadButton);
+                    info.registered = true;
+                    saveDownloadHistory(info).catch(error => {
+                        window.debugLogger?.warn('[ORDER] Download history save failed:', error);
+                    });
+                }
+            } catch (error) {
+                launchWindow?.close();
+                window.debugLogger?.error('[ORDER] AvatarExplorer download failed:', error);
+                alert(`AvatarExplorerの起動に失敗しました。\n${error.message}`);
+            } finally {
+                avatarExplorerRow.style.pointerEvents = '';
+            }
+        }, true);
+
+        sourceRow.insertAdjacentElement('afterend', avatarExplorerRow);
+    });
+}
+
+const orderObserver = new MutationObserver(() => {
+    addAvatarExplorerDownloadButtons();
+});
+orderObserver.observe(document.documentElement, { childList: true, subtree: true });
+
 // ページ読み込み完了時に実行
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', addDownloadAllButtons);
+    document.addEventListener('DOMContentLoaded', () => {
+        addDownloadAllButtons();
+        addAvatarExplorerDownloadButtons();
+    });
 } else {
     addDownloadAllButtons();
+    addAvatarExplorerDownloadButtons();
 }

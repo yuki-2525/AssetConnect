@@ -198,6 +198,18 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
     // Return true to indicate async response
     return true;
+  } else if (request.action === 'fetchAvatarExplorerDeeplink') {
+    debugLog('Deeplink: message received', {
+      tabId: sender.tab?.id,
+      downloadableId: /\/downloadables\/(\d+)/.exec(request.deeplinkUrl || '')?.[1]
+    });
+    handleAvatarExplorerDeeplink(request.deeplinkUrl, sender.tab?.id)
+      .then(result => sendResponse(result))
+      .catch(error => sendResponse({
+        success: false,
+        error: error.message
+      }));
+    return true;
   } else if (request.action === 'languageChanged') {
     // Update context menus when language changes
     updateContextMenusLanguage(request.language);
@@ -205,6 +217,128 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     return true;
   }
 });
+
+const pendingDeeplinkRequests = new Map();
+
+function resolvePendingDeeplink(requestUrl, location, source, statusCode) {
+  const requestId = new URL(requestUrl).searchParams.get('_asset_connect_request_id');
+  const resolve = requestId && pendingDeeplinkRequests.get(requestId);
+  debugLog('Deeplink: webRequest event', {
+    requestId: requestId?.slice(0, 8),
+    source,
+    statusCode,
+    pending: Boolean(resolve),
+    hasLocation: Boolean(location),
+    locationScheme: location?.split(':', 1)[0]
+  });
+  if (resolve && location) resolve(location);
+}
+
+chrome.webRequest.onHeadersReceived.addListener(
+  details => {
+    const locationHeader = details.responseHeaders?.find(
+      header => header.name.toLowerCase() === 'location'
+    );
+    resolvePendingDeeplink(
+      details.url,
+      locationHeader?.value,
+      'onHeadersReceived',
+      details.statusCode
+    );
+  },
+  { urls: ['https://booth.pm/downloadables/*/deeplink*'] },
+  ['responseHeaders', 'extraHeaders']
+);
+
+chrome.webRequest.onBeforeRedirect.addListener(
+  details => resolvePendingDeeplink(
+    details.url,
+    details.redirectUrl,
+    'onBeforeRedirect',
+    details.statusCode
+  ),
+  { urls: ['https://booth.pm/downloadables/*/deeplink*'] }
+);
+
+async function handleAvatarExplorerDeeplink(deeplinkUrl, tabId) {
+  const url = new URL(deeplinkUrl);
+  if (url.origin !== 'https://booth.pm' || !/^\/downloadables\/\d+\/deeplink$/.test(url.pathname)) {
+    throw new Error('Invalid BOOTH deeplink URL');
+  }
+
+  // 同時リクエストを区別し、webRequest側でこの302だけを捕捉する。
+  const requestId = crypto.randomUUID();
+  url.searchParams.set('_asset_connect_request_id', requestId);
+  const requestUrl = url.href;
+  debugLog('Deeplink: request prepared', {
+    requestId: requestId.slice(0, 8),
+    tabId,
+    downloadableId: /\/downloadables\/(\d+)/.exec(url.pathname)?.[1]
+  });
+  let timeoutId;
+  let resolveLocation;
+  let rejectLocation;
+  const locationPromise = new Promise((resolve, reject) => {
+    resolveLocation = resolve;
+    rejectLocation = reject;
+    pendingDeeplinkRequests.set(requestId, resolveLocation);
+    debugLog('Deeplink: pending request registered', {
+      requestId: requestId.slice(0, 8),
+      pendingCount: pendingDeeplinkRequests.size
+    });
+    timeoutId = setTimeout(() => {
+      debugLog('Deeplink: request timed out', {
+        requestId: requestId.slice(0, 8),
+        tabId,
+        pendingCount: pendingDeeplinkRequests.size
+      });
+      reject(new Error(`BOOTH deeplink request timed out (${requestId.slice(0, 8)})`));
+    }, 10000);
+  });
+
+  try {
+    if (!tabId) throw new Error('BOOTH tab was not found');
+
+    // ログイン済みBOOTHタブをリクエスト元にすることで、認証Cookieを確実に利用する。
+    chrome.tabs.sendMessage(tabId, {
+      action: 'probeBoothDeeplink',
+      requestUrl
+    }).then(() => {
+      debugLog('Deeplink: probe dispatched to tab', {
+        requestId: requestId.slice(0, 8),
+        tabId
+      });
+    }).catch(error => {
+      debugLog('Deeplink: probe dispatch failed', {
+        requestId: requestId.slice(0, 8),
+        error: error.message
+      });
+      rejectLocation(new Error(`BOOTH deeplink probe failed: ${error.message}`));
+    });
+
+    const location = await locationPromise;
+    debugLog('Deeplink: Location received', {
+      requestId: requestId.slice(0, 8),
+      scheme: location.split(':', 1)[0]
+    });
+
+    if (!location.startsWith('booth-library-manager://')) {
+      throw new Error('BOOTH Library Manager deeplink was not returned');
+    }
+
+    return {
+      success: true,
+      deeplink: location.replace(/^booth-library-manager:\/\//, 'vrcae://')
+    };
+  } finally {
+    clearTimeout(timeoutId);
+    pendingDeeplinkRequests.delete(requestId);
+    debugLog('Deeplink: request cleaned up', {
+      requestId: requestId.slice(0, 8),
+      pendingCount: pendingDeeplinkRequests.size
+    });
+  }
+}
 
 async function handleCrossOriginFetch(itemUrl, itemId) {
   try {

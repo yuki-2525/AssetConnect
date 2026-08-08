@@ -44,9 +44,32 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Create Zip
+      - name: Create Chromium ZIP
         run: |
-          zip -r AssetConnect_v.${{ needs.get-version.outputs.version }}.zip . -x "*.git*" ".github/*" "docs/*" "*.DS_Store"
+          zip -r AssetConnect_Chromium_v.${{ needs.get-version.outputs.version }}.zip . -x "*.git*" ".github/*" "docs/*" "*.DS_Store"
+
+      - name: Create Firefox ZIP
+        shell: bash
+        run: |
+          firefox_dir="$(mktemp -d)"
+          rsync -a \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='docs' \
+            --exclude='.DS_Store' \
+            --exclude='AssetConnect_*.zip' \
+            ./ "$firefox_dir/"
+
+          jq '
+            .background = {
+              scripts: ["background/background.js"]
+            }
+          ' manifest.json > "$firefox_dir/manifest.json"
+
+          (
+            cd "$firefox_dir"
+            zip -r "$GITHUB_WORKSPACE/AssetConnect_firefox_v.${{ needs.get-version.outputs.version }}.zip" .
+          )
 
       - name: Create Tag
         uses: rickstaa/action-create-tag@v1
@@ -56,6 +79,8 @@ jobs:
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
-          files: AssetConnect_v.${{ needs.get-version.outputs.version }}.zip
+          files: |
+            AssetConnect_Chromium_v.${{ needs.get-version.outputs.version }}.zip
+            AssetConnect_firefox_v.${{ needs.get-version.outputs.version }}.zip
           tag_name: ${{ needs.get-version.outputs.version }}
           generate_release_notes: true

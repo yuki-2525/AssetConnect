@@ -13,9 +13,15 @@
       --spacing-unit: 12px;
     }
 
+    html {
+      height: 600px;
+    }
+
     body {
       font-family: "Segoe UI", "Meiryo UI", system-ui, -apple-system, sans-serif;
       width: 750px;
+      min-height: 600px;
+      height: 600px;
       box-sizing: border-box;
       padding: 0 0 10px 0;
       margin: 0;
@@ -23,6 +29,7 @@
       color: var(--text-color);
       background-color: #fff;
       overflow-x: hidden;
+      overflow-y: auto;
     }
 
     .settings-section {
@@ -637,6 +644,17 @@
               style="flex-grow: 1; padding: 6px; border: 1px solid var(--border-color); border-radius: 4px;">
             <button id="saveFolder" data-i18n="saveButton" style="padding: 6px 12px;">保存</button>
           </div>
+        </div>
+
+        <div style="margin-bottom: 15px;">
+          <label for="defaultDownloadMethod" data-i18n="defaultDownloadMethodLabel"
+            style="display: block; margin-bottom: 5px;">デフォルトのダウンロード方法:</label>
+          <select id="defaultDownloadMethod"
+            style="width: 100%; padding: 6px; border: 1px solid var(--border-color); border-radius: 4px;">
+            <option value="normal" data-i18n="normalDownload">通常ダウンロード</option>
+            <option value="booth-library-manager">BOOTH Library Manager</option>
+            <option value="avatar-explorer">AvatarExplorer</option>
+          </select>
         </div>
 
         <div style="margin-bottom: 15px;">
