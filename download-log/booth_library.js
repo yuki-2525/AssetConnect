@@ -235,8 +235,8 @@ async function addDownloadAllButtons() {
                     processedCount++;
                     updateProgress();
                     
-                    // サーバー負荷軽減のため少し待機
-                    await new Promise(r => setTimeout(r, 500));
+                    // 通常ダウンロードはリダイレクト処理の間隔を1秒確保する
+                    await new Promise(r => setTimeout(r, method === 'normal' ? 1000 : 500));
                     
                 }
             } catch (err) {
