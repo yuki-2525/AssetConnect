@@ -13,9 +13,15 @@
       --spacing-unit: 12px;
     }
 
+    html {
+      height: 600px;
+    }
+
     body {
       font-family: "Segoe UI", "Meiryo UI", system-ui, -apple-system, sans-serif;
       width: 750px;
+      min-height: 600px;
+      height: 600px;
       box-sizing: border-box;
       padding: 0 0 10px 0;
       margin: 0;
@@ -23,6 +29,7 @@
       color: var(--text-color);
       background-color: #fff;
       overflow-x: hidden;
+      overflow-y: auto;
     }
 
     .settings-section {
