@@ -247,7 +247,9 @@ chrome.webRequest.onHeadersReceived.addListener(
     );
   },
   { urls: ['https://booth.pm/downloadables/*/deeplink*'] },
-  ['responseHeaders', 'extraHeaders']
+  // extraHeaders is Chromium-only. Location is available with responseHeaders
+  // in both Chromium and Firefox.
+  ['responseHeaders']
 );
 
 chrome.webRequest.onBeforeRedirect.addListener(

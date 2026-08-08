@@ -46,7 +46,7 @@ jobs:
 
       - name: Create Chromium ZIP
         run: |
-          zip -r AssetConnect_Chromium_v.${{ needs.get-version.outputs.version }}.zip . -x "*.git*" ".github/*" "docs/*" "*.DS_Store"
+          zip -r AssetConnect_Chromium_v.${{ needs.get-version.outputs.version }}.zip . -x "*.git*" ".github/*" "docs/*" "tools/*" "*.DS_Store"
 
       - name: Create Firefox ZIP
         shell: bash
@@ -56,6 +56,7 @@ jobs:
             --exclude='.git' \
             --exclude='.github' \
             --exclude='docs' \
+            --exclude='tools' \
             --exclude='.DS_Store' \
             --exclude='AssetConnect_*.zip' \
             ./ "$firefox_dir/"
@@ -63,6 +64,15 @@ jobs:
           jq '
             .background = {
               scripts: ["background/background.js"]
+            } |
+            .browser_specific_settings = {
+              gecko: {
+                id: "AssetConnect@sakurayuki.dev",
+                strict_min_version: "140.0",
+                data_collection_permissions: {
+                  required: ["none"]
+                }
+              }
             }
           ' manifest.json > "$firefox_dir/manifest.json"
 

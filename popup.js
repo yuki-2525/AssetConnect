@@ -114,6 +114,22 @@ document.addEventListener('DOMContentLoaded', function () {
     return message;
   }
 
+  // Firefox closes an action popup when a native file or save dialog opens.
+  // Run data import/export from the persistent storage overview tab instead.
+  function openFirefoxDataManagement(tabId) {
+    if (!navigator.userAgent.includes('Firefox/')) return false;
+
+    const url = chrome.runtime.getURL(`storage-management/storage-overview.html#${tabId}`);
+    try {
+      Promise.resolve(chrome.tabs.create({ url })).catch(error => {
+        console.error('Failed to open data management tab:', error);
+      });
+    } catch (error) {
+      console.error('Failed to open data management tab:', error);
+    }
+    return true;
+  }
+
   function updateUITexts() {
     document.querySelectorAll('[data-i18n]').forEach(function (el) {
       const key = el.getAttribute('data-i18n');
@@ -662,6 +678,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // CSV 出力ボタン
   ELEMENTS.btnCsvExport.addEventListener("click", () => {
+    if (openFirefoxDataManagement('download-history')) return;
+
     chrome.storage.local.get("downloadHistory", function (result) {
       let history = result.downloadHistory || [];
       // タイムスタンプの降順にソート（最新のものが先頭になるように）
@@ -705,6 +723,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // 対応アバターデータのダウンロード (JSON)
   ELEMENTS.btnDownloadSupported.addEventListener("click", () => {
+    if (openFirefoxDataManagement('booth-items')) return;
+
     chrome.storage.local.get(['boothItems'], (result) => {
       const boothItems = result.boothItems || {};
       const savedItems = Object.values(boothItems).filter(item => item.category === 'saved');
@@ -743,6 +763,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // 対応アバターデータのインポート (JSON)
   ELEMENTS.btnImportSupported.addEventListener("click", () => {
+    if (openFirefoxDataManagement('booth-items')) return;
+
     ELEMENTS.jsonInput.click();
   });
 
@@ -826,6 +848,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
   // CSVインポート処理
   ELEMENTS.btnImport.addEventListener("click", function () {
+    if (openFirefoxDataManagement('download-history')) return;
+
     ELEMENTS.csvInput.click();
   });
   ELEMENTS.csvInput.addEventListener("change", function (e) {
