@@ -115,17 +115,17 @@ async function addDownloadAllButtons() {
 
     // バリエーションアイテムを取得
     const variationItems = document.querySelectorAll('.variation-item');
-    
-    variationItems.forEach(item => {
-        // 既にボタンが追加されているかチェック
-        if (item.querySelector('.asset-connect-download-all')) return;
+    const buttons = document.querySelectorAll(
+        '.variation-item a[href^="https://booth.pm/downloadables/"]'
+    );
+    if (variationItems.length === 0 || buttons.length < 2) return;
+    if (document.querySelector('.asset-connect-download-all')) return;
 
-        const buttons = item.querySelectorAll('a[href^="https://booth.pm/downloadables/"]');
-        if (buttons.length < 2) return;
+    const item = variationItems[0];
 
-        // 挿入位置を探す (variation-cart内)
-        const cartContainer = item.querySelector('.variation-cart');
-        if (!cartContainer) return;
+        // 挿入位置を探す（バリエーション一覧）
+        const variationsContainer = item.parentElement;
+        if (!variationsContainer) return;
 
         // ボタンコンテナを作成
         const btnContainer = document.createElement('div');
@@ -230,9 +230,8 @@ async function addDownloadAllButtons() {
 
         btnContainer.appendChild(newBtn);
         
-        // カートコンテナの先頭に挿入
-        cartContainer.insertBefore(btnContainer, cartContainer.firstChild);
-    });
+        // 商品内の全ファイルを対象にするため、一覧の先頭に1つだけ挿入
+        variationsContainer.insertBefore(btnContainer, item);
 }
 
 // 「その他のDL方法」にAvatarExplorer連携を追加する
@@ -278,6 +277,7 @@ function addAvatarExplorerDownloadButtons(root = document) {
             event.preventDefault();
             event.stopPropagation();
 
+            const launchWindow = window.prepareAvatarExplorerLaunch();
             avatarExplorerRow.style.pointerEvents = 'none';
             try {
                 const downloadableId = /\/downloadables\/(\d+)/.exec(
@@ -297,17 +297,20 @@ function addAvatarExplorerDownloadButtons(root = document) {
                     scheme: response.deeplink.split(':', 1)[0]
                 });
 
+                debugLog('Launching AvatarExplorer:', { downloadableId });
+                window.launchAvatarExplorer(response.deeplink, launchWindow);
+
                 const regularDownloadLink = dropdown.closest('.variation-item')
                     ?.querySelector('a[href^="https://booth.pm/downloadables/"]');
                 if (regularDownloadLink) {
                     const info = getDownloadInfo(regularDownloadLink);
                     info.registered = true;
-                    await saveDownloadHistory(info);
+                    saveDownloadHistory(info).catch(error => {
+                        window.debugLogger?.warn('[SHOP] Download history save failed:', error);
+                    });
                 }
-
-                debugLog('Launching AvatarExplorer:', { downloadableId });
-                window.launchAvatarExplorer(response.deeplink);
             } catch (error) {
+                launchWindow?.close();
                 window.debugLogger?.error('[SHOP] AvatarExplorer download failed:', error);
                 alert(`AvatarExplorerの起動に失敗しました。\n${error.message}`);
             } finally {
@@ -319,8 +322,15 @@ function addAvatarExplorerDownloadButtons(root = document) {
     });
 }
 
+let shopUpdateScheduled = false;
 const shopObserver = new MutationObserver(() => {
-    addAvatarExplorerDownloadButtons();
+    if (shopUpdateScheduled) return;
+    shopUpdateScheduled = true;
+    queueMicrotask(() => {
+        shopUpdateScheduled = false;
+        addDownloadAllButtons();
+        addAvatarExplorerDownloadButtons();
+    });
 });
 shopObserver.observe(document.documentElement, { childList: true, subtree: true });
 

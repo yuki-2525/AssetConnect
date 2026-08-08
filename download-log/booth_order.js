@@ -284,6 +284,7 @@ function addAvatarExplorerDownloadButtons(root = document) {
             event.preventDefault();
             event.stopPropagation();
 
+            const launchWindow = window.prepareAvatarExplorerLaunch();
             avatarExplorerRow.style.pointerEvents = 'none';
             try {
                 const downloadableId = /\/downloadables\/(\d+)/.exec(
@@ -304,7 +305,7 @@ function addAvatarExplorerDownloadButtons(root = document) {
                 });
 
                 debugLog('Launching AvatarExplorer:', { downloadableId });
-                window.launchAvatarExplorer(response.deeplink);
+                window.launchAvatarExplorer(response.deeplink, launchWindow);
 
                 const regularDownloadButton = dropdown.closest('.legacy-list-item')
                     ?.querySelector('.js-download-button[data-href^="https://booth.pm/downloadables/"]');
@@ -316,6 +317,7 @@ function addAvatarExplorerDownloadButtons(root = document) {
                     });
                 }
             } catch (error) {
+                launchWindow?.close();
                 window.debugLogger?.error('[ORDER] AvatarExplorer download failed:', error);
                 alert(`AvatarExplorerの起動に失敗しました。\n${error.message}`);
             } finally {

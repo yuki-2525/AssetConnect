@@ -66,7 +66,12 @@
     }
   }
 
-  function launchUrl(url) {
+  function prepareAvatarExplorerLaunch() {
+    // 302取得後に現在のBOOTHページから直接起動するため、事前タブは不要。
+    return null;
+  }
+
+  function launchUrl(url, preparedWindow = null) {
     const link = document.createElement('a');
     link.href = url;
     link.style.display = 'none';
@@ -76,9 +81,18 @@
   }
 
   // 各ダウンロードページのAvatarExplorerボタンから共通利用する。
+  window.prepareAvatarExplorerLaunch = prepareAvatarExplorerLaunch;
   window.launchAvatarExplorer = launchUrl;
 
   async function launchMethod(method, dropdown, regular) {
+    const downloadableId = /\/downloadables\/(\d+)/.exec(
+      getLibraryManagerUrl(dropdown)
+    )?.[1];
+    window.debugLogger?.log('[DOWNLOAD METHOD] Launch requested:', {
+      method,
+      downloadableId
+    });
+
     if (method === 'normal') {
       const normalUrl = getNormalUrl(regular);
       if (!normalUrl) throw new Error('Normal download URL was not found');
@@ -96,14 +110,24 @@
       return;
     }
 
-    const response = await chrome.runtime.sendMessage({
-      action: 'fetchAvatarExplorerDeeplink',
-      deeplinkUrl
-    });
-    if (!response?.success || !response.deeplink) {
-      throw new Error(response?.error || 'AvatarExplorer deeplink could not be created');
+    const preparedWindow = prepareAvatarExplorerLaunch();
+    try {
+      const response = await chrome.runtime.sendMessage({
+        action: 'fetchAvatarExplorerDeeplink',
+        deeplinkUrl
+      });
+      if (!response?.success || !response.deeplink) {
+        throw new Error(response?.error || 'AvatarExplorer deeplink could not be created');
+      }
+      window.debugLogger?.log('[DOWNLOAD METHOD] AvatarExplorer deeplink converted:', {
+        downloadableId,
+        scheme: response.deeplink.split(':', 1)[0]
+      });
+      launchUrl(response.deeplink, preparedWindow);
+    } catch (error) {
+      preparedWindow?.close();
+      throw error;
     }
-    launchUrl(response.deeplink);
   }
 
   function updateDropdown(dropdown) {
@@ -190,10 +214,11 @@
 
   document.addEventListener('click', event => {
     const normalRow = event.target.closest('.asset-connect-normal-download');
+    const avatarExplorerRow = event.target.closest('.asset-connect-avatar-explorer-download');
     const menuRow = event.target.closest('[data-test="other-downloads-button"] .cursor-pointer');
     const libraryManagerRow = menuRow &&
       !normalRow &&
-      !menuRow.classList.contains('asset-connect-avatar-explorer-download') &&
+      !avatarExplorerRow &&
       menuRow.textContent.includes('BOOTH Library Manager')
         ? menuRow
         : null;
@@ -201,10 +226,12 @@
       '.js-download-button[data-href^="https://booth.pm/downloadables/"], ' +
       'a[href^="https://booth.pm/downloadables/"]'
     );
-    if (!normalRow && !libraryManagerRow && (!regular || currentMethod === 'normal')) return;
+    if (!normalRow && !avatarExplorerRow && !libraryManagerRow &&
+        (!regular || currentMethod === 'normal')) return;
 
-    const dropdown = normalRow || libraryManagerRow
-      ? (normalRow || libraryManagerRow).closest('[data-test="other-downloads-button"]')
+    const dropdown = normalRow || avatarExplorerRow || libraryManagerRow
+      ? (normalRow || avatarExplorerRow || libraryManagerRow)
+          .closest('[data-test="other-downloads-button"]')
       : (() => {
           let container = regular.parentElement;
           while (container && container !== document.body) {
@@ -220,9 +247,16 @@
     event.stopImmediatePropagation();
     const method = normalRow
       ? 'normal'
-      : libraryManagerRow
-        ? 'booth-library-manager'
-        : currentMethod;
+      : avatarExplorerRow
+        ? 'avatar-explorer'
+        : libraryManagerRow
+          ? 'booth-library-manager'
+          : currentMethod;
+    window.debugLogger?.log('[DOWNLOAD METHOD] Click captured:', {
+      method,
+      delegatedRow: Boolean(normalRow || avatarExplorerRow || libraryManagerRow),
+      hasRegularDownload: Boolean(regular || findRegularDownload(dropdown))
+    });
     launchMethod(method, dropdown, regular || findRegularDownload(dropdown))
       .catch(error => {
         window.debugLogger?.error('[DOWNLOAD METHOD] Launch failed:', error);
@@ -243,6 +277,39 @@
       ? changes.defaultDownloadMethod.newValue
       : 'normal';
     updatePage();
+  });
+
+  chrome.runtime.onMessage.addListener(request => {
+    if (request.action !== 'probeBoothDeeplink' || !request.requestUrl) return;
+
+    const probeUrl = new URL(request.requestUrl);
+    const requestId = probeUrl.searchParams.get('_asset_connect_request_id');
+    window.debugLogger?.log('[DOWNLOAD METHOD] Deeplink probe received:', {
+      requestId: requestId?.slice(0, 8),
+      downloadableId: /\/downloadables\/(\d+)/.exec(probeUrl.pathname)?.[1]
+    });
+
+    // redirect: manualで元のbooth-library-manager://への遷移を止める。
+    // Locationの取得はbackgroundのwebRequest監視が担当する。
+    fetch(request.requestUrl, {
+      method: 'GET',
+      credentials: 'include',
+      redirect: 'manual'
+    }).then(response => {
+      window.debugLogger?.log('[DOWNLOAD METHOD] Deeplink probe completed:', {
+        requestId: requestId?.slice(0, 8),
+        status: response.status,
+        type: response.type,
+        redirected: response.redirected
+      });
+    }).catch(error => {
+      // カスタムスキームへの302はfetch上ではERR_UNSAFE_REDIRECTになる。
+      // LocationはbackgroundのwebRequestで取得するため、これは想定動作。
+      window.debugLogger?.log('[DOWNLOAD METHOD] Deeplink probe ended at external redirect:', {
+        requestId: requestId?.slice(0, 8),
+        error: error.message
+      });
+    });
   });
 
   new MutationObserver(updatePage).observe(document.documentElement, {

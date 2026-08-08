@@ -199,7 +199,11 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     // Return true to indicate async response
     return true;
   } else if (request.action === 'fetchAvatarExplorerDeeplink') {
-    handleAvatarExplorerDeeplink(request.deeplinkUrl)
+    debugLog('Deeplink: message received', {
+      tabId: sender.tab?.id,
+      downloadableId: /\/downloadables\/(\d+)/.exec(request.deeplinkUrl || '')?.[1]
+    });
+    handleAvatarExplorerDeeplink(request.deeplinkUrl, sender.tab?.id)
       .then(result => sendResponse(result))
       .catch(error => sendResponse({
         success: false,
@@ -216,9 +220,17 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
 const pendingDeeplinkRequests = new Map();
 
-function resolvePendingDeeplink(requestUrl, location) {
+function resolvePendingDeeplink(requestUrl, location, source, statusCode) {
   const requestId = new URL(requestUrl).searchParams.get('_asset_connect_request_id');
   const resolve = requestId && pendingDeeplinkRequests.get(requestId);
+  debugLog('Deeplink: webRequest event', {
+    requestId: requestId?.slice(0, 8),
+    source,
+    statusCode,
+    pending: Boolean(resolve),
+    hasLocation: Boolean(location),
+    locationScheme: location?.split(':', 1)[0]
+  });
   if (resolve && location) resolve(location);
 }
 
@@ -227,18 +239,28 @@ chrome.webRequest.onHeadersReceived.addListener(
     const locationHeader = details.responseHeaders?.find(
       header => header.name.toLowerCase() === 'location'
     );
-    resolvePendingDeeplink(details.url, locationHeader?.value);
+    resolvePendingDeeplink(
+      details.url,
+      locationHeader?.value,
+      'onHeadersReceived',
+      details.statusCode
+    );
   },
   { urls: ['https://booth.pm/downloadables/*/deeplink*'] },
-  ['responseHeaders']
+  ['responseHeaders', 'extraHeaders']
 );
 
 chrome.webRequest.onBeforeRedirect.addListener(
-  details => resolvePendingDeeplink(details.url, details.redirectUrl),
+  details => resolvePendingDeeplink(
+    details.url,
+    details.redirectUrl,
+    'onBeforeRedirect',
+    details.statusCode
+  ),
   { urls: ['https://booth.pm/downloadables/*/deeplink*'] }
 );
 
-async function handleAvatarExplorerDeeplink(deeplinkUrl) {
+async function handleAvatarExplorerDeeplink(deeplinkUrl, tabId) {
   const url = new URL(deeplinkUrl);
   if (url.origin !== 'https://booth.pm' || !/^\/downloadables\/\d+\/deeplink$/.test(url.pathname)) {
     throw new Error('Invalid BOOTH deeplink URL');
@@ -248,21 +270,57 @@ async function handleAvatarExplorerDeeplink(deeplinkUrl) {
   const requestId = crypto.randomUUID();
   url.searchParams.set('_asset_connect_request_id', requestId);
   const requestUrl = url.href;
+  debugLog('Deeplink: request prepared', {
+    requestId: requestId.slice(0, 8),
+    tabId,
+    downloadableId: /\/downloadables\/(\d+)/.exec(url.pathname)?.[1]
+  });
   let timeoutId;
+  let resolveLocation;
+  let rejectLocation;
   const locationPromise = new Promise((resolve, reject) => {
-    pendingDeeplinkRequests.set(requestId, resolve);
-    timeoutId = setTimeout(() => reject(new Error('BOOTH deeplink request timed out')), 10000);
+    resolveLocation = resolve;
+    rejectLocation = reject;
+    pendingDeeplinkRequests.set(requestId, resolveLocation);
+    debugLog('Deeplink: pending request registered', {
+      requestId: requestId.slice(0, 8),
+      pendingCount: pendingDeeplinkRequests.size
+    });
+    timeoutId = setTimeout(() => {
+      debugLog('Deeplink: request timed out', {
+        requestId: requestId.slice(0, 8),
+        tabId,
+        pendingCount: pendingDeeplinkRequests.size
+      });
+      reject(new Error(`BOOTH deeplink request timed out (${requestId.slice(0, 8)})`));
+    }, 10000);
   });
 
   try {
-    // manualにすることで、元のbooth-library-manager://へは遷移しない。
-    fetch(requestUrl, {
-      method: 'GET',
-      credentials: 'include',
-      redirect: 'manual'
-    }).catch(() => {});
+    if (!tabId) throw new Error('BOOTH tab was not found');
+
+    // ログイン済みBOOTHタブをリクエスト元にすることで、認証Cookieを確実に利用する。
+    chrome.tabs.sendMessage(tabId, {
+      action: 'probeBoothDeeplink',
+      requestUrl
+    }).then(() => {
+      debugLog('Deeplink: probe dispatched to tab', {
+        requestId: requestId.slice(0, 8),
+        tabId
+      });
+    }).catch(error => {
+      debugLog('Deeplink: probe dispatch failed', {
+        requestId: requestId.slice(0, 8),
+        error: error.message
+      });
+      rejectLocation(new Error(`BOOTH deeplink probe failed: ${error.message}`));
+    });
 
     const location = await locationPromise;
+    debugLog('Deeplink: Location received', {
+      requestId: requestId.slice(0, 8),
+      scheme: location.split(':', 1)[0]
+    });
 
     if (!location.startsWith('booth-library-manager://')) {
       throw new Error('BOOTH Library Manager deeplink was not returned');
@@ -275,6 +333,10 @@ async function handleAvatarExplorerDeeplink(deeplinkUrl) {
   } finally {
     clearTimeout(timeoutId);
     pendingDeeplinkRequests.delete(requestId);
+    debugLog('Deeplink: request cleaned up', {
+      requestId: requestId.slice(0, 8),
+      pendingCount: pendingDeeplinkRequests.size
+    });
   }
 }
 
