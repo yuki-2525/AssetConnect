@@ -640,6 +640,17 @@
         </div>
 
         <div style="margin-bottom: 15px;">
+          <label for="defaultDownloadMethod" data-i18n="defaultDownloadMethodLabel"
+            style="display: block; margin-bottom: 5px;">デフォルトのダウンロード方法:</label>
+          <select id="defaultDownloadMethod"
+            style="width: 100%; padding: 6px; border: 1px solid var(--border-color); border-radius: 4px;">
+            <option value="normal" data-i18n="normalDownload">通常ダウンロード</option>
+            <option value="booth-library-manager">BOOTH Library Manager</option>
+            <option value="avatar-explorer">AvatarExplorer</option>
+          </select>
+        </div>
+
+        <div style="margin-bottom: 15px;">
           <div class="toggle-item">
             <input type="checkbox" id="hideAvatarClipboard">
             <label for="hideAvatarClipboard" data-i18n="hideAvatarClipboardLabel">AssetConnect

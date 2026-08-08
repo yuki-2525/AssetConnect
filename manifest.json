@@ -9,7 +9,8 @@
     "clipboardWrite",
     "storage",
     "unlimitedStorage",
-    "contextMenus"
+    "contextMenus",
+    "webRequest"
   ],
   "host_permissions": [
     "*://*.booth.pm/*",
@@ -32,6 +33,8 @@
         "https://accounts.booth.pm/library*"
       ],
       "js": [
+        "shared/debug-logger.js",
+        "shared/default-download-method.js",
         "shared/translation-manager.js",
         "download-log/booth_library.js"
       ]
@@ -42,6 +45,8 @@
         "https://booth.pm/*/items/*"
       ],
       "js": [
+        "shared/debug-logger.js",
+        "shared/default-download-method.js",
         "shared/translation-manager.js",
         "download-log/booth_shoppage.js"
       ]
@@ -55,7 +60,6 @@
         "https://manage.booth.pm/items/*"
       ],
       "js": [
-        "shared/debug-logger.js",
         "shared/error-handler.js",
         "shared/translation-manager.js",
         "avatar-clipboard/utils/storage-manager.js",
@@ -75,6 +79,8 @@
         "https://accounts.booth.pm/orders/*"
       ],
       "js": [
+        "shared/debug-logger.js",
+        "shared/default-download-method.js",
         "shared/translation-manager.js",
         "download-log/booth_order.js"
       ]
@@ -84,6 +90,8 @@
         "https://booth.pm/gifts/*"
       ],
       "js": [
+        "shared/debug-logger.js",
+        "shared/default-download-method.js",
         "shared/translation-manager.js",
         "download-log/booth_gift.js"
       ]

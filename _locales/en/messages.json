@@ -509,6 +509,20 @@
     "storageKeyDeleted": {
         "message": "Storage key deleted"
     },
+    "defaultDownloadMethodLabel": {
+        "message": "Default download method"
+    },
+    "normalDownload": {
+        "message": "Normal download"
+    },
+    "downloadWithMethod": {
+        "message": "Download with $METHOD$",
+        "placeholders": { "method": { "content": "$1" } }
+    },
+    "bulkDownloadWithMethod": {
+        "message": "Download all with $METHOD$",
+        "placeholders": { "method": { "content": "$1" } }
+    },
     "deleteError": {
         "message": "Delete error: $ERROR$",
         "placeholders": {

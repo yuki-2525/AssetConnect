@@ -509,6 +509,20 @@
     "storageKeyDeleted": {
         "message": "스토리지 키가 삭제되었습니다"
     },
+    "defaultDownloadMethodLabel": {
+        "message": "기본 다운로드 방법"
+    },
+    "normalDownload": {
+        "message": "일반 다운로드"
+    },
+    "downloadWithMethod": {
+        "message": "$METHOD$(으)로 다운로드",
+        "placeholders": { "method": { "content": "$1" } }
+    },
+    "bulkDownloadWithMethod": {
+        "message": "$METHOD$(으)로 일괄 다운로드",
+        "placeholders": { "method": { "content": "$1" } }
+    },
     "deleteError": {
         "message": "삭제 오류: $ERROR$",
         "placeholders": {

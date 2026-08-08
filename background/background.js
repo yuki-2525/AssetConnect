@@ -198,6 +198,14 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 
     // Return true to indicate async response
     return true;
+  } else if (request.action === 'fetchAvatarExplorerDeeplink') {
+    handleAvatarExplorerDeeplink(request.deeplinkUrl)
+      .then(result => sendResponse(result))
+      .catch(error => sendResponse({
+        success: false,
+        error: error.message
+      }));
+    return true;
   } else if (request.action === 'languageChanged') {
     // Update context menus when language changes
     updateContextMenusLanguage(request.language);
@@ -205,6 +213,70 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
     return true;
   }
 });
+
+const pendingDeeplinkRequests = new Map();
+
+function resolvePendingDeeplink(requestUrl, location) {
+  const requestId = new URL(requestUrl).searchParams.get('_asset_connect_request_id');
+  const resolve = requestId && pendingDeeplinkRequests.get(requestId);
+  if (resolve && location) resolve(location);
+}
+
+chrome.webRequest.onHeadersReceived.addListener(
+  details => {
+    const locationHeader = details.responseHeaders?.find(
+      header => header.name.toLowerCase() === 'location'
+    );
+    resolvePendingDeeplink(details.url, locationHeader?.value);
+  },
+  { urls: ['https://booth.pm/downloadables/*/deeplink*'] },
+  ['responseHeaders']
+);
+
+chrome.webRequest.onBeforeRedirect.addListener(
+  details => resolvePendingDeeplink(details.url, details.redirectUrl),
+  { urls: ['https://booth.pm/downloadables/*/deeplink*'] }
+);
+
+async function handleAvatarExplorerDeeplink(deeplinkUrl) {
+  const url = new URL(deeplinkUrl);
+  if (url.origin !== 'https://booth.pm' || !/^\/downloadables\/\d+\/deeplink$/.test(url.pathname)) {
+    throw new Error('Invalid BOOTH deeplink URL');
+  }
+
+  // 同時リクエストを区別し、webRequest側でこの302だけを捕捉する。
+  const requestId = crypto.randomUUID();
+  url.searchParams.set('_asset_connect_request_id', requestId);
+  const requestUrl = url.href;
+  let timeoutId;
+  const locationPromise = new Promise((resolve, reject) => {
+    pendingDeeplinkRequests.set(requestId, resolve);
+    timeoutId = setTimeout(() => reject(new Error('BOOTH deeplink request timed out')), 10000);
+  });
+
+  try {
+    // manualにすることで、元のbooth-library-manager://へは遷移しない。
+    fetch(requestUrl, {
+      method: 'GET',
+      credentials: 'include',
+      redirect: 'manual'
+    }).catch(() => {});
+
+    const location = await locationPromise;
+
+    if (!location.startsWith('booth-library-manager://')) {
+      throw new Error('BOOTH Library Manager deeplink was not returned');
+    }
+
+    return {
+      success: true,
+      deeplink: location.replace(/^booth-library-manager:\/\//, 'vrcae://')
+    };
+  } finally {
+    clearTimeout(timeoutId);
+    pendingDeeplinkRequests.delete(requestId);
+  }
+}
 
 async function handleCrossOriginFetch(itemUrl, itemId) {
   try {

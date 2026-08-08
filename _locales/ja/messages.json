@@ -509,6 +509,20 @@
     "storageKeyDeleted": {
         "message": "ストレージキーを削除しました"
     },
+    "defaultDownloadMethodLabel": {
+        "message": "デフォルトのダウンロード方法"
+    },
+    "normalDownload": {
+        "message": "通常ダウンロード"
+    },
+    "downloadWithMethod": {
+        "message": "$METHOD$でダウンロード",
+        "placeholders": { "method": { "content": "$1" } }
+    },
+    "bulkDownloadWithMethod": {
+        "message": "$METHOD$で一括ダウンロード",
+        "placeholders": { "method": { "content": "$1" } }
+    },
     "deleteError": {
         "message": "削除エラー: $ERROR$",
         "placeholders": {
