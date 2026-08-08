@@ -159,6 +159,29 @@
         .tab-content.active {
             display: block;
         }
+        .data-transfer-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            margin: 0 0 20px;
+            padding: 15px;
+            background: #f8f9fa;
+            border-radius: 6px;
+        }
+        .data-transfer-actions button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .data-transfer-actions button:hover {
+            background: #5a6fd8;
+        }
+        .data-transfer-actions input[type="file"] {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -205,6 +228,11 @@
 
         <!-- 対応アバター一括コピータブ -->
         <div id="booth-items" class="tab-content active">
+            <div class="data-transfer-actions">
+                <button id="export-supported-data" type="button" data-i18n="downloadSupportedAvatarData">対応アバターデータ(json)のダウンロード</button>
+                <button id="import-supported-data" type="button" data-i18n="importSupportedAvatarData">対応アバターデータ(json)のインポート</button>
+                <input id="supported-data-input" type="file" accept=".json">
+            </div>
             <div id="saved-section" class="category-section" style="display: none;">
                 <h3 class="category-title category-saved" data-i18n="savedAvatars">保存済みアバター</h3>
                 <div id="saved-items"></div>
@@ -227,6 +255,11 @@
 
         <!-- ダウンロード履歴タブ -->
         <div id="download-history" class="tab-content">
+            <div class="data-transfer-actions">
+                <button id="export-download-history" type="button" data-i18n="exportCsv">ダウンロードログデータ(csv)をダウンロード</button>
+                <button id="import-download-history" type="button" data-i18n="importCsv">ダウンロードログデータ(csv)をインポート</button>
+                <input id="download-history-input" type="file" accept=".csv">
+            </div>
             <div id="download-history-section" class="category-section" style="display: none;">
                 <h3 class="category-title category-download" data-i18n="tabDownloadHistory">ダウンロード履歴</h3>
                 <div id="download-history-items"></div>

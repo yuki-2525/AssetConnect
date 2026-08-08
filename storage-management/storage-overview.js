@@ -70,6 +70,11 @@ document.addEventListener('DOMContentLoaded', async () => {
     updateUITexts();
     await loadStorageData();
     setupEventListeners();
+
+    const requestedTab = location.hash.slice(1);
+    if (['booth-items', 'download-history', 'raw-storage'].includes(requestedTab)) {
+        switchTab(requestedTab);
+    }
 });
 
 function createBoothUrl(itemId) {
@@ -343,6 +348,296 @@ function setupEventListeners() {
             }
         }
     });
+
+    setupDataTransferEventListeners();
+}
+
+function setupDataTransferEventListeners() {
+    const exportSupportedButton = getCachedElement('export-supported-data');
+    const importSupportedButton = getCachedElement('import-supported-data');
+    const supportedInput = getCachedElement('supported-data-input');
+    const exportHistoryButton = getCachedElement('export-download-history');
+    const importHistoryButton = getCachedElement('import-download-history');
+    const historyInput = getCachedElement('download-history-input');
+
+    exportSupportedButton?.addEventListener('click', () => {
+        exportSupportedAvatarData().catch(error => showDataTransferError(error));
+    });
+    importSupportedButton?.addEventListener('click', () => supportedInput?.click());
+    supportedInput?.addEventListener('change', async event => {
+        const [file] = event.target.files;
+        if (!file) return;
+        try {
+            await importSupportedAvatarData(file);
+        } catch (error) {
+            showDataTransferError(error);
+        } finally {
+            event.target.value = '';
+        }
+    });
+
+    exportHistoryButton?.addEventListener('click', () => {
+        exportDownloadHistory().catch(error => showDataTransferError(error));
+    });
+    importHistoryButton?.addEventListener('click', () => historyInput?.click());
+    historyInput?.addEventListener('change', async event => {
+        const [file] = event.target.files;
+        if (!file) return;
+        try {
+            await importDownloadHistory(file);
+        } catch (error) {
+            showDataTransferError(error);
+        } finally {
+            event.target.value = '';
+        }
+    });
+}
+
+function showDataTransferError(error) {
+    console.error('Data transfer error:', error);
+    alert(getMessage('downloadError', { error: error.message }));
+}
+
+async function downloadBlob(blob, filename) {
+    const objectUrl = URL.createObjectURL(blob);
+    let cleanupTimer;
+    let changeListener;
+    let cleanedUp = false;
+    const cleanup = () => {
+        if (cleanedUp) return;
+        cleanedUp = true;
+        if (cleanupTimer) clearTimeout(cleanupTimer);
+        if (changeListener) chrome.downloads.onChanged.removeListener(changeListener);
+        URL.revokeObjectURL(objectUrl);
+    };
+
+    try {
+        const downloadId = await chrome.downloads.download({
+            url: objectUrl,
+            filename,
+            conflictAction: 'overwrite',
+            saveAs: true
+        });
+
+        changeListener = delta => {
+            if (delta.id !== downloadId || !delta.state) return;
+            if (delta.state.current === 'complete' || delta.state.current === 'interrupted') {
+                cleanup();
+            }
+        };
+        chrome.downloads.onChanged.addListener(changeListener);
+        cleanupTimer = setTimeout(cleanup, 5 * 60 * 1000);
+    } catch (error) {
+        cleanup();
+        throw error;
+    }
+}
+
+function escapeCsvValue(value) {
+    if (value == null) return '';
+    return `"${String(value).replace(/"/g, '""')}"`;
+}
+
+async function exportDownloadHistory() {
+    const result = await chrome.storage.local.get('downloadHistory');
+    const history = [...(result.downloadHistory || [])]
+        .sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+    const header = ['URL', 'timestamp', 'boothID', 'title', 'fileName', 'free', 'registered']
+        .map(escapeCsvValue)
+        .join(',');
+    const lines = history.map(entry => [
+        entry.url && entry.url.trim() ? entry.url : createBoothUrl(entry.boothID),
+        entry.timestamp,
+        entry.boothID,
+        entry.title,
+        entry.filename,
+        entry.free,
+        entry.registered === true ? 'true' : (entry.registered === false ? 'false' : '')
+    ].map(escapeCsvValue).join(','));
+
+    await downloadBlob(
+        new Blob([`\uFEFF${[header, ...lines].join('\n')}`], { type: 'text/csv;charset=UTF-8' }),
+        'downloadHistory.csv'
+    );
+}
+
+async function exportSupportedAvatarData() {
+    const result = await chrome.storage.local.get('boothItems');
+    const savedItems = Object.values(result.boothItems || {})
+        .filter(item => item.category === 'saved');
+    if (savedItems.length === 0) {
+        alert(getMessage('noBoothItems'));
+        return;
+    }
+
+    const exportData = {
+        exportDate: new Date().toISOString(),
+        version: '1.0',
+        items: savedItems.map(item => ({
+            id: item.id,
+            name: item.name || `Item ${item.id}`
+        }))
+    };
+    const dateString = new Date().toISOString().split('T')[0];
+    await downloadBlob(
+        new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' }),
+        `booth-items-${dateString}.json`
+    );
+}
+
+function readFileAsText(file) {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(reader.result);
+        reader.onerror = () => reject(reader.error || new Error('Failed to read file'));
+        reader.readAsText(file, 'UTF-8');
+    });
+}
+
+async function importSupportedAvatarData(file) {
+    if (file.type !== 'application/json' && !file.name.toLowerCase().endsWith('.json')) {
+        alert(getMessage('selectJsonFile'));
+        return;
+    }
+
+    let jsonData;
+    try {
+        jsonData = JSON.parse(await readFileAsText(file));
+    } catch (error) {
+        throw new Error(`${getMessage('jsonParseError')}: ${error.message}`);
+    }
+    if (!Array.isArray(jsonData.items)) {
+        alert(getMessage('invalidJsonFormat'));
+        return;
+    }
+
+    const validItems = jsonData.items
+        .filter(item => item.id && item.name)
+        .map(item => ({
+            id: String(item.id),
+            name: String(item.name),
+            category: 'saved'
+        }));
+    if (validItems.length === 0) {
+        alert(getMessage('noValidItems'));
+        return;
+    }
+    if (!confirm(
+        `${getMessage('importReady', { count: validItems.length })}\n${getMessage('replaceDuplicates')}`
+    )) {
+        return;
+    }
+
+    const result = await chrome.storage.local.get('boothItems');
+    const existingItems = result.boothItems || {};
+    let importedCount = 0;
+    let updatedCount = 0;
+    validItems.forEach(item => {
+        if (existingItems[item.id]) {
+            existingItems[item.id] = { ...existingItems[item.id], name: item.name, category: 'saved' };
+            updatedCount++;
+        } else {
+            existingItems[item.id] = item;
+            importedCount++;
+        }
+    });
+    await chrome.storage.local.set({ boothItems: existingItems });
+    clearStorageCache();
+    await loadStorageData();
+
+    const results = [];
+    if (importedCount > 0) results.push(getMessage('newItemsAdded', { count: importedCount }));
+    if (updatedCount > 0) results.push(getMessage('itemsUpdated', { count: updatedCount }));
+    alert(`${getMessage('importComplete')}${results.join(', ')}`);
+}
+
+function parseDownloadHistoryCsv(csvText) {
+    const lines = csvText.split(/\r?\n/);
+    if (lines.length === 0) return [];
+
+    const headerColumns = lines[0].trim().replace(/^\uFEFF/, '')
+        .split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/)
+        .map(value => value.replace(/^"|"$/g, '').trim());
+    const importedEntries = [];
+
+    if (headerColumns.join(',') === 'URL,timestamp,boothID,title,fileName,free,registered' ||
+        headerColumns.join(',') === 'URL,timestamp,boothID,title,fileName,free') {
+        const hasRegistered = headerColumns.length === 7;
+        for (const line of lines.slice(1)) {
+            if (!line.trim()) continue;
+            const columns = line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+            if (columns.length < (hasRegistered ? 7 : 6)) continue;
+            const values = columns.map(value => value.replace(/^"|"$/g, '').trim());
+            const registeredValue = hasRegistered ? values[6] : undefined;
+            importedEntries.push({
+                url: values[0],
+                timestamp: values[1],
+                boothID: values[2],
+                title: values[3],
+                filename: values[4],
+                free: values[5].toLowerCase() === 'true',
+                ...(hasRegistered ? {
+                    registered: registeredValue === '' ? undefined : registeredValue.toLowerCase() === 'true'
+                } : {})
+            });
+        }
+        return importedEntries;
+    }
+
+    for (let index = 0; index < lines.length; index++) {
+        const line = lines[index].trim();
+        if (!line) continue;
+        const idMatch = line.match(/\/items\/(\d+)/);
+        if (index === 0 && !idMatch) continue;
+        const match = line.match(/^\s*"((?:[^"]|"")*)"\s*,\s*"((?:[^"]|"")*)"\s*$/);
+        if (!match) continue;
+        const url = match[1].replace(/""/g, '"');
+        const managedName = match[2].replace(/""/g, '"');
+        const boothID = /\/items\/(\d+)/.exec(url)?.[1];
+        if (!boothID) continue;
+        const timestamp = /^\s*\[([^\]]+)\]/.exec(managedName)?.[1] || '';
+        const titleAndFilename = managedName.replace(/^\s*\[[^\]]+\]\s*/, '');
+        const separatorIndex = titleAndFilename.lastIndexOf('/');
+        importedEntries.push({
+            url,
+            timestamp,
+            boothID,
+            title: separatorIndex === -1 ? titleAndFilename.trim() : titleAndFilename.slice(0, separatorIndex).trim(),
+            filename: '',
+            free: true
+        });
+    }
+    return importedEntries;
+}
+
+async function importDownloadHistory(file) {
+    const importedEntries = parseDownloadHistoryCsv(await readFileAsText(file));
+    if (importedEntries.length === 0) {
+        alert(getMessage('noValidItems'));
+        return;
+    }
+
+    const result = await chrome.storage.local.get('downloadHistory');
+    let history = result.downloadHistory || [];
+    importedEntries.forEach(newEntry => {
+        history = history.filter(existing => {
+            if (existing.boothID !== newEntry.boothID) return true;
+            const newFilename = (newEntry.filename || '').trim();
+            const existingFilename = (existing.filename || '').trim();
+            if (newFilename === '' && existingFilename === '') return false;
+            if (newFilename !== '' && existingFilename !== '') return existingFilename !== newFilename;
+            return true;
+        });
+        if ((newEntry.filename || '').trim() === '' &&
+            history.some(entry => entry.boothID === newEntry.boothID && (entry.filename || '').trim() !== '')) {
+            return;
+        }
+        history.push(newEntry);
+    });
+    await chrome.storage.local.set({ downloadHistory: history });
+    clearStorageCache();
+    await loadStorageData();
+    alert(`${getMessage('importComplete')}${getMessage('newItemsAdded', { count: importedEntries.length })}`);
 }
 
 function displayRawStorage(allStorageData) {
