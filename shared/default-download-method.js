@@ -75,6 +75,9 @@
     link.remove();
   }
 
+  // 各ダウンロードページのAvatarExplorerボタンから共通利用する。
+  window.launchAvatarExplorer = launchUrl;
+
   async function launchMethod(method, dropdown, regular) {
     if (method === 'normal') {
       const normalUrl = getNormalUrl(regular);
