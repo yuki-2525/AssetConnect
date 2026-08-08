@@ -7,6 +7,7 @@
   }
 
   function findTextNode(button) {
+    if (!button) return null;
     const walker = document.createTreeWalker(button, NodeFilter.SHOW_TEXT);
     let node;
     while ((node = walker.nextNode())) {
@@ -19,7 +20,8 @@
     let container = dropdown.parentElement;
     while (container && container !== document.body) {
       const regular = container.querySelector(
-        '.js-download-button[data-href^="https://booth.pm/downloadables/"], ' +
+        '.js-download-button[data-test="downloadable"]' +
+        '[data-href^="https://booth.pm/downloadables/"], ' +
         'a[href^="https://booth.pm/downloadables/"]'
       );
       if (regular) return regular;
@@ -178,6 +180,14 @@
   }
 
   function updatePage() {
+    document.querySelectorAll('.js-download-button[data-test="browsable"]').forEach(browsable => {
+      const textNode = findTextNode(browsable.querySelector('button'));
+      const label = browsable.dataset.label;
+      if (textNode && label && textNode.textContent !== label) {
+        textNode.textContent = label;
+      }
+    });
+
     document.querySelectorAll('[data-test="other-downloads-button"][data-dropdown-items]')
       .forEach(updateDropdown);
     document.querySelectorAll('.asset-connect-download-all button').forEach(button => {
@@ -223,7 +233,8 @@
         ? menuRow
         : null;
     const regular = event.target.closest(
-      '.js-download-button[data-href^="https://booth.pm/downloadables/"], ' +
+      '.js-download-button[data-test="downloadable"]' +
+      '[data-href^="https://booth.pm/downloadables/"], ' +
       'a[href^="https://booth.pm/downloadables/"]'
     );
     if (!normalRow && !avatarExplorerRow && !libraryManagerRow &&

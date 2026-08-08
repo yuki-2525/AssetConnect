@@ -107,7 +107,10 @@ window.assetConnectDownloadAdapter = {
 
 document.addEventListener('click', function (e) {
   // 形式: .js-download-button (data-href属性を持つ)
-  const downloadButton = e.target.closest('.js-download-button[data-href^="https://booth.pm/downloadables/"]');
+  const downloadButton = e.target.closest(
+    '.js-download-button[data-test="downloadable"]' +
+    '[data-href^="https://booth.pm/downloadables/"]'
+  );
   
   if (!downloadButton) return;
 
@@ -138,7 +141,10 @@ async function addDownloadAllButtons() {
         // 既にボタンが追加されているかチェック
         if (container.querySelector('.asset-connect-download-all')) return;
 
-        const buttons = container.querySelectorAll('.js-download-button[data-href^="https://booth.pm/downloadables/"]');
+        const buttons = container.querySelectorAll(
+            '.js-download-button[data-test="downloadable"]' +
+            '[data-href^="https://booth.pm/downloadables/"]'
+        );
         if (buttons.length < 2) return;
 
         // 挿入位置を探す (ダウンロードリストのコンテナ)
@@ -319,7 +325,10 @@ function addAvatarExplorerDownloadButtons(root = document) {
                 window.launchAvatarExplorer(response.deeplink, launchWindow);
 
                 const regularDownloadButton = dropdown.closest('.desktop\\:flex')
-                    ?.querySelector('.js-download-button[data-href^="https://booth.pm/downloadables/"]');
+                    ?.querySelector(
+                        '.js-download-button[data-test="downloadable"]' +
+                        '[data-href^="https://booth.pm/downloadables/"]'
+                    );
                 if (regularDownloadButton) {
                     const info = getDownloadInfo(regularDownloadButton);
                     info.registered = true;
