@@ -81,6 +81,21 @@ function createBoothUrl(itemId) {
     return window.translationManager.createBoothUrl(itemId);
 }
 
+function getSafeBoothUrl(url, fallbackUrl) {
+    try {
+        const parsedUrl = new URL(url);
+        const isBoothHost = parsedUrl.hostname === 'booth.pm' || parsedUrl.hostname.endsWith('.booth.pm');
+
+        if (parsedUrl.protocol === 'https:' && isBoothHost) {
+            return parsedUrl.href;
+        }
+    } catch (error) {
+        // Use the generated BOOTH URL when imported data does not contain a valid URL.
+    }
+
+    return fallbackUrl;
+}
+
 /**
  * 統一されたHTML要素生成ヘルパー
  * @param {Object} config - 設定オブジェクト
@@ -99,26 +114,44 @@ function createUnifiedItemElement(config) {
     const itemDiv = document.createElement('div');
     itemDiv.className = `item ${config.className}`;
 
-    let actionElement = '';
-    if (config.action.type === 'link') {
-        actionElement = `<a href="${config.action.href}" target="_blank" class="item-link">${config.action.text}</a>`;
-    } else if (config.action.type === 'button') {
-        let dataAttrs = '';
-        if (config.action.dataset) {
-            dataAttrs = Object.entries(config.action.dataset)
-                .map(([key, value]) => `data-${key}="${escapeHtml(value)}"`)
-                .join(' ');
-        }
-        actionElement = `<button class="${config.action.className || 'action-btn'}" ${dataAttrs} type="button">${config.action.text}</button>`;
+    const itemInfo = document.createElement('div');
+    itemInfo.className = 'item-info';
+
+    const itemName = document.createElement('div');
+    itemName.className = 'item-name';
+    itemName.textContent = String(config.name ?? '');
+
+    const itemDetails = document.createElement('div');
+    itemDetails.className = 'item-details';
+    if (config.details instanceof Node) {
+        itemDetails.appendChild(config.details);
+    } else {
+        itemDetails.textContent = String(config.details ?? '');
     }
 
-    itemDiv.innerHTML = `
-        <div class="item-info">
-            <div class="item-name">${escapeHtml(config.name)}</div>
-            <div class="item-details">${config.details}</div>
-        </div>
-        ${actionElement}
-    `;
+    itemInfo.append(itemName, itemDetails);
+    itemDiv.appendChild(itemInfo);
+
+    if (config.action?.type === 'link') {
+        const link = document.createElement('a');
+        link.href = getSafeBoothUrl(config.action.href, config.action.fallbackHref || createBoothUrl(''));
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.className = 'item-link';
+        link.textContent = String(config.action.text ?? '');
+        itemDiv.appendChild(link);
+    } else if (config.action?.type === 'button') {
+        const button = document.createElement('button');
+        button.className = config.action.className || 'action-btn';
+        button.type = 'button';
+        button.textContent = String(config.action.text ?? '');
+
+        Object.entries(config.action.dataset || {}).forEach(([key, value]) => {
+            button.dataset[key] = String(value);
+        });
+
+        itemDiv.appendChild(button);
+    }
 
     return itemDiv;
 }
@@ -235,7 +268,7 @@ function displayDownloadHistory(downloadHistory) {
 
     getCachedElement('download-history-section').style.display = 'block';
     const container = getCachedElement('download-history-items');
-    container.innerHTML = '';
+    container.replaceChildren();
 
     // Sort by timestamp (newest first)
     const sortedHistory = [...downloadHistory].sort((a, b) =>
@@ -250,7 +283,7 @@ function displayDownloadHistory(downloadHistory) {
 
 function displayCategoryItems(items, containerId, category) {
     const container = getCachedElement(containerId);
-    container.innerHTML = '';
+    container.replaceChildren();
 
     // Sort items by name (alphabetical)
     items.sort((a, b) => {
@@ -276,15 +309,17 @@ function createItemElement(item, category) {
         action: {
             type: 'link',
             href: itemUrl,
+            fallbackHref: itemUrl,
             text: getMessage('openInBooth')
         }
     });
 }
 
 function createDownloadHistoryElement(item) {
-    const itemUrl = item.url || createBoothUrl(item.boothID);
+    const fallbackUrl = createBoothUrl(item.boothID);
+    const itemUrl = getSafeBoothUrl(item.url, fallbackUrl);
     const registeredText = item.registered === true ? getMessage('yes') : (item.registered === false ? getMessage('no') : getMessage('unknown'));
-    const details = `ID: ${item.boothID} | ${getMessage('fileName')}: ${escapeHtml(item.filename || getMessage('none'))} | ${getMessage('dateTime')}: ${item.timestamp} | ${getMessage('free')}: ${item.free ? getMessage('yes') : getMessage('no')} | ${getMessage('registered')}: ${registeredText}`;
+    const details = `ID: ${item.boothID} | ${getMessage('fileName')}: ${item.filename || getMessage('none')} | ${getMessage('dateTime')}: ${item.timestamp} | ${getMessage('free')}: ${item.free ? getMessage('yes') : getMessage('no')} | ${getMessage('registered')}: ${registeredText}`;
 
     return createUnifiedItemElement({
         className: 'download',
@@ -293,6 +328,7 @@ function createDownloadHistoryElement(item) {
         action: {
             type: 'link',
             href: itemUrl,
+            fallbackHref: fallbackUrl,
             text: getMessage('openInBooth')
         }
     });
@@ -317,12 +353,6 @@ function formatDate(dateString) {
     } catch (error) {
         return dateString;
     }
-}
-
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
 }
 
 function setupEventListeners() {
@@ -650,7 +680,7 @@ function displayRawStorage(allStorageData) {
 
     getCachedElement('raw-storage-section').style.display = 'block';
     const container = getCachedElement('raw-storage-items');
-    container.innerHTML = '';
+    container.replaceChildren();
 
     // Sort keys alphabetically
     rawStorageKeys.sort().forEach(key => {
@@ -692,7 +722,18 @@ function createRawStorageElement(key, value) {
         valuePreview = getMessage('dataParseError');
     }
 
-    const details = `${getMessage('dataType')}: ${dataType} | ${getMessage('size')}: ${formatBytes(new Blob([JSON.stringify(value)]).size)}<br><code style="background: #f1f1f1; padding: 2px 4px; border-radius: 3px; font-size: 0.8em; white-space: pre-wrap;">${escapeHtml(valuePreview)}</code>`;
+    const details = document.createDocumentFragment();
+    details.append(`${getMessage('dataType')}: ${dataType} | ${getMessage('size')}: ${formatBytes(new Blob([JSON.stringify(value)]).size)}`);
+    details.appendChild(document.createElement('br'));
+
+    const valuePreviewElement = document.createElement('code');
+    valuePreviewElement.style.background = '#f1f1f1';
+    valuePreviewElement.style.padding = '2px 4px';
+    valuePreviewElement.style.borderRadius = '3px';
+    valuePreviewElement.style.fontSize = '0.8em';
+    valuePreviewElement.style.whiteSpace = 'pre-wrap';
+    valuePreviewElement.textContent = valuePreview;
+    details.appendChild(valuePreviewElement);
 
     const itemDiv = createUnifiedItemElement({
         className: 'raw-key',

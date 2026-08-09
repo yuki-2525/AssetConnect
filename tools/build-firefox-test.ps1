@@ -42,6 +42,9 @@ try {
         required = @('none')
       }
     }
+    gecko_android = [PSCustomObject]@{
+      strict_min_version = '142.0'
+    }
   }) -Force
 
   $manifestJson = $firefoxManifest | ConvertTo-Json -Depth 100
@@ -103,7 +106,8 @@ try {
     $packagedManifest.background.scripts.Count -ne 1 -or
     $packagedManifest.background.scripts[0] -ne 'background/background.js' -or
     $packagedManifest.permissions -notcontains 'webRequestBlocking' -or
-    $packagedManifest.browser_specific_settings.gecko.id -ne 'AssetConnect@sakurayuki.dev'
+    $packagedManifest.browser_specific_settings.gecko.id -ne 'AssetConnect@sakurayuki.dev' -or
+    $packagedManifest.browser_specific_settings.gecko_android.strict_min_version -ne '142.0'
   ) {
     throw 'Firefox manifest validation failed.'
   }

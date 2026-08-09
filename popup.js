@@ -311,10 +311,12 @@ document.addEventListener('DOMContentLoaded', function () {
       history.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
       const container = ELEMENTS.historyList;
-      container.innerHTML = "";
+      container.replaceChildren();
 
       if (history.length === 0) {
-        container.innerHTML = `<p>${getMessage("noHistory")}</p>`;
+        const emptyMessage = document.createElement('p');
+        emptyMessage.textContent = getMessage("noHistory");
+        container.appendChild(emptyMessage);
         return;
       }
 
@@ -552,7 +554,7 @@ document.addEventListener('DOMContentLoaded', function () {
         .then(response => response.json())
         .then(data => {
           const modalBody = document.querySelector('.modal-body');
-          modalBody.innerHTML = '';
+          modalBody.replaceChildren();
 
           data.versions.forEach(version => {
             const entry = document.createElement('div');
