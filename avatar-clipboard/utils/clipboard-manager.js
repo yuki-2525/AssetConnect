@@ -154,9 +154,8 @@ class ClipboardManager {
   }
 
   stripHtml(html) {
-    const temp = document.createElement('div');
-    temp.innerHTML = html;
-    return temp.textContent || temp.innerText || '';
+    const documentFragment = new DOMParser().parseFromString(String(html ?? ''), 'text/html');
+    return documentFragment.body.textContent || '';
   }
 
   collectVisibleExportItems(entityType) {

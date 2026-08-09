@@ -153,6 +153,40 @@ class UIManager {
     return this.translationManager.getMessage(key, replacements);
   }
 
+  createElement(tagName, options = {}) {
+    const element = document.createElement(tagName);
+    const { id, className, text, attributes = {}, dataset = {} } = options;
+
+    if (id) element.id = id;
+    if (className) element.className = className;
+    if (text !== undefined) element.textContent = String(text ?? '');
+
+    Object.entries(attributes).forEach(([name, value]) => {
+      element.setAttribute(name, String(value));
+    });
+
+    Object.entries(dataset).forEach(([name, value]) => {
+      element.dataset[name] = String(value);
+    });
+
+    return element;
+  }
+
+  getSafeBoothUrl(url, fallbackUrl) {
+    try {
+      const parsedUrl = new URL(url);
+      const isBoothHost = parsedUrl.hostname === 'booth.pm' || parsedUrl.hostname.endsWith('.booth.pm');
+
+      if (parsedUrl.protocol === 'https:' && isBoothHost) {
+        return parsedUrl.href;
+      }
+    } catch (error) {
+      // Use a generated BOOTH URL when an external value is not a valid BOOTH URL.
+    }
+
+    return fallbackUrl;
+  }
+
   /**
    * 地域別BOOTH URLを生成
    * @param {string} itemId - アイテムID
@@ -238,25 +272,28 @@ class UIManager {
    * 共通モーダル用の基本構造を作成するヘルパーメソッド
    * @param {string} modalId - モーダルID
    * @param {string} title - モーダルタイトル
-   * @param {string} content - モーダルコンテンツHTML
+   * @param {Node} content - モーダルコンテンツ
    * @returns {HTMLElement} モーダル要素
    */
   createModalBase(modalId, title, content) {
-    const modalOverlay = document.createElement('div');
-    modalOverlay.className = 'booth-manual-add-modal-overlay';
-    modalOverlay.id = modalId;
-    
-    modalOverlay.innerHTML = `
-      <div class="booth-manual-add-modal">
-        <div class="booth-manual-add-modal-header">
-          <h3>${title}</h3>
-          <button class="booth-manual-add-modal-close" type="button">×</button>
-        </div>
-        <div class="booth-manual-add-modal-content">
-          ${content}
-        </div>
-      </div>
-    `;
+    const modalOverlay = this.createElement('div', {
+      id: modalId,
+      className: 'booth-manual-add-modal-overlay'
+    });
+    const modal = this.createElement('div', { className: 'booth-manual-add-modal' });
+    const header = this.createElement('div', { className: 'booth-manual-add-modal-header' });
+    const heading = this.createElement('h3', { text: title });
+    const closeButton = this.createElement('button', {
+      className: 'booth-manual-add-modal-close',
+      text: '×',
+      attributes: { type: 'button' }
+    });
+    const contentContainer = this.createElement('div', { className: 'booth-manual-add-modal-content' });
+
+    header.append(heading, closeButton);
+    contentContainer.appendChild(content);
+    modal.append(header, contentContainer);
+    modalOverlay.appendChild(modal);
     
     return modalOverlay;
   }
@@ -509,7 +546,7 @@ class UIManager {
     allSections.forEach(section => {
       const container = this.getCachedElement(`ac-clip-${section}-items`);
       if (container) {
-        container.innerHTML = '';
+        container.replaceChildren();
       }
     });
   }
@@ -544,34 +581,46 @@ class UIManager {
   }
 
   /**
-   * セクションHTML生成ヘルパーメソッド
+   * セクション要素生成ヘルパーメソッド
    * @param {string} sectionId - セクションID
    * @param {string} labelKey - ラベル翻訳キー
    * @param {boolean} collapsed - 折りたたみ状態
-   * @returns {string} セクションHTML
+   * @returns {HTMLElement} セクション要素
    */
   generateSectionHtml(sectionId, labelKey, collapsed = false) {
-    const collapsedClass = collapsed ? ' collapsed' : '';
-    const toggleIcon = collapsed ? '▶' : '▼';
-    const displayStyle = collapsed ? ' style="display: none;"' : '';
-    const label = this.getMessage(labelKey) || labelKey;
-    
-    return `
-      <div class="booth-section" id="ac-clip-${sectionId}-section">
-        <h4 class="booth-section-header${collapsedClass}" data-section="${sectionId}">
-          <span class="booth-section-toggle">${toggleIcon}</span>
-          ${label}
-          <span class="booth-section-count" id="ac-clip-${sectionId}-count">0</span>
-        </h4>
-        <div class="booth-items-list" id="ac-clip-${sectionId}-items"${displayStyle}></div>
-      </div>
-    `;
+    const section = this.createElement('div', {
+      id: `ac-clip-${sectionId}-section`,
+      className: 'booth-section'
+    });
+    const header = this.createElement('h4', {
+      className: `booth-section-header${collapsed ? ' collapsed' : ''}`,
+      dataset: { section: sectionId }
+    });
+    const toggle = this.createElement('span', {
+      className: this.CSS_CLASSES.SECTION_TOGGLE,
+      text: collapsed ? '▶' : '▼'
+    });
+    const count = this.createElement('span', {
+      id: `ac-clip-${sectionId}-count`,
+      className: 'booth-section-count',
+      text: '0'
+    });
+    const items = this.createElement('div', {
+      id: `ac-clip-${sectionId}-items`,
+      className: this.CSS_CLASSES.ITEMS_LIST
+    });
+
+    if (collapsed) items.style.display = 'none';
+
+    header.append(toggle, ` ${this.getMessage(labelKey) || labelKey} `, count);
+    section.append(header, items);
+    return section;
   }
 
   /**
-   * タブコンテンツ用のセクションHTML一括生成
+   * タブコンテンツ用のセクション要素を一括生成
    * @param {string} suffix - タグ用の場合は '-tags'
-   * @returns {string} セクションHTML
+   * @returns {DocumentFragment} セクション要素
    */
   generateAllSectionsHtml(suffix = '') {
     const sections = [
@@ -581,7 +630,11 @@ class UIManager {
       { id: `permanentlyExcluded${suffix}`, labelKey: 'permanentlyExcludedSection', collapsed: true }
     ];
     
-    return sections.map(s => this.generateSectionHtml(s.id, s.labelKey, s.collapsed)).join('');
+    const fragment = document.createDocumentFragment();
+    sections.forEach(section => {
+      fragment.appendChild(this.generateSectionHtml(section.id, section.labelKey, section.collapsed));
+    });
+    return fragment;
   }
 
   /**
@@ -596,53 +649,116 @@ class UIManager {
     const windowContainer = document.createElement('div');
     windowContainer.id = this.windowId;
     windowContainer.className = 'booth-clipboard-manager';
-    
-    windowContainer.innerHTML = `
-      <div class="booth-manager-header">
-        <div class="booth-manager-title-wrap">
-          <h3>${this.getMessage('avatarClipboardTitle')}</h3>
-          <span class="booth-copy-mode-label" id="booth-copy-mode-label"></span>
-        </div>
-        <div class="booth-manager-controls">
-          <a href="https://assetconnect.sakurayuki.dev/tutorial#avatar-copy" target="_blank" class="booth-help-btn" title="Help">
-            <svg class="help-icon" viewBox="0 0 24 24" width="16" height="16">
-              <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z"/>
-            </svg>
-          </a>
-          <button class="booth-manager-close" type="button">×</button>
-        </div>
-      </div>
-      <div class="booth-manager-tabs">
-        <button class="booth-tab-btn active" data-tab="items">${this.getMessage('avatarsTab') || 'Avatars'}</button>
-        <button class="booth-tab-btn" data-tab="tags">${this.getMessage('tagsTab') || 'Tags'}</button>
-      </div>
-      <div class="booth-manager-content">
-        <div id="items-tab-content" class="booth-tab-content active">
-          <div class="booth-manager-notification" id="booth-notification" style="display: none;">
-            <p>${this.getMessage('unregisteredItemsFound')}</p>
-            <div class="booth-found-items" id="booth-found-items" style="display: none;"></div>
-            <div class="booth-notification-actions">
-              <button class="booth-fetch-btn" type="button">${this.getMessage('fetchItemInfo')}</button>
-            </div>
-          </div>
-          <div class="booth-manager-sections">
-            ${this.generateAllSectionsHtml()}
-          </div>
-        </div>
-        <div id="tags-tab-content" class="booth-tab-content" style="display: none;">
-          <div class="booth-manager-notification booth-tags-notification" id="booth-tags-notification" style="display: none;">
-            <p></p>
-          </div>
-          <div class="booth-manager-sections">
-            ${this.generateAllSectionsHtml('-tags')}
-          </div>
-        </div>
-      </div>
-      <div class="booth-manager-actions">
-        <button class="booth-export-btn" type="button">${this.getMessage('copyToClipboard')}</button>
-        <button class="booth-manual-add-toggle-btn" type="button">${this.getMessage('manualAdd')}</button>
-      </div>
-    `;
+
+    const header = this.createElement('div', { className: 'booth-manager-header' });
+    const titleWrap = this.createElement('div', { className: 'booth-manager-title-wrap' });
+    const title = this.createElement('h3', { text: this.getMessage('avatarClipboardTitle') });
+    const modeLabel = this.createElement('span', {
+      id: this.ELEMENT_IDS.COPY_MODE_LABEL,
+      className: 'booth-copy-mode-label'
+    });
+    titleWrap.append(title, modeLabel);
+
+    const controls = this.createElement('div', { className: 'booth-manager-controls' });
+    const helpLink = this.createElement('a', {
+      className: 'booth-help-btn',
+      attributes: {
+        href: 'https://assetconnect.sakurayuki.dev/tutorial#avatar-copy',
+        target: '_blank',
+        rel: 'noopener noreferrer',
+        title: 'Help'
+      }
+    });
+    const helpIcon = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+    helpIcon.setAttribute('class', 'help-icon');
+    helpIcon.setAttribute('viewBox', '0 0 24 24');
+    helpIcon.setAttribute('width', '16');
+    helpIcon.setAttribute('height', '16');
+    const helpIconPath = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    helpIconPath.setAttribute('fill', 'currentColor');
+    helpIconPath.setAttribute('d', 'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z');
+    helpIcon.appendChild(helpIconPath);
+    helpLink.appendChild(helpIcon);
+    const closeButton = this.createElement('button', {
+      className: this.CSS_CLASSES.MANAGER_CLOSE,
+      text: '×',
+      attributes: { type: 'button' }
+    });
+    controls.append(helpLink, closeButton);
+    header.append(titleWrap, controls);
+
+    const tabs = this.createElement('div', { className: 'booth-manager-tabs' });
+    const itemsTabButton = this.createElement('button', {
+      className: `${this.CSS_CLASSES.TAB_BTN} active`,
+      text: this.getMessage('avatarsTab') || 'Avatars',
+      attributes: { type: 'button' },
+      dataset: { tab: 'items' }
+    });
+    const tagsTabButton = this.createElement('button', {
+      className: this.CSS_CLASSES.TAB_BTN,
+      text: this.getMessage('tagsTab') || 'Tags',
+      attributes: { type: 'button' },
+      dataset: { tab: 'tags' }
+    });
+    tabs.append(itemsTabButton, tagsTabButton);
+
+    const managerContent = this.createElement('div', { className: 'booth-manager-content' });
+    const itemsContent = this.createElement('div', {
+      id: 'items-tab-content',
+      className: `${this.CSS_CLASSES.TAB_CONTENT} active`
+    });
+    const notification = this.createElement('div', {
+      id: 'booth-notification',
+      className: 'booth-manager-notification'
+    });
+    notification.style.display = 'none';
+    const notificationMessage = this.createElement('p', { text: this.getMessage('unregisteredItemsFound') });
+    const foundItems = this.createElement('div', {
+      id: 'booth-found-items',
+      className: 'booth-found-items'
+    });
+    foundItems.style.display = 'none';
+    const notificationActions = this.createElement('div', { className: 'booth-notification-actions' });
+    const fetchButton = this.createElement('button', {
+      className: this.CSS_CLASSES.FETCH_BTN,
+      text: this.getMessage('fetchItemInfo'),
+      attributes: { type: 'button' }
+    });
+    notificationActions.appendChild(fetchButton);
+    notification.append(notificationMessage, foundItems, notificationActions);
+    const itemSections = this.createElement('div', { className: 'booth-manager-sections' });
+    itemSections.appendChild(this.generateAllSectionsHtml());
+    itemsContent.append(notification, itemSections);
+
+    const tagsContent = this.createElement('div', {
+      id: 'tags-tab-content',
+      className: this.CSS_CLASSES.TAB_CONTENT
+    });
+    tagsContent.style.display = 'none';
+    const tagsNotification = this.createElement('div', {
+      id: 'booth-tags-notification',
+      className: 'booth-manager-notification booth-tags-notification'
+    });
+    tagsNotification.style.display = 'none';
+    tagsNotification.appendChild(document.createElement('p'));
+    const tagSections = this.createElement('div', { className: 'booth-manager-sections' });
+    tagSections.appendChild(this.generateAllSectionsHtml('-tags'));
+    tagsContent.append(tagsNotification, tagSections);
+    managerContent.append(itemsContent, tagsContent);
+
+    const actions = this.createElement('div', { className: 'booth-manager-actions' });
+    const exportButton = this.createElement('button', {
+      className: this.CSS_CLASSES.EXPORT_BTN,
+      text: this.getMessage('copyToClipboard'),
+      attributes: { type: 'button' }
+    });
+    const manualAddButton = this.createElement('button', {
+      className: this.CSS_CLASSES.MANUAL_ADD_TOGGLE_BTN,
+      text: this.getMessage('manualAdd'),
+      attributes: { type: 'button' }
+    });
+    actions.append(exportButton, manualAddButton);
+    windowContainer.append(header, tabs, managerContent, actions);
   // start minimized (タイトルのみ表示)
   windowContainer.classList.add('minimized');
 
@@ -1087,51 +1203,75 @@ class UIManager {
     }
   }
 
+  prepareNotification() {
+    if (!this.notificationEl) return null;
+
+    this.notificationEl.style.display = 'block';
+    if (this.foundItemsEl) {
+      this.foundItemsEl.style.display = 'none';
+    }
+
+    return this.notificationEl.querySelector('p');
+  }
+
   showNotification(message, itemUrl = null) {
-    if (this.notificationEl) {
-      this.notificationEl.style.display = 'block';
-      const messageEl = this.notificationEl.querySelector('p');
-      if (messageEl) {
-        if (itemUrl) {
-          messageEl.innerHTML = `${message}<br><small class="${this.CSS_CLASSES.ITEM_URL}">${itemUrl}</small>`;
-        } else {
-          messageEl.innerHTML = message; // Use innerHTML to support HTML in progress messages
-        }
-      }
-      
-      // 他の通知を表示する際に見つかったアイテムリストを非表示
-      if (this.foundItemsEl) {
-        this.foundItemsEl.style.display = 'none';
-      }
+    const messageEl = this.prepareNotification();
+    if (!messageEl) return;
+
+    messageEl.replaceChildren(document.createTextNode(String(message ?? '')));
+    if (itemUrl) {
+      const itemUrlElement = this.createElement('small', {
+        className: this.CSS_CLASSES.ITEM_URL,
+        text: itemUrl
+      });
+      messageEl.append(document.createElement('br'), itemUrlElement);
     }
   }
 
   showFoundItemsNotification(itemsToFetch) {
     if (this.notificationEl && this.foundItemsEl) {
-      this.notificationEl.style.display = 'block';
+      const messageEl = this.prepareNotification();
       this.foundItemsEl.style.display = 'block';
       
-      const messageEl = this.notificationEl.querySelector('p');
       if (messageEl) {
         messageEl.textContent = this.getMessage('boothItemsFoundInPage', { count: itemsToFetch.length });
       }
       
       // 前のアイテムをクリア
-      this.foundItemsEl.innerHTML = '';
+      this.foundItemsEl.replaceChildren();
       
       // 削除ボタン付きで各見つかったアイテムを追加
       itemsToFetch.forEach((item) => {
-        const itemDiv = document.createElement('div');
-        itemDiv.className = this.CSS_CLASSES.FOUND_ITEM;
-        itemDiv.setAttribute('data-item-id', item.id);
-        
-        itemDiv.innerHTML = `
-          <div class="${this.CSS_CLASSES.FOUND_ITEM_INFO}">
-            <span class="${this.CSS_CLASSES.FOUND_ITEM_ID}">ID: ${item.id}</span>
-            <a href="${item.url}" target="_blank" class="${this.CSS_CLASSES.FOUND_ITEM_URL}">${item.url}</a>
-          </div>
-          <button class="${this.CSS_CLASSES.REMOVE_ITEM_BTN}" data-item-id="${item.id}" type="button">×</button>
-        `;
+        const itemId = String(item.id ?? '');
+        const fallbackUrl = this.createBoothUrl(itemId);
+        const itemUrl = this.getSafeBoothUrl(item.url, fallbackUrl);
+        const itemDiv = this.createElement('div', {
+          className: this.CSS_CLASSES.FOUND_ITEM,
+          dataset: { itemId }
+        });
+        const itemInfo = this.createElement('div', { className: this.CSS_CLASSES.FOUND_ITEM_INFO });
+        const itemIdElement = this.createElement('span', {
+          className: this.CSS_CLASSES.FOUND_ITEM_ID,
+          text: `ID: ${itemId}`
+        });
+        const itemLink = this.createElement('a', {
+          className: this.CSS_CLASSES.FOUND_ITEM_URL,
+          text: itemUrl,
+          attributes: {
+            href: itemUrl,
+            target: '_blank',
+            rel: 'noopener noreferrer'
+          }
+        });
+        const removeButton = this.createElement('button', {
+          className: this.CSS_CLASSES.REMOVE_ITEM_BTN,
+          text: '×',
+          attributes: { type: 'button' },
+          dataset: { itemId }
+        });
+
+        itemInfo.append(itemIdElement, itemLink);
+        itemDiv.append(itemInfo, removeButton);
         
         this.foundItemsEl.appendChild(itemDiv);
       });
@@ -1142,15 +1282,28 @@ class UIManager {
   }
 
   showProgressNotification(current, total, currentItem = '') {
-    const percentage = Math.round((current / total) * 100);
-    const progressBar = `
-      <div class="progress-container">
-        <div class="progress-bar" style="width: ${percentage}%"></div>
-      </div>
-      <span class="progress-text">${current}/${total} (${percentage}%)</span>
-      ${currentItem ? `<br><small>${this.getMessage('processing', { item: currentItem })}</small>` : ''}
-    `;
-    this.showNotification(progressBar);
+    const percentage = total > 0 ? Math.round((current / total) * 100) : 0;
+    const safePercentage = Math.max(0, Math.min(100, percentage));
+    const messageEl = this.prepareNotification();
+    if (!messageEl) return;
+
+    const progressContainer = this.createElement('div', { className: 'progress-container' });
+    const progressBar = this.createElement('div', { className: 'progress-bar' });
+    progressBar.style.width = `${safePercentage}%`;
+    progressContainer.appendChild(progressBar);
+
+    const progressText = this.createElement('span', {
+      className: 'progress-text',
+      text: `${current}/${total} (${safePercentage}%)`
+    });
+    messageEl.replaceChildren(progressContainer, progressText);
+
+    if (currentItem) {
+      const currentItemText = this.createElement('small', {
+        text: this.getMessage('processing', { item: currentItem })
+      });
+      messageEl.append(document.createElement('br'), currentItemText);
+    }
   }
 
   hideNotification() {
@@ -1165,7 +1318,7 @@ class UIManager {
       this.tagsNotificationEl.style.display = 'block';
       const messageEl = this.tagsNotificationEl.querySelector('p');
       if (messageEl) {
-        messageEl.innerHTML = message;
+        messageEl.textContent = String(message ?? '');
       }
     }
   }
@@ -1254,20 +1407,34 @@ class UIManager {
     // 既存のモーダルがある場合は削除
     this.hideFailedItemsModal();
     
-    const failedItemsList = failedItems.map(item => `・ID: ${item.id}`).join('<br>');
-    const content = `
-      <div class="${this.CSS_CLASSES.FAILED_ITEMS_MESSAGE}">
-        <p>${this.getMessage('itemFetchFailedMessage')}</p>
-        <div class="${this.CSS_CLASSES.FAILED_ITEMS_LIST}">
-          ${failedItemsList}
-        </div>
-        <p>${this.getMessage('manualInputPrompt')}</p>
-      </div>
-      <div class="booth-manual-add-modal-actions">
-        <button class="booth-failed-items-confirm-btn" type="button">${this.getMessage('confirmManualInput')}</button>
-        <button class="booth-manual-add-cancel-btn" type="button">${this.getMessage('cancel')}</button>
-      </div>
-    `;
+    const content = document.createDocumentFragment();
+    const message = this.createElement('div', { className: this.CSS_CLASSES.FAILED_ITEMS_MESSAGE });
+    const failedItemsList = this.createElement('div', { className: this.CSS_CLASSES.FAILED_ITEMS_LIST });
+    failedItems.forEach((item, index) => {
+      failedItemsList.append(`・ID: ${String(item.id ?? '')}`);
+      if (index < failedItems.length - 1) {
+        failedItemsList.appendChild(document.createElement('br'));
+      }
+    });
+    message.append(
+      this.createElement('p', { text: this.getMessage('itemFetchFailedMessage') }),
+      failedItemsList,
+      this.createElement('p', { text: this.getMessage('manualInputPrompt') })
+    );
+
+    const actions = this.createElement('div', { className: 'booth-manual-add-modal-actions' });
+    const confirmButton = this.createElement('button', {
+      className: this.MODAL_SELECTORS.CONFIRM.slice(1),
+      text: this.getMessage('confirmManualInput'),
+      attributes: { type: 'button' }
+    });
+    const cancelButton = this.createElement('button', {
+      className: this.MODAL_SELECTORS.CANCEL.slice(1),
+      text: this.getMessage('cancel'),
+      attributes: { type: 'button' }
+    });
+    actions.append(confirmButton, cancelButton);
+    content.append(message, actions);
     
     const modalOverlay = this.createModalBase(
       this.MODAL_IDS.FAILED_ITEMS,
@@ -1404,18 +1571,41 @@ class UIManager {
     // 既存のモーダルがある場合は削除
     this.hideManualAddModal();
     
-    const content = `
-      <div class="${this.CSS_CLASSES.MANUAL_ADD_FORM}">
-        <div class="${this.CSS_CLASSES.MANUAL_INPUTS}">
-          <input type="text" id="${this.ELEMENT_IDS.MANUAL_ITEM_ID}" placeholder="${this.getMessage('itemId')}" class="${this.CSS_CLASSES.MANUAL_INPUT}">
-          <input type="text" id="${this.ELEMENT_IDS.MANUAL_ITEM_NAME}" placeholder="${this.getMessage('itemName')}" class="${this.CSS_CLASSES.MANUAL_INPUT}">
-        </div>
-        <div class="booth-manual-add-modal-actions">
-          <button class="booth-manual-add-btn" type="button">${this.getMessage('add')}</button>
-          <button class="booth-manual-add-cancel-btn" type="button">${this.getMessage('cancel')}</button>
-        </div>
-      </div>
-    `;
+    const content = document.createDocumentFragment();
+    const form = this.createElement('div', { className: this.CSS_CLASSES.MANUAL_ADD_FORM });
+    const inputs = this.createElement('div', { className: this.CSS_CLASSES.MANUAL_INPUTS });
+    const idInput = this.createElement('input', {
+      id: this.ELEMENT_IDS.MANUAL_ITEM_ID,
+      className: this.CSS_CLASSES.MANUAL_INPUT,
+      attributes: {
+        type: 'text',
+        placeholder: this.getMessage('itemId')
+      }
+    });
+    const nameInput = this.createElement('input', {
+      id: this.ELEMENT_IDS.MANUAL_ITEM_NAME,
+      className: this.CSS_CLASSES.MANUAL_INPUT,
+      attributes: {
+        type: 'text',
+        placeholder: this.getMessage('itemName')
+      }
+    });
+    inputs.append(idInput, nameInput);
+
+    const actions = this.createElement('div', { className: 'booth-manual-add-modal-actions' });
+    const addButton = this.createElement('button', {
+      className: this.MODAL_SELECTORS.ADD.slice(1),
+      text: this.getMessage('add'),
+      attributes: { type: 'button' }
+    });
+    const cancelButton = this.createElement('button', {
+      className: this.MODAL_SELECTORS.CANCEL.slice(1),
+      text: this.getMessage('cancel'),
+      attributes: { type: 'button' }
+    });
+    actions.append(addButton, cancelButton);
+    form.append(inputs, actions);
+    content.appendChild(form);
     
     const modalOverlay = this.createModalBase(
       this.MODAL_IDS.MANUAL_ADD,
@@ -1558,39 +1748,52 @@ class UIManager {
   }
 
   /**
-   * エンティティ用ボタンHTMLを生成するヘルパーメソッド
+   * エンティティ用ボタン要素を生成するヘルパーメソッド
    * @param {string} entityType - 'item' または 'tag'
    * @param {string} sectionId - セクションID
    * @param {Object} entityData - エンティティデータ
-   * @returns {string} ボタンHTML
+   * @returns {DocumentFragment} ボタン要素
    */
   generateEntityButtons(entityType, sectionId, entityData) {
-    const dataTypeAttr = entityType === 'tag' ? ' data-type="tag"' : '';
     const baseSectionId = sectionId.replace('-tags', '');
+    const fragment = document.createDocumentFragment();
+    const createButton = (className, text, dataset = {}) => {
+      const buttonDataset = entityType === 'tag'
+        ? { type: 'tag', ...dataset }
+        : dataset;
+      return this.createElement('button', {
+        className,
+        text,
+        attributes: { type: 'button' },
+        dataset: buttonDataset
+      });
+    };
     
     if (baseSectionId === 'excluded') {
       // 除外: 復元ボタンと常に除外ボタンを表示
-      return `
-        <button class="${this.CSS_CLASSES.RESTORE_BTN}"${dataTypeAttr} data-original-category="${this.normalizeCategoryName(entityData.previousCategory || 'unsaved')}">${this.getMessage('restore')}</button>
-        <button class="${this.CSS_CLASSES.PERMANENTLY_EXCLUDE_BTN}"${dataTypeAttr}>${this.getMessage('alwaysExclude')}</button>
-      `;
+      fragment.append(
+        createButton(this.CSS_CLASSES.RESTORE_BTN, this.getMessage('restore'), {
+          originalCategory: this.normalizeCategoryName(entityData.previousCategory || 'unsaved')
+        }),
+        createButton(this.CSS_CLASSES.PERMANENTLY_EXCLUDE_BTN, this.getMessage('alwaysExclude'))
+      );
     } else if (baseSectionId === 'permanentlyExcluded') {
       // 常に除外: 復元ボタンのみ表示
-      return `
-        <button class="${this.CSS_CLASSES.RESTORE_BTN}"${dataTypeAttr} data-original-category="${this.normalizeCategoryName(entityData.previousCategory || 'unsaved')}">${this.getMessage('restore')}</button>
-      `;
+      fragment.appendChild(createButton(this.CSS_CLASSES.RESTORE_BTN, this.getMessage('restore'), {
+        originalCategory: this.normalizeCategoryName(entityData.previousCategory || 'unsaved')
+      }));
     } else if (baseSectionId === 'unsaved' && entityType === 'tag') {
       // 新規タグ: 除外ボタンと常に除外ボタンを表示
-      return `
-        <button class="${this.CSS_CLASSES.EXCLUDE_BTN}"${dataTypeAttr} data-target="excluded">${this.getMessage('exclude')}</button>
-        <button class="${this.CSS_CLASSES.PERMANENTLY_EXCLUDE_BTN}"${dataTypeAttr}>${this.getMessage('alwaysExclude')}</button>
-      `;
+      fragment.append(
+        createButton(this.CSS_CLASSES.EXCLUDE_BTN, this.getMessage('exclude'), { target: 'excluded' }),
+        createButton(this.CSS_CLASSES.PERMANENTLY_EXCLUDE_BTN, this.getMessage('alwaysExclude'))
+      );
     } else {
       // 保存済み・新規アイテム: 除外ボタンのみ表示
-      return `
-        <button class="${this.CSS_CLASSES.EXCLUDE_BTN}"${dataTypeAttr} data-target="excluded">${this.getMessage('exclude')}</button>
-      `;
+      fragment.appendChild(createButton(this.CSS_CLASSES.EXCLUDE_BTN, this.getMessage('exclude'), { target: 'excluded' }));
     }
+
+    return fragment;
   }
 
   /**
@@ -1644,24 +1847,39 @@ class UIManager {
     const section = this.getCachedElement(`ac-clip-${sectionId}-items`);
     if (!section) return;
 
-    const itemEl = document.createElement('div');
-    itemEl.className = this.CSS_CLASSES.BOOTH_ITEM;
-    itemEl.setAttribute('data-item-id', itemData.id);
-    
-    const buttonsHtml = this.generateEntityButtons('item', sectionId, itemData);
-    const itemUrl = this.createBoothUrl(itemData.id);
-    
-    itemEl.innerHTML = `
-      <div class="${this.CSS_CLASSES.ITEM_MAIN}">
-        <input type="text" class="${this.CSS_CLASSES.ITEM_NAME}" value="${itemData.name || ''}" placeholder="${this.getMessage('itemName')}">
-        <div class="${this.CSS_CLASSES.ITEM_URL}">
-          <a href="${itemUrl}" target="_blank" class="${this.CSS_CLASSES.URL_LINK}">${itemUrl}</a>
-        </div>
-      </div>
-      <div class="booth-item-actions">
-        ${buttonsHtml}
-      </div>
-    `;
+    const itemId = String(itemData.id ?? '');
+    const itemEl = this.createElement('div', {
+      className: this.CSS_CLASSES.BOOTH_ITEM,
+      dataset: { itemId }
+    });
+    const itemMain = this.createElement('div', { className: this.CSS_CLASSES.ITEM_MAIN });
+    const nameInput = this.createElement('input', {
+      className: this.CSS_CLASSES.ITEM_NAME,
+      attributes: {
+        type: 'text',
+        placeholder: this.getMessage('itemName')
+      }
+    });
+    nameInput.value = String(itemData.name ?? '');
+
+    const generatedItemUrl = this.createBoothUrl(itemId);
+    const itemUrl = this.getSafeBoothUrl(generatedItemUrl, 'https://booth.pm/');
+    const itemUrlContainer = this.createElement('div', { className: this.CSS_CLASSES.ITEM_URL });
+    const itemLink = this.createElement('a', {
+      className: this.CSS_CLASSES.URL_LINK,
+      text: itemUrl,
+      attributes: {
+        href: itemUrl,
+        target: '_blank',
+        rel: 'noopener noreferrer'
+      }
+    });
+    itemUrlContainer.appendChild(itemLink);
+    itemMain.append(nameInput, itemUrlContainer);
+
+    const actions = this.createElement('div', { className: 'booth-item-actions' });
+    actions.appendChild(this.generateEntityButtons('item', sectionId, itemData));
+    itemEl.append(itemMain, actions);
 
     this.attachEntityEventListeners('item', itemEl);
     section.appendChild(itemEl);
@@ -1672,20 +1890,25 @@ class UIManager {
     const section = this.getCachedElement(`ac-clip-${sectionId}-items`);
     if (!section) return;
 
-    const tagEl = document.createElement('div');
-    tagEl.className = this.CSS_CLASSES.BOOTH_ITEM;
-    tagEl.setAttribute('data-tag-id', tagData.id);
-    
-    const buttonsHtml = this.generateEntityButtons('tag', sectionId, tagData);
-    
-    tagEl.innerHTML = `
-      <div class="${this.CSS_CLASSES.ITEM_MAIN}">
-        <input type="text" class="${this.CSS_CLASSES.ITEM_NAME}" value="${tagData.name || ''}" placeholder="${this.getMessage('tagName') || 'Tag Name'}">
-      </div>
-      <div class="booth-item-actions">
-        ${buttonsHtml}
-      </div>
-    `;
+    const tagId = String(tagData.id ?? '');
+    const tagEl = this.createElement('div', {
+      className: this.CSS_CLASSES.BOOTH_ITEM,
+      dataset: { tagId }
+    });
+    const tagMain = this.createElement('div', { className: this.CSS_CLASSES.ITEM_MAIN });
+    const nameInput = this.createElement('input', {
+      className: this.CSS_CLASSES.ITEM_NAME,
+      attributes: {
+        type: 'text',
+        placeholder: this.getMessage('tagName') || 'Tag Name'
+      }
+    });
+    nameInput.value = String(tagData.name ?? '');
+    tagMain.appendChild(nameInput);
+
+    const actions = this.createElement('div', { className: 'booth-item-actions' });
+    actions.appendChild(this.generateEntityButtons('tag', sectionId, tagData));
+    tagEl.append(tagMain, actions);
 
     this.attachEntityEventListeners('tag', tagEl);
     section.appendChild(tagEl);
@@ -1704,7 +1927,7 @@ class UIManager {
       this.TAG_SECTIONS.forEach(section => {
         const container = this.getCachedElement(`ac-clip-${section}-items`);
         if (container) {
-          container.innerHTML = '';
+          container.replaceChildren();
         }
       });
 
@@ -1749,7 +1972,7 @@ class UIManager {
       this.SECTIONS.forEach(section => {
         const container = this.getCachedElement(`ac-clip-${section}-items`);
         if (container) {
-          container.innerHTML = '';
+          container.replaceChildren();
         }
       });
 
