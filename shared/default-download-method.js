@@ -123,7 +123,9 @@
       }
       window.debugLogger?.log('[DOWNLOAD METHOD] AvatarExplorer deeplink converted:', {
         downloadableId,
-        scheme: response.deeplink.split(':', 1)[0]
+        scheme: response.launchMode === 'firefox-navigation-redirect'
+          ? 'vrcae (via Firefox redirect)'
+          : response.deeplink.split(':', 1)[0]
       });
       launchUrl(response.deeplink, preparedWindow);
     } catch (error) {
@@ -300,7 +302,7 @@
       downloadableId: /\/downloadables\/(\d+)/.exec(probeUrl.pathname)?.[1]
     });
 
-    // redirect: manualで元のbooth-library-manager://への遷移を止める。
+    // 元のbooth-library-manager://への遷移を止める。
     // Locationの取得はbackgroundのwebRequest監視が担当する。
     fetch(request.requestUrl, {
       method: 'GET',

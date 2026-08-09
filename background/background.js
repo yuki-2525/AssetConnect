@@ -219,10 +219,20 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 const pendingDeeplinkRequests = new Map();
+const isFirefox = /Firefox\//.test(navigator.userAgent);
+const boothDownloadableRequestFilter = {
+  urls: ['https://booth.pm/downloadables/*']
+};
+const firefoxAvatarExplorerMarker = '_asset_connect_avatar_explorer';
 
 function resolvePendingDeeplink(requestUrl, location, source, statusCode) {
-  const requestId = new URL(requestUrl).searchParams.get('_asset_connect_request_id');
+  const url = new URL(requestUrl);
+  if (!/^\/downloadables\/\d+\/deeplink$/.test(url.pathname)) return false;
+
+  const requestId = url.searchParams.get('_asset_connect_request_id');
   const resolve = requestId && pendingDeeplinkRequests.get(requestId);
+  if (!requestId) return false;
+
   debugLog('Deeplink: webRequest event', {
     requestId: requestId?.slice(0, 8),
     source,
@@ -231,41 +241,98 @@ function resolvePendingDeeplink(requestUrl, location, source, statusCode) {
     hasLocation: Boolean(location),
     locationScheme: location?.split(':', 1)[0]
   });
-  if (resolve && location) resolve(location);
+  if (resolve && location) {
+    resolve(location);
+    return true;
+  }
+  return false;
 }
 
-chrome.webRequest.onHeadersReceived.addListener(
-  details => {
-    const locationHeader = details.responseHeaders?.find(
-      header => header.name.toLowerCase() === 'location'
-    );
-    resolvePendingDeeplink(
+// onBeforeRedirect provides redirectUrl without requesting response headers.
+// Register it first so a browser-specific response-header option cannot prevent
+// the deeplink path from being observed.
+try {
+  chrome.webRequest.onBeforeRedirect.addListener(
+    details => resolvePendingDeeplink(
       details.url,
-      locationHeader?.value,
-      'onHeadersReceived',
+      details.redirectUrl,
+      'onBeforeRedirect',
       details.statusCode
-    );
-  },
-  { urls: ['https://booth.pm/downloadables/*/deeplink*'] },
-  // extraHeaders is Chromium-only. Location is available with responseHeaders
-  // in both Chromium and Firefox.
-  ['responseHeaders']
-);
+    ),
+    boothDownloadableRequestFilter
+  );
+} catch (error) {
+  console.warn('Deeplink redirect listener is unavailable:', error);
+}
 
-chrome.webRequest.onBeforeRedirect.addListener(
-  details => resolvePendingDeeplink(
-    details.url,
-    details.redirectUrl,
-    'onBeforeRedirect',
-    details.statusCode
-  ),
-  { urls: ['https://booth.pm/downloadables/*/deeplink*'] }
-);
+try {
+  chrome.webRequest.onHeadersReceived.addListener(
+    details => {
+      const locationHeader = details.responseHeaders?.find(
+        header => header.name.toLowerCase() === 'location'
+      );
+      const requestUrl = new URL(details.url);
+      const isFirefoxAvatarExplorerNavigation =
+        isFirefox &&
+        details.type === 'main_frame' &&
+        /^\/downloadables\/\d+\/deeplink$/.test(requestUrl.pathname) &&
+        requestUrl.searchParams.has(firefoxAvatarExplorerMarker);
+
+      if (
+        isFirefoxAvatarExplorerNavigation &&
+        locationHeader?.value?.startsWith('booth-library-manager://')
+      ) {
+        const deeplink = locationHeader.value.replace(
+          /^booth-library-manager:\/\//,
+          'vrcae://'
+        );
+        debugLog('Deeplink: Firefox navigation redirect rewritten', {
+          downloadableId: /\/downloadables\/(\d+)/.exec(requestUrl.pathname)?.[1],
+          scheme: deeplink.split(':', 1)[0]
+        });
+        return { redirectUrl: deeplink };
+      }
+
+      resolvePendingDeeplink(
+        details.url,
+        locationHeader?.value,
+        'onHeadersReceived',
+        details.statusCode
+      );
+    },
+    boothDownloadableRequestFilter,
+    // extraHeaders is Chromium-only. Location is available with responseHeaders
+    // in both Chromium and Firefox.
+    isFirefox ? ['blocking', 'responseHeaders'] : ['responseHeaders']
+  );
+} catch (error) {
+  console.warn('Deeplink response-header listener is unavailable:', error);
+}
 
 async function handleAvatarExplorerDeeplink(deeplinkUrl, tabId) {
   const url = new URL(deeplinkUrl);
   if (url.origin !== 'https://booth.pm' || !/^\/downloadables\/\d+\/deeplink$/.test(url.pathname)) {
     throw new Error('Invalid BOOTH deeplink URL');
+  }
+
+  if (isFirefox) {
+    const hasBlockingPermission = await chrome.permissions.contains({
+      permissions: ['webRequestBlocking']
+    });
+    if (!hasBlockingPermission) {
+      throw new Error('Firefox deeplink permission is unavailable. Reload the latest Firefox package.');
+    }
+
+    url.searchParams.set(firefoxAvatarExplorerMarker, crypto.randomUUID());
+    debugLog('Deeplink: Firefox navigation prepared', {
+      tabId,
+      downloadableId: /\/downloadables\/(\d+)/.exec(url.pathname)?.[1]
+    });
+    return {
+      success: true,
+      deeplink: url.href,
+      launchMode: 'firefox-navigation-redirect'
+    };
   }
 
   // 同時リクエストを区別し、webRequest側でこの302だけを捕捉する。

@@ -65,6 +65,7 @@ jobs:
             .background = {
               scripts: ["background/background.js"]
             } |
+            .permissions += ["webRequestBlocking"] |
             .browser_specific_settings = {
               gecko: {
                 id: "AssetConnect@sakurayuki.dev",
