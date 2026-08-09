@@ -31,6 +31,9 @@ try {
   $firefoxManifest.background = [PSCustomObject]@{
     scripts = @('background/background.js')
   }
+  if ($firefoxManifest.permissions -notcontains 'webRequestBlocking') {
+    $firefoxManifest.permissions = @($firefoxManifest.permissions) + 'webRequestBlocking'
+  }
   $firefoxManifest | Add-Member -NotePropertyName browser_specific_settings -NotePropertyValue ([PSCustomObject]@{
     gecko = [PSCustomObject]@{
       id = 'AssetConnect@sakurayuki.dev'
@@ -52,14 +55,38 @@ try {
   if (Test-Path -LiteralPath $outputPath) {
     Remove-Item -LiteralPath $outputPath -Force
   }
-  Compress-Archive -Path (Join-Path $tempRoot '*') -DestinationPath $outputPath -Force
-
+  Add-Type -AssemblyName System.IO.Compression
   Add-Type -AssemblyName System.IO.Compression.FileSystem
+  $archive = [System.IO.Compression.ZipFile]::Open(
+    $outputPath,
+    [System.IO.Compression.ZipArchiveMode]::Create
+  )
+  try {
+    Get-ChildItem -LiteralPath $tempRoot -File -Recurse | ForEach-Object {
+      $relativePath = $_.FullName.Substring($tempRoot.Length).TrimStart([char[]]@(92, 47))
+      # ZIP entry names must use forward slashes. Firefox cannot resolve locale
+      # files when they are stored with Windows path separators.
+      $entryName = $relativePath -replace '\\', '/'
+      [System.IO.Compression.ZipFileExtensions]::CreateEntryFromFile(
+        $archive,
+        $_.FullName,
+        $entryName,
+        [System.IO.Compression.CompressionLevel]::Optimal
+      ) | Out-Null
+    }
+  } finally {
+    $archive.Dispose()
+  }
+
   $archive = [System.IO.Compression.ZipFile]::OpenRead($outputPath)
   try {
     $manifestEntry = $archive.GetEntry('manifest.json')
     if (-not $manifestEntry) {
       throw 'manifest.json was not found at the ZIP root.'
+    }
+    $localeEntry = $archive.GetEntry("_locales/$($sourceManifest.default_locale)/messages.json")
+    if (-not $localeEntry) {
+      throw 'The default locale file was not found at its ZIP path.'
     }
     $reader = New-Object System.IO.StreamReader($manifestEntry.Open())
     try {
@@ -75,6 +102,7 @@ try {
     $packagedManifest.background.service_worker -or
     $packagedManifest.background.scripts.Count -ne 1 -or
     $packagedManifest.background.scripts[0] -ne 'background/background.js' -or
+    $packagedManifest.permissions -notcontains 'webRequestBlocking' -or
     $packagedManifest.browser_specific_settings.gecko.id -ne 'AssetConnect@sakurayuki.dev'
   ) {
     throw 'Firefox manifest validation failed.'

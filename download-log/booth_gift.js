@@ -296,7 +296,9 @@ function addAvatarExplorerDownloadButtons(root = document) {
                 }
                 debugLog('AvatarExplorer deeplink converted:', {
                     downloadableId,
-                    scheme: response.deeplink.split(':', 1)[0]
+                    scheme: response.launchMode === 'firefox-navigation-redirect'
+                        ? 'vrcae (via Firefox redirect)'
+                        : response.deeplink.split(':', 1)[0]
                 });
 
                 debugLog('Launching AvatarExplorer:', { downloadableId });
