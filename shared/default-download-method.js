@@ -98,14 +98,14 @@
     if (method === 'normal') {
       const normalUrl = getNormalUrl(regular);
       if (!normalUrl) throw new Error('Normal download URL was not found');
-      saveHistory(regular, false);
+      await saveHistory(regular, false);
       launchUrl(normalUrl);
       return;
     }
 
     const deeplinkUrl = getLibraryManagerUrl(dropdown);
     if (!deeplinkUrl) throw new Error('BOOTH deeplink URL was not found');
-    saveHistory(regular, true);
+    await saveHistory(regular, true);
 
     if (method === 'booth-library-manager') {
       launchUrl(deeplinkUrl);

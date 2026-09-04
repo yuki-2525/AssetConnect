@@ -2,6 +2,9 @@
 
 const debugLog = (...args) => window.debugLogger?.log('[SHOP]', ...args);
 
+const SHOP_DOWNLOAD_LINK_SELECTOR =
+  'a[href^="https://booth.pm/downloadables/"]';
+
 // ヘルパー関数：日付を "YYYY-MM-DD HH:mm:ss" 形式にフォーマット
 function formatDate(date) {
   const pad = n => n.toString().padStart(2, '0');
@@ -13,9 +16,24 @@ function formatDate(date) {
     pad(date.getSeconds());
 }
 
+// クリックされた要素から、同じ商品バリエーションの通常DLリンクを取得する。
+// 「その他のDL方法」のメニュー項目はリンクではなく div なので、
+// その要素を直接 getDownloadInfo に渡しても正しく解決できるようにする。
+function resolveShopDownloadLink(element) {
+  if (!element) return null;
+  if (element.matches?.(SHOP_DOWNLOAD_LINK_SELECTOR)) return element;
+
+  return element.closest?.('.variation-cart')
+    ?.querySelector(SHOP_DOWNLOAD_LINK_SELECTOR)
+    || element.closest?.('.variation-item')
+      ?.querySelector(SHOP_DOWNLOAD_LINK_SELECTOR)
+    || null;
+}
+
 // ダウンロード情報を抽出するヘルパー関数
-function getDownloadInfo(downloadLink) {
-  const url = downloadLink.href;
+function getDownloadInfo(downloadElement) {
+  const downloadLink = resolveShopDownloadLink(downloadElement) || downloadElement;
+  const url = downloadLink?.href || downloadLink?.dataset?.href || '';
   
   // フォールバックデータを初期化
   let title = "何らかの理由でデータを取得できませんでした。作者に報告してください。";
@@ -43,15 +61,38 @@ function getDownloadInfo(downloadLink) {
     debugLog("Shop: BOOTHID not found - using fallback data");
   }
 
-  // ファイル名の取得：ダウンロードリンクの title 属性を利用
-  const fileNameFromTitle = downloadLink.getAttribute('title');
-  if (fileNameFromTitle) {
-    fileName = fileNameFromTitle;
+  // Shopページでは、通常DLリンクの title 属性よりも、
+  // variation-cart に表示されているファイル名を優先する。
+  // 「その他のDL方法」経由ではメニュー項目を起点に処理されるため、
+  // ファイル名はメニュー内ではなく同じ variation-item から取得する。
+  const variationItem = downloadLink?.closest?.('.variation-item');
+  const fileNameElement = variationItem?.querySelector(
+    '.variation-cart > [class~="mt-[10px]"] > .text-14'
+  ) || Array.from(
+    variationItem?.querySelectorAll('.variation-cart .text-14') || []
+  ).find(element => !element.closest('[data-test="other-downloads-button"]'));
+  const fileNameFromPage = fileNameElement?.textContent.trim();
+  const fileNameFromTitle = downloadLink?.getAttribute?.('title')?.trim();
+  if (fileNameFromPage || fileNameFromTitle) {
+    fileName = fileNameFromPage || fileNameFromTitle;
   } else {
     debugLog("Shop: File name not found - using fallback data");
   }
 
   return { url, fileName, title, boothID, itemUrl };
+}
+
+// Shopページでは、通常ダウンロードリンクと「その他のDL方法」が
+// variation-cart 内の兄弟要素として配置される。
+function findRegularDownloadLink(dropdown) {
+  const cart = dropdown?.closest('.variation-cart');
+  const linkInCart = cart?.querySelector(
+    SHOP_DOWNLOAD_LINK_SELECTOR
+  );
+  if (linkInCart) return linkInCart;
+
+  return dropdown?.closest('.variation-item')
+    ?.querySelector(SHOP_DOWNLOAD_LINK_SELECTOR) || null;
 }
 
 // 履歴を保存するヘルパー関数
@@ -94,6 +135,11 @@ window.assetConnectDownloadAdapter = {
 document.addEventListener('click', function (e) {
   const downloadLink = e.target.closest('a[href^="https://booth.pm/downloadables/"]');
   if (!downloadLink) return;
+
+  // default-download-method.js が実ダウンロード開始用に生成する
+  // 非表示リンクは、ここで再度履歴へ登録しない。
+  // Shopの商品ページ上の通常リンクだけを対象にする。
+  if (!downloadLink.closest('.variation-item')) return;
 
   debugLog('Shop: Download link detected:', downloadLink.href);
 
@@ -299,18 +345,15 @@ function addAvatarExplorerDownloadButtons(root = document) {
                         : response.deeplink.split(':', 1)[0]
                 });
 
-                debugLog('Launching AvatarExplorer:', { downloadableId });
-                window.launchAvatarExplorer(response.deeplink, launchWindow);
-
-                const regularDownloadLink = dropdown.closest('.variation-item')
-                    ?.querySelector('a[href^="https://booth.pm/downloadables/"]');
+                const regularDownloadLink = findRegularDownloadLink(dropdown);
                 if (regularDownloadLink) {
                     const info = getDownloadInfo(regularDownloadLink);
                     info.registered = true;
-                    saveDownloadHistory(info).catch(error => {
-                        window.debugLogger?.warn('[SHOP] Download history save failed:', error);
-                    });
+                    await saveDownloadHistory(info);
                 }
+
+                debugLog('Launching AvatarExplorer:', { downloadableId });
+                window.launchAvatarExplorer(response.deeplink, launchWindow);
             } catch (error) {
                 launchWindow?.close();
                 window.debugLogger?.error('[SHOP] AvatarExplorer download failed:', error);
