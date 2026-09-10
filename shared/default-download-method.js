@@ -17,13 +17,15 @@
   }
 
   function findRegularDownload(dropdown) {
+    const key = getDownloadKey(getLibraryManagerUrl(dropdown));
+    if (!key) return null;
     let container = dropdown.parentElement;
     while (container && container !== document.body) {
-      const regular = container.querySelector(
+      const regular = Array.from(container.querySelectorAll(
         '.js-download-button[data-test="downloadable"]' +
         '[data-href^="https://booth.pm/downloadables/"], ' +
         'a[href^="https://booth.pm/downloadables/"]'
-      );
+      )).find(candidate => getDownloadKey(getNormalUrl(candidate)) === key);
       if (regular) return regular;
       container = container.parentElement;
     }
@@ -31,9 +33,13 @@
   }
 
   function findDropdownForRegular(regular) {
+    const key = getDownloadKey(getNormalUrl(regular));
+    if (!key) return null;
     let container = regular?.parentElement;
     while (container && container !== document.body) {
-      const dropdown = container.querySelector('[data-test="other-downloads-button"]');
+      const dropdown = Array.from(container.querySelectorAll(
+        '[data-test="other-downloads-button"]'
+      )).find(candidate => getDownloadKey(getLibraryManagerUrl(candidate)) === key);
       if (dropdown) return dropdown;
       container = container.parentElement;
     }
@@ -42,6 +48,16 @@
 
   function getNormalUrl(regular) {
     return regular?.dataset?.href || regular?.href || '';
+  }
+
+  function getDownloadKey(url) {
+    try {
+      const parsed = new URL(url);
+      const id = /^\/downloadables\/(\d+)(?:\/deeplink)?\/?$/.exec(parsed.pathname)?.[1];
+      return id ? `${id}:${parsed.searchParams.get('variation_id') || ''}` : '';
+    } catch {
+      return '';
+    }
   }
 
   function getLibraryManagerUrl(dropdown) {
@@ -245,15 +261,7 @@
     const dropdown = normalRow || avatarExplorerRow || libraryManagerRow
       ? (normalRow || avatarExplorerRow || libraryManagerRow)
           .closest('[data-test="other-downloads-button"]')
-      : (() => {
-          let container = regular.parentElement;
-          while (container && container !== document.body) {
-            const found = container.querySelector('[data-test="other-downloads-button"]');
-            if (found) return found;
-            container = container.parentElement;
-          }
-          return null;
-        })();
+      : findDropdownForRegular(regular);
     if (!dropdown) return;
 
     event.preventDefault();
