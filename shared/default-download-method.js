@@ -21,11 +21,11 @@
     if (!key) return null;
     let container = dropdown.parentElement;
     while (container && container !== document.body) {
-      const regular = Array.from(container.querySelectorAll(
+      const regular = findMatchingDownload(container.querySelectorAll(
         '.js-download-button[data-test="downloadable"]' +
         '[data-href^="https://booth.pm/downloadables/"], ' +
         'a[href^="https://booth.pm/downloadables/"]'
-      )).find(candidate => getDownloadKey(getNormalUrl(candidate)) === key);
+      ), key, getNormalUrl);
       if (regular) return regular;
       container = container.parentElement;
     }
@@ -37,9 +37,9 @@
     if (!key) return null;
     let container = regular?.parentElement;
     while (container && container !== document.body) {
-      const dropdown = Array.from(container.querySelectorAll(
+      const dropdown = findMatchingDownload(container.querySelectorAll(
         '[data-test="other-downloads-button"]'
-      )).find(candidate => getDownloadKey(getLibraryManagerUrl(candidate)) === key);
+      ), key, getLibraryManagerUrl);
       if (dropdown) return dropdown;
       container = container.parentElement;
     }
@@ -54,10 +54,26 @@
     try {
       const parsed = new URL(url);
       const id = /^\/downloadables\/(\d+)(?:\/deeplink)?\/?$/.exec(parsed.pathname)?.[1];
-      return id ? `${id}:${parsed.searchParams.get('variation_id') || ''}` : '';
+      return id ? { id, variationId: parsed.searchParams.get('variation_id') || '' } : null;
     } catch {
-      return '';
+      return null;
     }
+  }
+
+  function findMatchingDownload(candidates, key, getUrl) {
+    const matches = Array.from(candidates).map(element => ({
+      element,
+      key: getDownloadKey(getUrl(element))
+    })).filter(candidate => candidate.key?.id === key.id);
+
+    // 購入済みページでは通常URLとdeeplinkでvariation_idの有無が異なる。
+    // 両方にある場合は一致を優先し、片方にない場合は同じファイルが一意なら対応付ける。
+    const exact = matches.find(candidate => candidate.key.variationId === key.variationId);
+    if (exact) return exact.element;
+    const compatible = matches.filter(candidate =>
+      !key.variationId || !candidate.key.variationId
+    );
+    return compatible.length === 1 ? compatible[0].element : null;
   }
 
   function getLibraryManagerUrl(dropdown) {
@@ -335,6 +351,7 @@
 
   new MutationObserver(updatePage).observe(document.documentElement, {
     childList: true,
+    characterData: true,
     subtree: true
   });
 })();
