@@ -29,6 +29,7 @@ document.addEventListener('DOMContentLoaded', function () {
     hideAvatarClipboard: document.getElementById("hideAvatarClipboard"),
     aev2CopyMode: document.getElementById("aev2CopyMode"),
     defaultDownloadMethod: document.getElementById("defaultDownloadMethod"),
+    aeBulkDownloadFormat: document.getElementById("aeBulkDownloadFormat"),
     // 支援モーダル要素
     supportBtn: document.getElementById("btn-support"),
     supportModal: document.getElementById("support-modal"),
@@ -254,7 +255,8 @@ document.addEventListener('DOMContentLoaded', function () {
       "bulkRegister",
       "hideAvatarClipboard",
       "aev2CopyMode",
-      "defaultDownloadMethod"
+      "defaultDownloadMethod",
+      "aeBulkDownloadFormat"
     ], async function (result) {
       // 言語設定
       const savedLang = result.selectedLanguage || chrome.i18n.getUILanguage().substring(0, 2);
@@ -277,6 +279,9 @@ document.addEventListener('DOMContentLoaded', function () {
       if (result.hideAvatarClipboard !== undefined) ELEMENTS.hideAvatarClipboard.checked = result.hideAvatarClipboard;
       if (result.aev2CopyMode !== undefined) ELEMENTS.aev2CopyMode.checked = result.aev2CopyMode;
       ELEMENTS.defaultDownloadMethod.value = result.defaultDownloadMethod || 'normal';
+      if (ELEMENTS.aeBulkDownloadFormat) {
+        ELEMENTS.aeBulkDownloadFormat.value = result.aeBulkDownloadFormat === 'v1' ? 'v1' : 'v0';
+      }
 
       // UI状態の更新
       ELEMENTS.bulkRegisterToggle.style.display = ELEMENTS.toggleGroup.checked ? 'flex' : 'none';
@@ -534,6 +539,9 @@ document.addEventListener('DOMContentLoaded', function () {
     });
     ELEMENTS.defaultDownloadMethod.addEventListener("change", function () {
       chrome.storage.local.set({ defaultDownloadMethod: this.value });
+    });
+    ELEMENTS.aeBulkDownloadFormat?.addEventListener("change", function () {
+      chrome.storage.local.set({ aeBulkDownloadFormat: this.value });
     });
     ELEMENTS.languageSelect.addEventListener("change", function () {
       changeLanguage(this.value);

@@ -530,5 +530,17 @@
                 "content": "$1"
             }
         }
+    },
+    "aeBulkDownloadFormatLabel": {
+        "message": "AvatarExplorer一括インポートバージョン"
+    },
+    "aeBulkFormatV0": {
+        "message": "バージョン0"
+    },
+    "aeBulkFormatV1": {
+        "message": "バージョン1"
+    },
+    "aeBulkDownloadFormatNote": {
+        "message": "※バージョン1はAvatarExplorer v2.13.0-beta.0以降で使用可能で、バージョン0よりも高速に一括ダウンロードできます。"
     }
 }

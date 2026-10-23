@@ -203,30 +203,37 @@ async function addDownloadAllButtons() {
             updateProgress();
             
             try {
-                for (const button of buttons) {
-                    const method = window.assetConnectDefaultDownload?.getMethod() || 'normal';
-                    if (method === 'normal') {
-                        const info = getDownloadInfo(button);
-                        await saveDownloadHistory(info);
+                if (window.assetConnectDefaultDownload?.launchBulk) {
+                    await window.assetConnectDefaultDownload.launchBulk(buttons, (processed) => {
+                        processedCount = processed;
+                        updateProgress();
+                    });
+                } else {
+                    for (const button of buttons) {
+                        const method = window.assetConnectDefaultDownload?.getMethod() || 'normal';
+                        if (method === 'normal') {
+                            const info = getDownloadInfo(button);
+                            await saveDownloadHistory(info);
 
-                        const iframe = document.createElement('iframe');
-                        iframe.style.display = 'none';
-                        iframe.src = info.url;
-                        document.body.appendChild(iframe);
+                            const iframe = document.createElement('iframe');
+                            iframe.style.display = 'none';
+                            iframe.src = info.url;
+                            document.body.appendChild(iframe);
 
-                        setTimeout(() => {
-                            if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
-                        }, 60000);
-                    } else {
-                        await window.assetConnectDefaultDownload.launchForRegular(button);
+                            setTimeout(() => {
+                                if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
+                            }, 60000);
+                        } else {
+                            await window.assetConnectDefaultDownload.launchForRegular(button);
+                        }
+                        
+                        processedCount++;
+                        updateProgress();
+                        
+                        // 通常ダウンロードはリダイレクト処理の間隔を1秒確保する、スキーマ起動は750msあける
+                        await new Promise(r => setTimeout(r, method === 'normal' ? 1000 : 750));
+                        
                     }
-                    
-                    processedCount++;
-                    updateProgress();
-                    
-                    // 通常ダウンロードはリダイレクト処理の間隔を1秒確保する
-                    await new Promise(r => setTimeout(r, method === 'normal' ? 1000 : 500));
-                    
                 }
             } catch (err) {
                 console.error(err);
