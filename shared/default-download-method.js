@@ -232,6 +232,193 @@
     });
   }
 
+  let currentAeBulkFormat = 'v0';
+  const SCHEMA_INTERVAL_MS = 750;
+  const MAX_URI_LENGTH = 2000;
+
+  function buildBulkItemImportUrl(itemId, itemsChunk) {
+    const json = JSON.stringify(itemsChunk);
+    return `vrcae://bulk-item-import?v=1&item_id=${encodeURIComponent(itemId)}&items=${encodeURIComponent(json)}`;
+  }
+
+  function chunkItemsForUri(itemId, items, maxLength = MAX_URI_LENGTH) {
+    const chunks = [];
+    let currentChunk = [];
+
+    for (const item of items) {
+      const candidate = [...currentChunk, item];
+      const url = buildBulkItemImportUrl(itemId, candidate);
+      if (url.length <= maxLength || currentChunk.length === 0) {
+        currentChunk.push(item);
+      } else {
+        chunks.push(currentChunk);
+        currentChunk = [item];
+      }
+    }
+
+    if (currentChunk.length > 0) {
+      chunks.push(currentChunk);
+    }
+
+    return chunks;
+  }
+
+  function getItemId(regular) {
+    const adapter = window.assetConnectDownloadAdapter;
+    const info = adapter?.getInfo?.(regular);
+    if (info?.boothID && info.boothID !== 'unknown') {
+      return String(info.boothID);
+    }
+    let container = regular?.parentElement;
+    while (container && container !== document.body) {
+      const link = container.querySelector('a[href*="/items/"]');
+      const match = link?.href?.match(/\/items\/(\d+)/);
+      if (match) return match[1];
+      container = container.parentElement;
+    }
+    const pageMatch = window.location?.href?.match(/\/items\/(\d+)/);
+    if (pageMatch) return pageMatch[1];
+    const anyLink = document.querySelector('a[href*="/items/"]');
+    const anyMatch = anyLink?.href?.match(/\/items\/(\d+)/);
+    if (anyMatch) return anyMatch[1];
+    return '';
+  }
+
+  function getVariationId(regular) {
+    const normalKey = getDownloadKey(getNormalUrl(regular));
+    if (normalKey?.variationId) return normalKey.variationId;
+    const dropdown = findDropdownForRegular(regular);
+    if (dropdown) {
+      const libraryKey = getDownloadKey(getLibraryManagerUrl(dropdown));
+      if (libraryKey?.variationId) return libraryKey.variationId;
+    }
+    return '';
+  }
+
+  function getDownloadableFilename(regular) {
+    const info = window.assetConnectDownloadAdapter?.getInfo?.(regular);
+    if (info?.fileName && !info.fileName.includes('何らかの理由でデータを取得できませんでした')) {
+      return info.fileName;
+    }
+    const title = regular.getAttribute?.('title');
+    if (title) return title;
+    const itemContainer = regular.closest?.('.variation-item, .sheet, .bg-white, .desktop\\:flex');
+    const nameEl = itemContainer?.querySelector?.('.text-14, b');
+    if (nameEl?.textContent?.trim()) return nameEl.textContent.trim();
+    return '';
+  }
+
+  async function launchAvatarExplorerV0Bulk(regulars, onProgress = null) {
+    if (!regulars || regulars.length === 0) return;
+    let processedCount = 0;
+    for (let i = 0; i < regulars.length; i++) {
+      const regular = regulars[i];
+      await window.assetConnectDefaultDownload.launchForRegular(regular);
+      processedCount++;
+      if (typeof onProgress === 'function') {
+        onProgress(processedCount, regulars.length);
+      }
+      if (i < regulars.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, SCHEMA_INTERVAL_MS));
+      }
+    }
+  }
+
+  async function launchAvatarExplorerV1Bulk(regulars, onProgress = null) {
+    if (!regulars || regulars.length === 0) return;
+
+    const itemsByItem = new Map();
+    for (const regular of regulars) {
+      const itemId = getItemId(regular);
+      const itemData = {
+        variation_id: String(getVariationId(regular) || '').trim(),
+        downloadable_filename: String(getDownloadableFilename(regular) || '').trim(),
+        dlurl: String(getNormalUrl(regular) || '').trim()
+      };
+      if (!itemsByItem.has(itemId)) {
+        itemsByItem.set(itemId, []);
+      }
+      itemsByItem.get(itemId).push({ regular, data: itemData });
+      await saveHistory(regular, true);
+    }
+
+    let processedCount = 0;
+    let isFirstLaunch = true;
+
+    for (const [itemId, entries] of itemsByItem) {
+      const itemsData = entries.map(e => e.data);
+      const chunks = chunkItemsForUri(itemId, itemsData, MAX_URI_LENGTH);
+
+      for (const chunk of chunks) {
+        if (!isFirstLaunch) {
+          await new Promise(resolve => setTimeout(resolve, SCHEMA_INTERVAL_MS));
+        }
+        isFirstLaunch = false;
+
+        const url = buildBulkItemImportUrl(itemId, chunk);
+        window.debugLogger?.log('[DOWNLOAD METHOD] AvatarExplorer bulk schema launched:', {
+          itemId,
+          itemCount: chunk.length,
+          urlLength: url.length
+        });
+        launchUrl(url);
+
+        processedCount += chunk.length;
+        if (typeof onProgress === 'function') {
+          onProgress(processedCount, regulars.length);
+        }
+      }
+    }
+  }
+
+  async function launchBulk(regulars, onProgress = null) {
+    if (!regulars || regulars.length === 0) return;
+    const method = currentMethod;
+
+    if (method === 'avatar-explorer') {
+      if (currentAeBulkFormat === 'v1') {
+        return launchAvatarExplorerV1Bulk(regulars, onProgress);
+      }
+      return launchAvatarExplorerV0Bulk(regulars, onProgress);
+    }
+
+    let processedCount = 0;
+    for (let i = 0; i < regulars.length; i++) {
+      const regular = regulars[i];
+      if (method === 'normal') {
+        const adapter = window.assetConnectDownloadAdapter;
+        const info = adapter?.getInfo?.(regular);
+        if (info) {
+          await adapter.save?.(info);
+        }
+        const normalUrl = getNormalUrl(regular);
+        if (normalUrl) {
+          const iframe = document.createElement('iframe');
+          iframe.style.display = 'none';
+          iframe.src = normalUrl;
+          document.body.appendChild(iframe);
+          setTimeout(() => {
+            if (iframe.parentNode) iframe.parentNode.removeChild(iframe);
+          }, 60000);
+        }
+      } else {
+        await window.assetConnectDefaultDownload.launchForRegular(regular);
+      }
+
+      processedCount++;
+      if (typeof onProgress === 'function') {
+        onProgress(processedCount, regulars.length);
+      }
+
+      if (i < regulars.length - 1) {
+        await new Promise(resolve => setTimeout(
+          resolve,
+          method === 'normal' ? 1000 : SCHEMA_INTERVAL_MS
+        ));
+      }
+    }
+  }
+
   window.assetConnectDefaultDownload = {
     getMethod() {
       return currentMethod;
@@ -249,11 +436,22 @@
         `${methodName}で一括ダウンロード`
       );
     },
+    getAeBulkFormat() {
+      return currentAeBulkFormat;
+    },
+    setAeBulkFormat(format) {
+      currentAeBulkFormat = format === 'v1' ? 'v1' : 'v0';
+    },
     async launchForRegular(regular) {
       const dropdown = findDropdownForRegular(regular);
       if (!dropdown) throw new Error('Other download methods were not found');
       return launchMethod(currentMethod, dropdown, regular);
-    }
+    },
+    async launchBulk(regulars, onProgress) {
+      return launchBulk(regulars, onProgress);
+    },
+    buildBulkItemImportUrl,
+    chunkItemsForUri
   };
 
   document.addEventListener('click', event => {
@@ -301,19 +499,25 @@
       });
   }, true);
 
-  chrome.storage.local.get('defaultDownloadMethod', result => {
+  chrome.storage.local.get(['defaultDownloadMethod', 'aeBulkDownloadFormat'], result => {
     currentMethod = VALID_METHODS.has(result.defaultDownloadMethod)
       ? result.defaultDownloadMethod
       : 'normal';
+    currentAeBulkFormat = result.aeBulkDownloadFormat === 'v1' ? 'v1' : 'v0';
     updatePage();
   });
 
   chrome.storage.onChanged.addListener((changes, areaName) => {
-    if (areaName !== 'local' || !changes.defaultDownloadMethod) return;
-    currentMethod = VALID_METHODS.has(changes.defaultDownloadMethod.newValue)
-      ? changes.defaultDownloadMethod.newValue
-      : 'normal';
-    updatePage();
+    if (areaName !== 'local') return;
+    if (changes.defaultDownloadMethod) {
+      currentMethod = VALID_METHODS.has(changes.defaultDownloadMethod.newValue)
+        ? changes.defaultDownloadMethod.newValue
+        : 'normal';
+      updatePage();
+    }
+    if (changes.aeBulkDownloadFormat) {
+      currentAeBulkFormat = changes.aeBulkDownloadFormat.newValue === 'v1' ? 'v1' : 'v0';
+    }
   });
 
   chrome.runtime.onMessage.addListener(request => {

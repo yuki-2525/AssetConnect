@@ -530,5 +530,17 @@
                 "content": "$1"
             }
         }
+    },
+    "aeBulkDownloadFormatLabel": {
+        "message": "AvatarExplorer Bulk Import Version"
+    },
+    "aeBulkFormatV0": {
+        "message": "Version 0"
+    },
+    "aeBulkFormatV1": {
+        "message": "Version 1"
+    },
+    "aeBulkDownloadFormatNote": {
+        "message": "* Version 1 is supported in AvatarExplorer v2.13.0-beta.0 or later and downloads faster than Version 0."
     }
 }

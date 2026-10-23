@@ -658,6 +658,20 @@
         </div>
 
         <div style="margin-bottom: 15px;">
+          <label for="aeBulkDownloadFormat" data-i18n="aeBulkDownloadFormatLabel"
+            style="display: block; margin-bottom: 5px;">AvatarExplorer一括インポートバージョン:</label>
+          <select id="aeBulkDownloadFormat"
+            style="width: 100%; padding: 6px; border: 1px solid var(--border-color); border-radius: 4px;">
+            <option value="v0" data-i18n="aeBulkFormatV0" selected>バージョン0</option>
+            <option value="v1" data-i18n="aeBulkFormatV1">バージョン1</option>
+          </select>
+          <div class="setting-note" data-i18n="aeBulkDownloadFormatNote"
+            style="font-size: 0.85em; color: #666; margin-top: 4px; line-height: 1.4;">
+            ※バージョン1はAvatarExplorer v2.13.0-beta.0以降で使用可能で、バージョン0よりも高速に一括ダウンロードできます。
+          </div>
+        </div>
+
+        <div style="margin-bottom: 15px;">
           <div class="toggle-item">
             <input type="checkbox" id="hideAvatarClipboard">
             <label for="hideAvatarClipboard" data-i18n="hideAvatarClipboardLabel">AssetConnect
