@@ -137,10 +137,10 @@
 
     const deeplinkUrl = getLibraryManagerUrl(dropdown);
     if (!deeplinkUrl) throw new Error('BOOTH deeplink URL was not found');
-    await saveHistory(regular, true);
 
     if (method === 'booth-library-manager') {
       launchUrl(deeplinkUrl);
+      await saveHistory(regular, true);
       return;
     }
 
@@ -150,7 +150,10 @@
         action: 'fetchAvatarExplorerDeeplink',
         deeplinkUrl
       });
-      if (!response?.success || !response.deeplink) {
+      if (!response) {
+        throw new Error('AssetConnectのバックグラウンドから応答がありません。拡張機能を再読み込みし、BOOTHページも再読み込みしてから再試行してください。');
+      }
+      if (!response.success || !response.deeplink) {
         throw new Error(response?.error || 'AvatarExplorer deeplink could not be created');
       }
       window.debugLogger?.log('[DOWNLOAD METHOD] AvatarExplorer deeplink converted:', {
@@ -160,6 +163,7 @@
           : response.deeplink.split(':', 1)[0]
       });
       launchUrl(response.deeplink, preparedWindow);
+      await saveHistory(regular, true);
     } catch (error) {
       preparedWindow?.close();
       throw error;
