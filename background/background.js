@@ -301,9 +301,9 @@ try {
       );
     },
     boothDownloadableRequestFilter,
-    // extraHeaders is Chromium-only. Location is available with responseHeaders
-    // in both Chromium and Firefox.
-    isFirefox ? ['blocking', 'responseHeaders'] : ['responseHeaders']
+    // Observe Chromium's cross-origin response before CORS/unsafe-redirect
+    // handling hides it from the content-script fetch. Firefox has no extraHeaders.
+    isFirefox ? ['blocking', 'responseHeaders'] : ['responseHeaders', 'extraHeaders']
   );
 } catch (error) {
   console.warn('Deeplink response-header listener is unavailable:', error);

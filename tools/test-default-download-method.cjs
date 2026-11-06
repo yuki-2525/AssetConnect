@@ -24,7 +24,7 @@ function element(kind, children = []) {
   return el;
 }
 
-function setup(pairs, sharedContainer = false, timeoutFn = setTimeout) {
+function setup(pairs, sharedContainer = false, timeoutFn = setTimeout, response = { success: true, deeplink: 'vrcae:test' }) {
   const regulars = pairs.map(([url]) => {
     const regular = element(sharedContainer ? 'link' : 'regular');
     if (sharedContainer) regular.href = url;
@@ -71,7 +71,7 @@ function setup(pairs, sharedContainer = false, timeoutFn = setTimeout) {
       },
       runtime: {
         onMessage: { addListener() {} },
-        sendMessage: async request => { requests.push(request); return { success: true, deeplink: 'vrcae:test' }; }
+        sendMessage: async request => { requests.push(request); return response; }
       }
     }
   });
@@ -90,6 +90,19 @@ function setup(pairs, sharedContainer = false, timeoutFn = setTimeout) {
 
 const normal = (id, suffix = '') => `https://booth.pm/downloadables/${id}${suffix}`;
 const deeplink = (id, suffix = '') => normal(id, `/deeplink?client=booth-library-manager${suffix}`);
+
+for (const [name, response, expected] of [
+  ['empty response', null, /バックグラウンドから応答がありません/],
+  ['background error', { success: false, error: 'BOOTH deeplink request timed out' }, /timed out/]
+]) {
+  test(`AvatarExplorer ${name} does not save a registered history entry`, async () => {
+    const env = setup([[normal(101), deeplink(101)]], false, setTimeout, response);
+    env.change('avatar-explorer');
+    await assert.rejects(env.window.assetConnectDefaultDownload.launchForRegular(env.regulars[0]), expected);
+    assert.equal(env.history.length, 0);
+    assert.equal(env.launched.length, 0);
+  });
+}
 
 for (const [name, pairs, shared] of [
   ['shop: 20 files in one container', Array.from({ length: 20 }, (_, i) =>
